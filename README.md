@@ -2,4 +2,18 @@
 <h6 align=center>paper delivered to your remarkable tablet</h6>
 
 
-goosepaper!
+## what's up
+
+goosepaper is a utility that delivers a daily newsfeed to your remarkable tablet. that's cute!
+
+## usage
+
+execute using [frof](https://github.com/j6k4m8/frof):
+
+```shell
+frof daily.frof
+```
+
+You can add this to a crontab to run daily in the morning.
+
+
