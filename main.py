@@ -34,5 +34,4 @@ for entry in entries:
     """
     )
 
-with open("daily.html", "w") as fh:
-    fh.write("<hr />".join(html_entries))
+print("<hr />".join(html_entries))
