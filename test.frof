@@ -1,0 +1,5 @@
+print_home -> done
+
+done: echo ""
+
+print_home: echo "{{HOME}}" > out.txt

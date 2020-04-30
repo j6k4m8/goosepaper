@@ -4,7 +4,7 @@ provision: mkdir temp
 
 generate: python3 main.py > temp/daily.html
 
-convert: PATH=/usr/bin /usr/local/bin/pandoc -r html temp/daily.html -V fontsize=12pt -V geometry:"top=2cm, bottom=1.5cm, left=3cm, right=3cm" --latex-engine=/Library/TeX/texbin/xelatex -o "temp/daily.pdf"
+convert: wkhtmltopdf temp/daily.html temp/daily.pdf
 
 upload: /usr/local/bin/docker run --rm -v "$HOME/.rmapi:/home/user/.rmapi:rw" -v $(pwd)/temp:/tmp p2r -p daily --filename $(date +%m-%d).pdf -r "/tmp/daily.pdf"
 

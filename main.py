@@ -1,10 +1,7 @@
 from typing import List
 import feedparser
+from goosepaper.styles import Styles
 
-DEFAULT_FEEDS = {
-    "Reuters": "http://feeds.reuters.com/reuters/topNews.rss",
-    "NYT World": "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
-}
 
 FEEDS = [
     feedparser.parse(feed)
@@ -34,4 +31,12 @@ for entry in entries:
     """
     )
 
-print("<hr />".join(html_entries))
+style = Styles.Autumn
+
+print(
+    "<html><head><style>"
+    + style
+    + "</style></head><body>"
+    + "<hr />".join(html_entries)
+    + "</body></html>"
+)
