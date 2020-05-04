@@ -1,0 +1,9 @@
+requests
+feedparser
+
+# for twitter stories:
+twint
+pandas
+
+# for wikipedia stories:
+bs4
