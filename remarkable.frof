@@ -2,7 +2,7 @@ provision -> generate -> convert -> upload -> cleanup
 
 provision: mkdir temp
 
-generate: python3 new.py > temp/daily.html
+generate: python3 main.py > temp/daily.html
 
 convert: wkhtmltopdf temp/daily.html temp/daily.pdf
 
