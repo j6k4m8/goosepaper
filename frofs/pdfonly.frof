@@ -1,0 +1,7 @@
+provision -> generate -> convert
+
+provision: mkdir temp
+
+generate: python3 new.py > temp/daily.html
+
+convert: wkhtmltopdf temp/daily.html temp/daily.pdf
