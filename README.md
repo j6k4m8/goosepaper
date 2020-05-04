@@ -28,6 +28,11 @@ Do you have another kind of tablet? You may generate a print-ready PDF which you
 frof frofs/pdf-only.frof
 ```
 
+## thank you, but i prefer not to install `frof`!
+
+that is ok! you can still use this like a Python library, and move the resulting HTML or PDF onto your device of choice.
+
+
 # More Questions, Infrequently Asked
 
 ## very nice! may i have it in comic sans?
@@ -56,4 +61,4 @@ no! I don't have a good intuition for this myself. I know it to be true, but I c
 
 ## sweet codes, bro. love it, dude! can i buy the creator a coffee?
 
-no thank you! i encourage you to put that small amount of money toward a donation to an important organization, such as [planned parenthood](https://www.plannedparenthood.org/get-involved/other-ways-give). if you [tweet the receipt to me](https://twitter.com/j6m8), i'll send you a thank-you letter :)
+no thank you! i encourage you to put that money toward a donation to an important organization, such as [planned parenthood](https://www.plannedparenthood.org/get-involved/other-ways-give). if you [tweet the receipt to me](https://twitter.com/j6m8), i'll send you a thank-you letter :)
