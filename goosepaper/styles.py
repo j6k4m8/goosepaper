@@ -31,7 +31,7 @@ class Styles:
         padding: 1em;
         font-size: 1.5em;
         display: grid;
-        grid-template-columns: auto auto auto;
+        grid-template-columns: min-content auto max-content;
     }
 
     .ear article {
@@ -69,6 +69,7 @@ class Styles:
         font-size: 23pt;
         text-indent: 0;
         margin-bottom: 0.25em;
+        line-height: 1.2em;
     }
     article>h1.priority-low {
         font-family: "Oswald";
@@ -106,9 +107,8 @@ class Styles:
 
     figure {
         border: 1px solid black;
-        padding: 2em;
-        float: right;
-        width: 50%;
+        text-indent: 0;
+        width: auto;
     }
 
     figure>img {

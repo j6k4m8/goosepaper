@@ -41,6 +41,7 @@ class StoryPriority(enum.Enum):
     HEADLINE = 5
     BANNER = 9
 
+
 class Story:
     def __init__(
         self,
@@ -68,7 +69,11 @@ class Story:
             StoryPriority.LOW: "priority-low",
             StoryPriority.BANNER: "priority-banner",
         }[self.priority]
-        headline = f"<h1 class='{priority_class}'>{self.headline}</h1>" if self.headline else ""
+        headline = (
+            f"<h1 class='{priority_class}'>{self.headline}</h1>"
+            if self.headline
+            else ""
+        )
         return f"""
         <article>
             {headline}
@@ -106,10 +111,10 @@ class WikipediaCurrentEventsStoryProvider(StoryProvider):
         # title = feed.entries[0].title
         title = "Today's Current Events (Wiki)"
         content = bs4.BeautifulSoup(feed.entries[0].summary)
-        for a in content.find_all('a'):
-            while a.find('li'):
+        for a in content.find_all("a"):
+            while a.find("li"):
                 a.find("li").replace_with_children()
-            while a.find('ul'):
+            while a.find("ul"):
                 a.find("ul").replace_with_children()
             a.replace_with_children()
 
@@ -117,7 +122,7 @@ class WikipediaCurrentEventsStoryProvider(StoryProvider):
         #     content.find("a").replace_with_children()
         # while content.find("dt"):
         #     content.find("dt").name = "h3"
-            # content.find("dt").replace_with_children()
+        # content.find("dt").replace_with_children()
         # while content.find("ul"):
         #     content.find("ul").replace_with_children()
         while content.find("dl"):
@@ -173,8 +178,12 @@ class TwitterStoryProvider(StoryProvider):
         twint.run.Search(c)
         df = twint.storage.panda.Tweets_df
         return [
-            Story(headline=None, body_text=row.tweet, byline=f"@{self.username} on Twitter at {pd.to_datetime(row.date).strftime('%I:%M %p')}")
-            for i, row in list(df.iterrows())[:min(self.limit, limit)]
+            Story(
+                headline=None,
+                body_text=row.tweet,
+                byline=f"@{self.username} on Twitter at {pd.to_datetime(row.date).strftime('%I:%M %p')}",
+            )
+            for i, row in list(df.iterrows())[: min(self.limit, limit)]
         ]
 
 
@@ -200,7 +209,9 @@ class WeatherStoryProvider(StoryProvider):
         self.woe = woe
 
     def get_stories(self, limit: int = 1) -> List[Story]:
-        weather = requests.get(f"https://www.metaweather.com/api/location/{self.woe}/").json()['consolidated_weather'][0]
+        weather = requests.get(
+            f"https://www.metaweather.com/api/location/{self.woe}/"
+        ).json()["consolidated_weather"][0]
         headline = f"{int((weather['the_temp'] * 9/5) + 32)}ºF with {weather['weather_state_name']}"
         body_html = f"""
         <img
@@ -216,6 +227,24 @@ class WeatherStoryProvider(StoryProvider):
                 placement_preference=PlacementPreference.EAR,
             )
         ]
+
+
+class RSSFeedStoryProvider(StoryProvider):
+    def __init__(self, rss_path: str, limit: int = 5) -> None:
+        self.limit = limit
+        self.feed_url = rss_path
+
+    def get_stories(self, limit: int = 5) -> List[Story]:
+        limit = min(self.limit, limit)
+        feed = feedparser.parse(self.feed_url)
+        stories = []
+        for entry in feed.entries[:limit]:
+            html = entry.content[0]["value"]
+            if len(entry.media_content):
+                src = entry.media_content[0]["url"]
+                html = f"<figure><img class='hero-img' src='{src}' /></figure>'" + html
+            stories.append(Story(entry.title, body_html=html))
+        return stories
 
 
 class Goosepaper:
