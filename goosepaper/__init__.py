@@ -256,7 +256,7 @@ class Goosepaper:
         style: str = Styles.Autumn,
     ):
         self.story_providers = story_providers
-        self.title = title if title else "Daily Goose"
+        self.title = title if title else "Daily Goosepaper"
         self.subtitle = (
             subtitle if subtitle else datetime.datetime.today().strftime("%B %d, %Y")
         )
