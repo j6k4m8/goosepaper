@@ -47,14 +47,21 @@ class Styles:
     }
 
     .stories {
-        column-count: 2;
-        column-gap: 2em;
-        column-width: 16em;
         margin: 1em;
+        display: grid;
+        grid-column-gap: 2em;
+        grid-template-columns: auto 30vw;
+    }
+
+    .main-stories {
+        font-size: 15pt;
+    }
+
+    .sidebar-stories {
+        font-size: 13pt;
     }
 
     article {
-        font-size: 12pt;
         text-align: justify;
         text-indent: 3em;
         line-height: 1.45em;
