@@ -3,6 +3,7 @@ import pandas as pd
 import datetime
 import abc
 import enum
+import re
 
 import twint
 
@@ -24,6 +25,18 @@ def htmlize(text: str) -> str:
     if isinstance(text, list):
         return "".join([f"<p>{line}</p>" for line in text])
     return f"<p>{text}</p>"
+
+
+def clean_html(html: str) -> str:
+    html = html.replace("â€TM", "'")
+    html = re.sub("http[s]?:\/\/[^\s\"']+", "", html)
+    return html
+
+
+def clean_text(text: str) -> str:
+    text = text.replace("â€TM", "'")
+    text = re.sub("http[s]?:\/\/[^\s\"']+", "", text)
+    return text
 
 
 class PlacementPreference(enum.Enum):
@@ -172,7 +185,7 @@ class TwitterStoryProvider(StoryProvider):
         return [
             Story(
                 headline=None,
-                body_text=row.tweet,
+                body_text=clean_text(row.tweet),
                 byline=f"@{self.username} on Twitter at {pd.to_datetime(row.date).strftime('%I:%M %p')}",
                 date=pd.to_datetime(row.date),
                 placement_preference=PlacementPreference.SIDEBAR,
@@ -278,7 +291,7 @@ class RSSFeedStoryProvider(StoryProvider):
         stories = []
         for entry in feed.entries[:limit]:
             html = entry.content[0]["value"]
-            html = html.replace("â€TM", "'")
+            html = clean_html(html)
             if len(entry.media_content):
                 src = entry.media_content[0]["url"]
                 html = f"<figure><img class='hero-img' src='{src}' /></figure>'" + html
@@ -332,15 +345,15 @@ class Goosepaper:
         return (
             "<html><head><style>"
             + style
-            + "</style></head><body>"
+            + "</style><meta http-equiv='Content-type' content='text/html; charset=utf-8' /><meta charset='UTF-8' /></head><body>"
             + "<div class='header'>"
             + f"<div class='left-ear ear'>{left_ear}</div><div><h1>{self.title}</h1><h4>{self.subtitle}</h4></div><div class='right-ear ear'>{right_ear}</div>"
-            + "</div><div class='stories'>"
-            + "<div class='main-stories'>"
+            + "</div><table class='stories'><tbody>"
+            + "<tr><td class='main-stories'>"
             + "    <hr />".join(main_stories)
-            + "</div>"
-            + "<div class='sidebar-stories'>"
+            + "</td>"
+            + "<td class='sidebar-stories'>"
             + "    <hr />".join(sidebar_stories)
-            + "</div>"
-            + "</div></body></html>"
+            + "</td>"
+            + "</tr></tbody></table></body></html>"
         )

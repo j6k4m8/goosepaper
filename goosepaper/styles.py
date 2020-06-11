@@ -29,9 +29,15 @@ class Styles:
         width: 100%;
         margin: 1em;
         padding: 1em;
-        font-size: 1.5em;
-        display: grid;
-        grid-template-columns: min-content auto max-content;
+    }
+
+    .header div {
+        float: left;
+        display: inline-block;
+    }
+
+    .header .ear {
+        float: right;
     }
 
     .ear article {
@@ -48,13 +54,21 @@ class Styles:
 
     .stories {
         margin: 1em;
-        display: grid;
-        grid-column-gap: 2em;
-        grid-template-columns: auto 30vw;
+        width: 100vw;
+        table-layout: fixed;
+    }
+
+    table.stories tbody tr td {
+        vertical-align: top;
+        padding: 1em;
+        display: inline-block;
     }
 
     .main-stories {
         font-size: 15pt;
+        width: 62vw;
+        max-width: 62vw;
+        min-width: 62vw;
     }
 
     .sidebar-stories {
