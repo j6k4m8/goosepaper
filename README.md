@@ -11,7 +11,7 @@ goosepaper is a utility that delivers a daily newspaper to your remarkable table
 
 ## usage
 
-execute using [frof](https://github.com/j6k4m8/frof):
+execute easily using [frof](https://github.com/j6k4m8/frof):
 
 ```shell
 frof remarkable.frof
@@ -40,11 +40,6 @@ that is ok! you can still use this like a Python library, and move the resulting
 yes! you may do anything that you find to be fun and welcoming :)
 
 Check out the `styles.Styles` enum in the goosepaper library. You will find there what you seek.
-
-## i would like it to have my own name at the top: "Freenbu Wrimjilab". you may imagine how difficult it is to find things personalized with my name.
-
-I can certainly appreciate how difficult that would be! You may change the Goosepaper constructor in the `main.py` script so that the `title=` argument reflects your wishes!
-
 
 ## do all dogs' names start with the letter "B"?
 
