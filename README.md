@@ -9,6 +9,10 @@
 
 goosepaper is a utility that delivers a daily newspaper to your remarkable tablet. that's cute!
 
+you can include RSS feeds, Twitter feeds, news articles, wikipedia articles-of-the-day, weather, and more. I read it when I wake up so that I can feel anxious without having to get my phone out.
+
+Check out `main.py` for an example usage!
+
 ## usage
 
 execute easily using [frof](https://github.com/j6k4m8/frof):
