@@ -3,6 +3,7 @@ import pandas as pd
 import datetime
 import abc
 import enum
+import re
 
 import twint
 
@@ -24,6 +25,18 @@ def htmlize(text: str) -> str:
     if isinstance(text, list):
         return "".join([f"<p>{line}</p>" for line in text])
     return f"<p>{text}</p>"
+
+
+def clean_html(html: str) -> str:
+    html = html.replace("â€TM", "'")
+    html = re.sub("http[s]?:\/\/[^\s\"']+", "", html)
+    return html
+
+
+def clean_text(text: str) -> str:
+    text = text.replace("â€TM", "'")
+    text = re.sub("http[s]?:\/\/[^\s\"']+", "", text)
+    return text
 
 
 class PlacementPreference(enum.Enum):
@@ -59,6 +72,7 @@ class Story:
         self.headline = headline
         self.priority = priority
         self.byline = byline
+        self.date = date
         self.body_html = body_html if body_html else htmlize(body_text)
         self.placement_preference = placement_preference
 
@@ -118,23 +132,14 @@ class WikipediaCurrentEventsStoryProvider(StoryProvider):
                 a.find("ul").replace_with_children()
             a.replace_with_children()
 
-        # while content.find("a"):
-        #     content.find("a").replace_with_children()
-        # while content.find("dt"):
-        #     content.find("dt").name = "h3"
-        # content.find("dt").replace_with_children()
-        # while content.find("ul"):
-        #     content.find("ul").replace_with_children()
         while content.find("dl"):
             content.find("dl").name = "h3"
-        # for el in content.find_all("li"):
-        #     content.find("ul").replace_with_children()
         return [
             Story(
                 headline=title,
                 body_html=str(content),
                 byline="Wikipedia Current Events",
-                placement_preference=PlacementPreference.SIDEBAR,
+                placement_preference=PlacementPreference.BANNER,
             )
         ]
 
@@ -180,11 +185,57 @@ class TwitterStoryProvider(StoryProvider):
         return [
             Story(
                 headline=None,
-                body_text=row.tweet,
+                body_text=clean_text(row.tweet),
                 byline=f"@{self.username} on Twitter at {pd.to_datetime(row.date).strftime('%I:%M %p')}",
+                date=pd.to_datetime(row.date),
+                placement_preference=PlacementPreference.SIDEBAR,
             )
             for i, row in list(df.iterrows())[: min(self.limit, limit)]
         ]
+
+
+class MultiTwitterStoryProvider(StoryProvider):
+    def __init__(
+        self,
+        usernames: List[str],
+        limit_per: int = 5,
+        priority_mode: TwitterStoryProviderPriorityMode = TwitterStoryProviderPriorityMode.DEFAULT,
+    ) -> None:
+        """
+        Create a new story provider that reads tweets from several users.
+
+        Arguments:
+            usernames (List[str]): A list of twitter usernames
+            limit_per (int: 5): A maximum number of tweets to fetch from each
+                user in `usernames`
+            priority_mode (TwitterStoryProviderPriorityMode): Which priority
+                technique to use. Not currently implemented.
+
+        """
+        self.usernames = usernames
+        self.limit_per = limit_per
+        self.priority_mode = priority_mode
+
+    def get_stories(self, limit: int = 42) -> List[Story]:
+        """
+        Get a list of tweets where each tweet is a story.
+
+        Arguments:
+            limit (int: 15): The maximum number of tweets to fetch
+
+        Returns:
+            List[Story]: A list of tweets
+
+        """
+        stories = []
+        for username in self.usernames:
+            stories.extend(
+                TwitterStoryProvider(
+                    username, self.limit_per, self.priority_mode
+                ).get_stories(limit=self.limit_per)
+            )
+        stories = sorted(stories, key=lambda story: story.date)
+        return stories[:limit]
 
 
 class LoremStoryProvider(StoryProvider):
@@ -240,6 +291,7 @@ class RSSFeedStoryProvider(StoryProvider):
         stories = []
         for entry in feed.entries[:limit]:
             html = entry.content[0]["value"]
+            html = clean_html(html)
             if len(entry.media_content):
                 src = entry.media_content[0]["url"]
                 html = f"<figure><img class='hero-img' src='{src}' /></figure>'" + html
@@ -276,19 +328,32 @@ class Goosepaper:
             right_ear = ears[0].to_html()
         if len(ears) > 1:
             left_ear = ears[1].to_html()
-        stories = [
-            s for s in stories if s.placement_preference != PlacementPreference.EAR
+
+        main_stories = [
+            s.to_html()
+            for s in stories
+            if s.placement_preference
+            not in [PlacementPreference.EAR, PlacementPreference.SIDEBAR]
         ]
 
-        stories = [story.to_html() for story in stories]
+        sidebar_stories = [
+            s.to_html()
+            for s in stories
+            if s.placement_preference == PlacementPreference.SIDEBAR
+        ]
 
         return (
             "<html><head><style>"
             + style
-            + "</style></head><body>"
+            + "</style><meta http-equiv='Content-type' content='text/html; charset=utf-8' /><meta charset='UTF-8' /></head><body>"
             + "<div class='header'>"
             + f"<div class='left-ear ear'>{left_ear}</div><div><h1>{self.title}</h1><h4>{self.subtitle}</h4></div><div class='right-ear ear'>{right_ear}</div>"
-            + "</div><div class='stories'>"
-            + "<hr />".join(stories)
-            + "</div></body></html>"
+            + "</div><table class='stories'><tbody>"
+            + "<tr><td class='main-stories'>"
+            + "    <hr />".join(main_stories)
+            + "</td>"
+            + "<td class='sidebar-stories'>"
+            + "    <hr />".join(sidebar_stories)
+            + "</td>"
+            + "</tr></tbody></table></body></html>"
         )
