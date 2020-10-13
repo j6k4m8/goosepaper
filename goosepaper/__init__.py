@@ -287,10 +287,15 @@ class RSSFeedStoryProvider(StoryProvider):
 
     def get_stories(self, limit: int = 5) -> List[Story]:
         feed = feedparser.parse(self.feed_url)
-        limit = min(self.limit, limit, len(feed.entries))
+        limit = min(self.limit, len(feed.entries) )
         stories = []
         for entry in feed.entries[:limit]:
-            html = entry.content[0]["value"]
+            if "content" in entry:
+            	html = entry.content[0]["value"]
+            elif "summary_detail" in entry: 
+                html = entry.summary_detail["value"]
+            else:
+                html = entry.summary
             html = clean_html(html)
             if len(entry.media_content):
                 src = entry.media_content[0]["url"]
