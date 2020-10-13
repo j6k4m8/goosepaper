@@ -286,8 +286,8 @@ class RSSFeedStoryProvider(StoryProvider):
         self.feed_url = rss_path
 
     def get_stories(self, limit: int = 5) -> List[Story]:
-        limit = min(self.limit, limit)
         feed = feedparser.parse(self.feed_url)
+        limit = min(self.limit, limit, len(feed.entries))
         stories = []
         for entry in feed.entries[:limit]:
             html = entry.content[0]["value"]
