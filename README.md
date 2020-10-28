@@ -59,11 +59,3 @@ I do not think so, but it is a good question!
 ## may i use this to browse twitter?
 
 yes you may! you can add a list of usernames to the feed generator and it will make a print-ready version of twitter. this is helpful for when you are on twitter on your laptop but wish you had Other Twitter as well, in print form.
-
-## can you help me build an intuition for why a subset of the conic section parameter space is ellipsoid?
-
-no! I don't have a good intuition for this myself. I know it to be true, but I can't come up with a compelling and straightforward way to present the proof to myself.
-
-## sweet codes, bro. love it, dude! can i buy the creator a coffee?
-
-no thank you! i encourage you to put that money toward a donation to an important organization, such as [planned parenthood](https://www.plannedparenthood.org/get-involved/other-ways-give). if you [tweet the receipt to me](https://twitter.com/j6m8), i'll send you a thank-you letter :)
