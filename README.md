@@ -25,6 +25,7 @@ You can add this to a crontab to run daily in the morning.
 ### slightly more annoying, without frof:
 
 ```shell
+mkdir -p temp
 python3 main.py > temp/test.html
 wkhtmltopdf temp/test.html temp/test.pdf
 open temp/test.pdf

@@ -58,6 +58,10 @@ class Styles:
         table-layout: fixed;
     }
 
+    li {
+        padding-left: 4px !important;
+    }
+
     table.stories tbody tr td {
         vertical-align: top;
         padding: 1em;
@@ -73,10 +77,8 @@ class Styles:
     }
 
     .main-stories {
-        font-size: 15pt;
-        width: 62vw;
-        max-width: 62vw;
-        min-width: 62vw;
+        font-size: 13pt;
+        width: 75vw;
     }
 
     .sidebar-stories {
@@ -85,7 +87,7 @@ class Styles:
 
     article {
         text-align: justify;
-        text-indent: 3em;
+        text-indent: 1em;
         line-height: 1.45em;
     }
 

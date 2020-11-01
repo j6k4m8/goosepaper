@@ -19,6 +19,7 @@ print(
             # ),
             # Pending this issue: https://github.com/j6k4m8/goosepaper/issues/5
             RedditHeadlineStoryProvider("news"),
+            RedditHeadlineStoryProvider("todayilearned"),
         ]
     ).to_html()
 )
