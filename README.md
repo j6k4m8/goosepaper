@@ -59,3 +59,7 @@ I do not think so, but it is a good question!
 ## may i use this to browse twitter?
 
 yes you may! you can add a list of usernames to the feed generator and it will make a print-ready version of twitter. this is helpful for when you are on twitter on your laptop but wish you had Other Twitter as well, in print form.
+
+# You May Also Like...
+
+-   [remailable](https://github.com/j6k4m8/remailable): Email PDF documents to your reMarkable tablet
