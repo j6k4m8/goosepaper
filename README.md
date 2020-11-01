@@ -22,6 +22,14 @@ frof remarkable.frof
 
 You can add this to a crontab to run daily in the morning.
 
+### slightly more annoying, without frof:
+
+```shell
+python3 main.py > temp/test.html
+wkhtmltopdf temp/test.html temp/test.pdf
+open temp/test.pdf
+```
+
 ### p2r
 
 You'll need a [`p2r` of some variety](https://github.com/GjjvdBurg/paper2remarkable) installed; this tool syncs documents to your tablet. (You can also use this without p2r, and sync the PDF yourself.) I'd recommend cloning the p2r repo and building with docker:

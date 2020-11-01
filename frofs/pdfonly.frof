@@ -1,6 +1,6 @@
 provision -> generate -> convert
 
-provision: mkdir temp
+provision: mkdir -p temp
 
 generate: python3 main.py > temp/daily.html
 

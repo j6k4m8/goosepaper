@@ -1,9 +1,10 @@
 from goosepaper import (
     Goosepaper,
+    RedditHeadlineStoryProvider,
     RSSFeedStoryProvider,
-    WikipediaCurrentEventsStoryProvider,
-    MultiTwitterStoryProvider,
     WeatherStoryProvider,
+    WikipediaCurrentEventsStoryProvider,
+    # MultiTwitterStoryProvider,
 )
 
 print(
@@ -13,10 +14,11 @@ print(
             WeatherStoryProvider(woe="2358820"),
             RSSFeedStoryProvider("https://www.statnews.com/feed/", limit=5),
             RSSFeedStoryProvider("https://www.npr.org/feed/", limit=5),
-            #MultiTwitterStoryProvider(
+            # MultiTwitterStoryProvider(
             #    ["reuters", "bbcWorld", "axios", "BethanyAllenEbr", "NPR"], limit_per=5
-            #),
+            # ),
             # Pending this issue: https://github.com/j6k4m8/goosepaper/issues/5
+            RedditHeadlineStoryProvider("news"),
         ]
     ).to_html()
 )

@@ -287,12 +287,12 @@ class RSSFeedStoryProvider(StoryProvider):
 
     def get_stories(self, limit: int = 5) -> List[Story]:
         feed = feedparser.parse(self.feed_url)
-        limit = min(self.limit, len(feed.entries) )
+        limit = min(self.limit, len(feed.entries))
         stories = []
         for entry in feed.entries[:limit]:
             if "content" in entry:
-            	html = entry.content[0]["value"]
-            elif "summary_detail" in entry: 
+                html = entry.content[0]["value"]
+            elif "summary_detail" in entry:
                 html = entry.summary_detail["value"]
             else:
                 html = entry.summary
@@ -301,6 +301,30 @@ class RSSFeedStoryProvider(StoryProvider):
                 src = entry.media_content[0]["url"]
                 html = f"<figure><img class='hero-img' src='{src}' /></figure>'" + html
             stories.append(Story(entry.title, body_html=html))
+        return stories
+
+
+class RedditHeadlineStoryProvider(StoryProvider):
+    def __init__(self, subreddit: str, limit: int = 20):
+        self.limit = limit
+        subreddit.lstrip("/")
+        subreddit = subreddit[2:] if subreddit.startswith("r/") else subreddit
+        self.subreddit = subreddit
+
+    def get_stories(self, limit: int = 20) -> List[Story]:
+        feed = feedparser.parse(f"https://www.reddit.com/r/{self.subreddit}.rss")
+        limit = min(self.limit, len(feed.entries), limit)
+        stories = []
+        for entry in feed.entries[:limit]:
+            stories.append(
+                Story(
+                    headline=None,
+                    body_text=entry.title,
+                    byline=entry.author,
+                    date=entry.updated_parsed,
+                    placement_preference=PlacementPreference.SIDEBAR,
+                )
+            )
         return stories
 
 

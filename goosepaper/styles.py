@@ -61,7 +61,15 @@ class Styles:
     table.stories tbody tr td {
         vertical-align: top;
         padding: 1em;
-        display: inline-block;
+    }
+
+    table.stories {
+        width: 100vw;
+        width: 9in;
+    }
+
+    table, tr, td, th, tbody, thead, tfoot {
+        page-break-inside: avoid !important;
     }
 
     .main-stories {
