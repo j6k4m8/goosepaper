@@ -10,7 +10,16 @@ goosepaper is a utility that delivers a daily newspaper to your remarkable table
 
 you can include RSS feeds, Twitter feeds, news articles, wikipedia articles-of-the-day, weather, and more. I read it when I wake up so that I can feel anxious without having to get my phone out.
 
-Check out `main.py` for an example usage!
+Check out [this example PDF](https://github.com/j6k4m8/goosepaper/blob/71ee16e91840560fe40234493a02a283cb84083f/docs/Example-Nov-1-2020.pdf), generated on Nov 1 2020 using `main.py`.
+
+
+## existing story providers (want to write your own?)
+
+* [Wikipedia Top News / Current Events](https://github.com/j6k4m8/goosepaper/blob/71ee16e91840560fe40234493a02a283cb84083f/goosepaper/__init__.py#L112)
+* [Tweets](https://github.com/j6k4m8/goosepaper/blob/71ee16e91840560fe40234493a02a283cb84083f/goosepaper/__init__.py#L154) (Note: Currently borked, see [Issue #5](https://github.com/j6k4m8/goosepaper/issues/5))
+* [Weather](https://github.com/j6k4m8/goosepaper/blob/71ee16e91840560fe40234493a02a283cb84083f/goosepaper/__init__.py#L258). These stories appear in the "ear" of the front page, just like a regular ol' newspaper
+* [RSS Feeds](https://github.com/j6k4m8/goosepaper/blob/71ee16e91840560fe40234493a02a283cb84083f/goosepaper/__init__.py#L283)
+* [Reddit Subreddits](https://github.com/j6k4m8/goosepaper/blob/71ee16e91840560fe40234493a02a283cb84083f/goosepaper/__init__.py#L307)
 
 ## usage
 
