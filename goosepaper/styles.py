@@ -1,43 +1,52 @@
-class Styles:
+class Style:
+    def get_stylesheets(self):
+        ...
 
-    Autumn = """
-    @import 'https://fonts.googleapis.com/css?family=Oswald';
-    @import 'https://fonts.googleapis.com/css?family=Merriweather';
+    def get_css(self):
+        ...
 
-    * {
-        box-sizing: border-box;
+
+class AutumnStyle(Style):
+    def get_stylesheets(self):
+        return [
+            "https://fonts.googleapis.com/css?family=Oswald&display=swap",
+            "https://fonts.googleapis.com/css?family=Playfair+Display&display=swap",
+        ]
+
+    def get_css(self):
+        return self.CSS
+
+    CSS = """
+    @page {
+        margin-top: 0.5in;
+        margin-right: 0.2in;
+        margin-left: 0.5in;
     }
 
     body {
-        font-family: "Merriweather";
-    }
-
-    @media print {
-        body {
-            font-size: 90%;
-            margin: 0;
-            padding: 0;
-        }
-    }
-
-    @page {
-        size: 8.5in 11in;
-        margin: 0.5in 0.2in 0.1in 0.5in;
+        font-family: "Playfair Display";
     }
 
     .header {
-        width: 100%;
-        margin: 1em;
         padding: 1em;
+        height: 10em;
     }
 
     .header div {
         float: left;
-        display: inline-block;
+        display: block;
     }
 
     .header .ear {
         float: right;
+    }
+
+    ul, li, ol {
+        margin-left: 0; padding-left: 0.15em;
+    }
+
+    .stories {
+        font-size: 14pt;
     }
 
     .ear article {
@@ -47,48 +56,14 @@ class Styles:
         font-size: 11pt;
     }
     .ear article h1 {
-        font-family: "Merriweather";
+        font-family: "Playfair Display";
         font-size: 10pt;
         font-weight: normal;
     }
 
-    .stories {
-        margin: 1em;
-        width: 100vw;
-        table-layout: fixed;
-    }
-
-    li {
-        padding-left: 4px !important;
-    }
-
-    table.stories tbody tr td {
-        vertical-align: top;
-        padding: 1em;
-    }
-
-    table.stories {
-        width: 100vw;
-        width: 9in;
-    }
-
-    table, tr, td, th, tbody, thead, tfoot {
-        page-break-inside: avoid !important;
-    }
-
-    .main-stories {
-        font-size: 13pt;
-        width: 75vw;
-    }
-
-    .sidebar-stories {
-        font-size: 13pt;
-    }
-
     article {
         text-align: justify;
-        text-indent: 1em;
-        line-height: 1.45em;
+        line-height: 1.25em;
     }
 
     .longform {
@@ -97,15 +72,17 @@ class Styles:
 
     article>h1 {
         font-family: "Oswald";
+        font-weight: 400;
         font-size: 23pt;
         text-indent: 0;
         margin-bottom: 0.25em;
         line-height: 1.2em;
+        text-align: left;
     }
     article>h1.priority-low {
         font-family: "Oswald";
         font-size: 18pt;
-        font-weight: normal;
+        font-weight: 400;
         text-indent: 0;
         border-bottom: 1px solid #dedede;
         margin-bottom: 0.15em;
@@ -114,14 +91,14 @@ class Styles:
     article>h4.byline {
         font-family: "Oswald";
         font-size: 12pt;
-        font-weight: normal;
+        font-weight: 400;
         text-indent: 0;
         border-bottom: 1px solid #dedede;
     }
 
     article>h3 {
         font-family: "Oswald";
-        font-weight: normal;
+        font-weight: 400;
         font-size: 13pt;
         text-indent: 0;
     }
@@ -131,7 +108,6 @@ class Styles:
     section>h3,
     section>h4,
     section>h5 {
-        /* font-size: 0.8em; */
         border-left: 5px solid #dedede;
         padding-left: 1em;
     }
@@ -149,4 +125,29 @@ class Styles:
     figure>span {
         font-size: 0;
     }
+
+    .row {
+        column-count: 2;
+    }
+
+
+    /*
+    .row {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        width: 100%;
+        justify-content: space-between;
+        align-items: start;
+        align-content: start;
+    }
+
+    .column {
+        display: flex;
+        flex-direction: column;
+        flex-basis: 100%;
+        flex: 1;
+    }
+    */
+
     """

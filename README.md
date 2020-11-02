@@ -10,6 +10,36 @@ goosepaper is a utility that delivers a daily newspaper to your remarkable table
 
 you can include RSS feeds, Twitter feeds, news articles, wikipedia articles-of-the-day, weather, and more. I read it when I wake up so that I can feel anxious without having to get my phone out.
 
+## installation
+
+### dependencies:
+
+this tool uses `weasyprint` to generate PDFs. You can install everything you need with `pip3 install -r ./requirements.txt` from this repo, but you may need these prerequisites before starting.
+
+more details [here](https://weasyprint.readthedocs.io/en/latest/install.html).
+
+#### mac:
+
+```shell
+brew install cairo pango gdk-pixbuf libffi
+```
+
+#### ubuntu-flavored:
+
+```shell
+sudo apt-get install build-essential python3-dev python3-pip python3-setuptools python3-wheel python3-cffi libcairo2 libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf2.0-0 libffi-dev shared-mime-info
+```
+
+#### windows:
+
+[Follow these instructions carefully](https://weasyprint.readthedocs.io/en/latest/install.html#windows).
+
+## and then:
+
+```shell
+pip3 install -r ./requirements.txt
+```
+
 Check out `main.py` for an example usage!
 
 ## usage

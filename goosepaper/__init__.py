@@ -11,7 +11,7 @@ import bs4
 import feedparser
 import requests
 
-from .styles import Styles
+from .styles import Style, AutumnStyle
 
 
 def htmlize(text: str) -> str:
@@ -29,13 +29,13 @@ def htmlize(text: str) -> str:
 
 def clean_html(html: str) -> str:
     html = html.replace("â€TM", "'")
-    html = re.sub("http[s]?:\/\/[^\s\"']+", "", html)
+    html = re.sub(r"http[s]?:\/\/[^\s\"']+", "", html)
     return html
 
 
 def clean_text(text: str) -> str:
     text = text.replace("â€TM", "'")
-    text = re.sub("http[s]?:\/\/[^\s\"']+", "", text)
+    text = re.sub(r"http[s]?:\/\/[^\s\"']+", "", text)
     return text
 
 
@@ -123,7 +123,7 @@ class WikipediaCurrentEventsStoryProvider(StoryProvider):
         """
         feed = feedparser.parse("https://www.to-rss.xyz/wikipedia/current_events/")
         # title = feed.entries[0].title
-        title = "Today's Current Events (Wiki)"
+        title = "Today's Current Events"
         content = bs4.BeautifulSoup(feed.entries[0].summary)
         for a in content.find_all("a"):
             while a.find("li"):
@@ -320,7 +320,7 @@ class RedditHeadlineStoryProvider(StoryProvider):
                 Story(
                     headline=None,
                     body_text=entry.title,
-                    byline=entry.author,
+                    byline=f"{entry.author} in r/{self.subreddit}",
                     date=entry.updated_parsed,
                     placement_preference=PlacementPreference.SIDEBAR,
                 )
@@ -334,7 +334,6 @@ class Goosepaper:
         story_providers: List[StoryProvider],
         title: str = None,
         subtitle: str = None,
-        style: str = Styles.Autumn,
     ):
         self.story_providers = story_providers
         self.title = title if title else "Daily Goosepaper"
@@ -343,8 +342,6 @@ class Goosepaper:
         )
 
     def to_html(self) -> str:
-        style = Styles.Autumn
-
         stories = []
         for prov in self.story_providers:
             stories.extend(prov.get_stories())
@@ -371,18 +368,54 @@ class Goosepaper:
             if s.placement_preference == PlacementPreference.SIDEBAR
         ]
 
-        return (
-            "<html><head><style>"
-            + style
-            + "</style><meta http-equiv='Content-type' content='text/html; charset=utf-8' /><meta charset='UTF-8' /></head><body>"
-            + "<div class='header'>"
-            + f"<div class='left-ear ear'>{left_ear}</div><div><h1>{self.title}</h1><h4>{self.subtitle}</h4></div><div class='right-ear ear'>{right_ear}</div>"
-            + "</div><table class='stories'><tbody>"
-            + "<tr><td class='main-stories'>"
-            + "    <hr />".join(main_stories)
-            + "</td>"
-            + "<td class='sidebar-stories'>"
-            + "    <hr />".join(sidebar_stories)
-            + "</td>"
-            + "</tr></tbody></table></body></html>"
-        )
+        return f"""
+            <html>
+            <head>
+                <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+                <meta charset="UTF-8" />
+            </head>
+            <body>
+                <div class="header">
+                    <div class="left-ear ear">{left_ear}</div>
+                    <div><h1>{self.title}</h1><h4>{self.subtitle}</h4></div>
+                    <div class="right-ear ear">{right_ear}</div>
+                </div>
+                <div class="stories row">
+                    <div class="main-stories column">
+                        {"<hr />".join(main_stories)}
+                    </div>
+                    <div class="sidebar column">
+                        {"<br />".join(sidebar_stories)}
+                    </div>
+                </div>
+            </body>
+            </html>
+        """
+
+    def to_pdf(self, filename: str, style: Style = AutumnStyle) -> str:
+        """
+        Renders the current Goosepaper to a PDF file on disk.
+
+        TODO: If an IO type is provided, write bytes instead.
+
+        """
+        from weasyprint import HTML, CSS
+
+        style = style()
+
+        html = self.to_html()
+        h = HTML(string=html)
+        c = CSS(string=style.get_css())
+        h.write_pdf(filename, stylesheets=[c, *style.get_stylesheets()])
+        return filename
+
+
+def transfer_file_to_remarkable(fname: str, config_dict: dict = None):
+    from rmapy.document import ZipDocument
+    from rmapy.api import Client
+
+    rm = Client(config_dict=config_dict)
+    rm.renew_token()
+    doc = ZipDocument(doc=fname)
+    rm.upload(doc)
+    return True
