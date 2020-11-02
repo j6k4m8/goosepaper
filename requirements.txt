@@ -1,4 +1,7 @@
+# for general downloadery and story chomping:
 requests
+
+# for rss feeds and reddit:
 feedparser
 
 # for twitter stories:
@@ -7,3 +10,9 @@ pandas
 
 # for wikipedia stories:
 bs4
+
+# for rendering:
+WeasyPrint
+
+# for sending to remarkable:
+git+https://github.com/j6k4m8/rmapy
