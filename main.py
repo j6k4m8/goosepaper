@@ -26,8 +26,8 @@ Goosepaper(
         # Pending this issue: https://github.com/j6k4m8/goosepaper/issues/5
         #    ["reuters", "bbcWorld", "axios", "BethanyAllenEbr", "NPR"], limit_per=5
         # ),
-        RedditHeadlineStoryProvider("news"),
-        RedditHeadlineStoryProvider("todayilearned"),
+        #RedditHeadlineStoryProvider("news"),
+        #RedditHeadlineStoryProvider("todayilearned"),
     ]
 ).to_pdf(FNAME)
 logging.info(f"Saved to PDF, now transferring...")
