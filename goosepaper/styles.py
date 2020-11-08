@@ -9,8 +9,8 @@ class Style:
 class AutumnStyle(Style):
     def get_stylesheets(self):
         return [
-            "https://fonts.googleapis.com/css?family=Oswald&display=swap",
-            "https://fonts.googleapis.com/css?family=Playfair+Display&display=swap",
+            "https://fonts.googleapis.com/css?family=Oswald",
+            "https://fonts.googleapis.com/css?family=Playfair+Display",
         ]
 
     def get_css(self):

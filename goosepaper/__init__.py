@@ -311,9 +311,13 @@ class RSSFeedStoryProvider(StoryProvider):
             else:
                 html = entry.summary
             html = clean_html(html)
-            if len(entry.media_content):
-                src = entry.media_content[0]["url"]
-                html = f"<figure><img class='hero-img' src='{src}' /></figure>'" + html
+            try:
+                if len(entry.media_content):
+                    src = entry.media_content[0]["url"]
+                    html = f"<figure><img class='hero-img' src='{src}' /></figure>'" + html
+            except Exception:
+                pass
+
             stories.append(Story(entry.title, body_html=html))
         return stories
 
@@ -330,11 +334,15 @@ class RedditHeadlineStoryProvider(StoryProvider):
         limit = min(self.limit, len(feed.entries), limit)
         stories = []
         for entry in feed.entries[:limit]:
+            try:
+                author = entry.author
+            except AttributeError:
+                author = "A Reddit user"
             stories.append(
                 Story(
                     headline=None,
                     body_text=entry.title,
-                    byline=f"{entry.author} in r/{self.subreddit}",
+                    byline=f"{author} in r/{self.subreddit}",
                     date=entry.updated_parsed,
                     placement_preference=PlacementPreference.SIDEBAR,
                 )
