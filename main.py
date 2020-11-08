@@ -18,8 +18,9 @@ logging.info(f"Honk! I will save your temporary PDF to {FNAME}.")
 logging.info(f"Generating paper...")
 Goosepaper(
     [
+        
         WikipediaCurrentEventsStoryProvider(),
-        WeatherStoryProvider(woe="2358820"),
+        WeatherStoryProvider(woe="2358820", F=False),
         RSSFeedStoryProvider("https://www.npr.org/feed/", limit=5),
         RSSFeedStoryProvider("https://www.statnews.com/feed/", limit=2),
         # MultiTwitterStoryProvider(

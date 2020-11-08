@@ -124,7 +124,7 @@ class WikipediaCurrentEventsStoryProvider(StoryProvider):
         feed = feedparser.parse("https://www.to-rss.xyz/wikipedia/current_events/")
         # title = feed.entries[0].title
         title = "Today's Current Events"
-        content = bs4.BeautifulSoup(feed.entries[0].summary)
+        content = bs4.BeautifulSoup(feed.entries[0].summary, "lxml")
         for a in content.find_all("a"):
             while a.find("li"):
                 a.find("li").replace_with_children()
@@ -256,21 +256,35 @@ class LoremStoryProvider(StoryProvider):
 
 
 class WeatherStoryProvider(StoryProvider):
-    def __init__(self, woe: str = "2358820"):
+    def __init__(self, woe: str = "2358820", F: bool = True):
         self.woe = woe
+        self.F = F
+
+    def CtoF(self, temp: float) -> float:
+        return (temp * 9/5) + 32
 
     def get_stories(self, limit: int = 1) -> List[Story]:
-        weather = requests.get(
+        weatherReq = requests.get(
             f"https://www.metaweather.com/api/location/{self.woe}/"
-        ).json()["consolidated_weather"][0]
-        headline = f"{int((weather['the_temp'] * 9/5) + 32)}ºF with {weather['weather_state_name']}"
-        body_html = f"""
-        <img
-            src="https://www.metaweather.com/static/img/weather/png/64/{weather['weather_state_abbr']}.png"
-            width="42" />
-        {int((weather['min_temp'] * 9/5) + 32)} – {int((weather['max_temp'] * 9/5) + 32)}ºF, Winds {weather['wind_direction_compass']}
-        """
-
+        ).json()
+        weather = weatherReq["consolidated_weather"][0]
+        weatherTitle = weatherReq["title"]
+        if self.F:
+            headline = f"{int(self.CtoF(weather['the_temp']))}ºF with {weather['weather_state_name']} in {weatherTitle}"
+            body_html = f"""
+            <img
+                src="https://www.metaweather.com/static/img/weather/png/64/{weather['weather_state_abbr']}.png"
+                width="42" />
+            {int(self.CtoF(weather['min_temp']))} – {int(self.CtoF(weather['max_temp']))}ºF, Winds {weather['wind_direction_compass']}
+            """
+        else:
+            headline = f"{weather['the_temp']:.1f}ºC with {weather['weather_state_name']} in {weatherTitle}"
+            body_html = f"""
+            <img
+                src="https://www.metaweather.com/static/img/weather/png/64/{weather['weather_state_abbr']}.png"
+                width="42" />
+            {weather['min_temp']:.1f} – {weather['max_temp']:.1f}ºC, Winds {weather['wind_direction_compass']}
+            """
         return [
             Story(
                 headline=headline,
@@ -297,9 +311,13 @@ class RSSFeedStoryProvider(StoryProvider):
             else:
                 html = entry.summary
             html = clean_html(html)
-            if len(entry.media_content):
-                src = entry.media_content[0]["url"]
-                html = f"<figure><img class='hero-img' src='{src}' /></figure>'" + html
+            try:
+                if len(entry.media_content):
+                    src = entry.media_content[0]["url"]
+                    html = f"<figure><img class='hero-img' src='{src}' /></figure>'" + html
+            except Exception:
+                pass
+
             stories.append(Story(entry.title, body_html=html))
         return stories
 
@@ -316,11 +334,15 @@ class RedditHeadlineStoryProvider(StoryProvider):
         limit = min(self.limit, len(feed.entries), limit)
         stories = []
         for entry in feed.entries[:limit]:
+            try:
+                author = entry.author
+            except AttributeError:
+                author = "A Reddit user"
             stories.append(
                 Story(
                     headline=None,
                     body_text=entry.title,
-                    byline=f"{entry.author} in r/{self.subreddit}",
+                    byline=f"{author} in r/{self.subreddit}",
                     date=entry.updated_parsed,
                     placement_preference=PlacementPreference.SIDEBAR,
                 )
