@@ -10,6 +10,7 @@ pandas
 
 # for wikipedia stories:
 bs4
+lxml
 
 # for rendering:
 WeasyPrint

@@ -1,0 +1,34 @@
+{
+    "stories": [
+        {
+            "provider": "weather",
+            "config": { "woe": 2358820, "F": true }
+        },
+        {
+            "provider": "wikipedia_current_events",
+            "config": {}
+        },
+        {
+            "provider": "rss",
+            "config": {
+                "rss_path": "https://www.npr.org/feed/",
+                "limit": 5
+            }
+        },
+        {
+            "provider": "rss",
+            "config": {
+                "rss_path": "https://www.statnews.com/feed/",
+                "limit": 2
+            }
+        },
+        {
+            "provider": "reddit",
+            "config": { "subreddit": "news" }
+        },
+        {
+            "provider": "reddit",
+            "config": { "subreddit": "todayilearned" }
+        }
+    ]
+}

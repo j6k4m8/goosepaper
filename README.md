@@ -1,8 +1,8 @@
 <p align=center><img align=center src='docs/goose.svg' width=600 /></p>
 <h6 align=center>a daily newsfeed delivered to your remarkable tablet</h6>
 
-![GitHub repo size](https://img.shields.io/github/repo-size/j6k4m8/goosepaper?style=for-the-badge) ![GitHub last commit](https://img.shields.io/github/last-commit/j6k4m8/goosepaper?style=for-the-badge)
-![This repo is pretty dope.](https://img.shields.io/badge/pretty%20dope-%F0%9F%91%8C-blue?style=for-the-badge) ![This repo is licensed under Apache 2.0](https://img.shields.io/github/license/j6k4m8/goosepaper?style=for-the-badge)
+<p align=center><a href="https://img.shields.io/github/repo-size/j6k4m8/goosepaper?style=for-the-badge" alt="GitHub repo size"><img src="https://img.shields.io/github/repo-size/j6k4m8/goosepaper?style=for-the-badge" /></a><a href="https://img.shields.io/github/last-commit/j6k4m8/goosepaper?style=for-the-badge" alt="GitHub last commit"><img src="https://img.shields.io/github/last-commit/j6k4m8/goosepaper?style=for-the-badge" /></a<a href="https://img.shields.io/badge/pretty%20dope-%F0%9F%91%8C-blue?style=for-the-badge" alt="This repo is pretty dope."><img src="https://img.shields.io/badge/pretty%20dope-%F0%9F%91%8C-blue?style=for-the-badge" /></a><a href="https://img.shields.io/github/license/j6k4m8/goosepaper?style=for-the-badge" alt="This repo is licensed under Apache 2.0"><img src="https://img.shields.io/github/license/j6k4m8/goosepaper?style=for-the-badge" /></a>
+</p>
 
 ## what's up
 
@@ -14,7 +14,7 @@ you can include RSS feeds, Twitter feeds, news articles, wikipedia articles-of-t
 
 ### dependencies:
 
-this tool uses `weasyprint` to generate PDFs. You can install everything you need with `pip3 install -r ./requirements.txt` from this repo, but you may need these prerequisites before starting.
+this tool uses `weasyprint` to generate PDFs. You can install all of the python libraries you need with `pip3 install -r ./requirements.txt` from this repo, but you may need these prerequisites before getting started.
 
 more details [here](https://weasyprint.readthedocs.io/en/latest/install.html).
 
@@ -36,17 +36,25 @@ sudo apt-get install build-essential python3-dev python3-pip python3-setuptools 
 
 ## and then:
 
+From inside the goosepaper repo,
+
 ```shell
-pip3 install -r ./requirements.txt
+pip3 install -e .
 ```
 
 ## get started
 
-You can customize your goosepaper by editing `main.py`. (Better customization tools coming soon!)
+You can customize your goosepaper by editing `config.json`. (More instructions, and customization tools, all coming soon!)
 
 ```shell
-python3 ./main.py
+goosepaper --config myconfig.json --output mypaper.pdf
 ```
+
+If you don't pass an output flag, one will be generated based upon the time of generation. You DO need to pass a config file for now.
+
+An example config file is included here: [example-config.json](example-config.json).
+
+---
 
 Check out [this example PDF](https://github.com/j6k4m8/goosepaper/blob/71ee16e91840560fe40234493a02a283cb84083f/docs/Example-Nov-1-2020.pdf), generated on Nov 1 2020.
 
