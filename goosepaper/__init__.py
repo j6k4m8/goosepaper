@@ -1,9 +1,12 @@
 from typing import List
+
+import argparse
 import pandas as pd
 import datetime
 import abc
 import enum
 import re
+import json
 
 import twint
 
@@ -261,7 +264,7 @@ class WeatherStoryProvider(StoryProvider):
         self.F = F
 
     def CtoF(self, temp: float) -> float:
-        return (temp * 9/5) + 32
+        return (temp * 9 / 5) + 32
 
     def get_stories(self, limit: int = 1) -> List[Story]:
         weatherReq = requests.get(
@@ -314,7 +317,9 @@ class RSSFeedStoryProvider(StoryProvider):
             try:
                 if len(entry.media_content):
                     src = entry.media_content[0]["url"]
-                    html = f"<figure><img class='hero-img' src='{src}' /></figure>'" + html
+                    html = (
+                        f"<figure><img class='hero-img' src='{src}' /></figure>'" + html
+                    )
             except Exception:
                 pass
 
@@ -441,3 +446,76 @@ def transfer_file_to_remarkable(fname: str, config_dict: dict = None):
     doc = ZipDocument(doc=fname)
     rm.upload(doc)
     return True
+
+
+StoryProviderConfigNames = {
+    "twitter": TwitterStoryProvider,
+    "reddit": RedditHeadlineStoryProvider,
+    "weather": WeatherStoryProvider,
+    "wikipedia_current_events": WikipediaCurrentEventsStoryProvider,
+    "rss": RSSFeedStoryProvider,
+}
+
+
+def load_config_file(filepath: str) -> dict:
+    with open(filepath, "r") as fh:
+        config_dict = json.load(fh)
+    return config_dict
+
+
+def construct_story_providers_from_config_dict(config: dict) -> List[StoryProvider]:
+
+    if "stories" not in config:
+        return []
+
+    stories = []
+    for provider_config in config["stories"]:
+        provider_name = provider_config["provider"]
+        if provider_name not in StoryProviderConfigNames:
+            raise ValueError(f"Provider {provider_name} does not exist.")
+        stories.append(
+            StoryProviderConfigNames[provider_name](**provider_config["config"])
+        )
+    return stories
+
+
+def cli():
+    parser = argparse.ArgumentParser(
+        "Goosepaper generates and delivers a daily newspaper in PDF format."
+    )
+    parser.add_argument(
+        "-c",
+        "--config",
+        required=False,
+        default=None,
+        help="The json file to use to generate this paper.",
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        required=False,
+        default=f"Goosepaper-{datetime.datetime.now().strftime('%Y-%B-%d-%H-%M')}.pdf",
+        help="The output file path at which to save the paper",
+    )
+
+    args = parser.parse_args()
+
+    try:
+        config = load_config_file(args.config)
+    except FileNotFoundError as e:
+        raise FileNotFoundError(
+            f"Could not find the configuration file at {args.config}"
+        ) from e
+
+    story_providers = construct_story_providers_from_config_dict(config)
+
+    paper = Goosepaper(story_providers=story_providers)
+
+    if args.output.endswith(".html"):
+        with open(args.output, "w") as fh:
+            fh.write(paper.to_html())
+    elif args.output.endswith(".pdf"):
+        paper.to_pdf(args.output)
+    else:
+        raise ValueError(f"Unknown file extension '{args.output.split('.')[-1]}'.")
+
