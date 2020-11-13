@@ -1,7 +1,11 @@
 <p align=center><img align=center src='docs/goose.svg' width=600 /></p>
 <h6 align=center>a daily newsfeed delivered to your remarkable tablet</h6>
 
-<p align=center><a href="https://img.shields.io/github/repo-size/j6k4m8/goosepaper?style=for-the-badge" alt="GitHub repo size"><img src="https://img.shields.io/github/repo-size/j6k4m8/goosepaper?style=for-the-badge" /></a><a href="https://img.shields.io/github/last-commit/j6k4m8/goosepaper?style=for-the-badge" alt="GitHub last commit"><img src="https://img.shields.io/github/last-commit/j6k4m8/goosepaper?style=for-the-badge" /></a<a href="https://img.shields.io/badge/pretty%20dope-%F0%9F%91%8C-blue?style=for-the-badge" alt="This repo is pretty dope."><img src="https://img.shields.io/badge/pretty%20dope-%F0%9F%91%8C-blue?style=for-the-badge" /></a><a href="https://img.shields.io/github/license/j6k4m8/goosepaper?style=for-the-badge" alt="This repo is licensed under Apache 2.0"><img src="https://img.shields.io/github/license/j6k4m8/goosepaper?style=for-the-badge" /></a>
+<p align=center>
+  <a href="https://github.com/j6k4m8/goosepaper/" alt="GitHub repo size"><img src="https://img.shields.io/github/repo-size/j6k4m8/goosepaper?style=for-the-badge" /></a>
+  <a href="#" alt="GitHub last commit"><img src="https://img.shields.io/github/last-commit/j6k4m8/goosepaper?style=for-the-badge" /></a> 
+  <a href="#" alt="This repo is pretty dope."><img src="https://img.shields.io/badge/pretty%20dope-%F0%9F%91%8C-blue?style=for-the-badge" /></a> 
+  <a href="#" alt="This repo is licensed under Apache 2.0"><img src="https://img.shields.io/github/license/j6k4m8/goosepaper?style=for-the-badge" /></a>
 </p>
 
 ## what's up
