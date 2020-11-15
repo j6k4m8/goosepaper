@@ -38,7 +38,7 @@ setup(
     keywords=["sqlite"],
     packages=find_packages(exclude=["docs", "tests*"]),
     include_package_data=True,
-    entry_points={"console_scripts": ["goosepaper=goosepaper:cli"],},
+    entry_points={"console_scripts": ["goosepaper=goosepaper:cli", "upload_to_remarkable=goosepaper:upload"],},
     author="Jordan Matelsky",
     install_requires=install_requires,
     dependency_links=dependency_links,

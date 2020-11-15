@@ -7,13 +7,13 @@ import abc
 import enum
 import re
 import json
-
+import os
 import twint
 
 import bs4
 import feedparser
 import requests
-
+from pathlib import Path
 from .styles import Style, AutumnStyle
 
 
@@ -301,29 +301,103 @@ class RSSFeedStoryProvider(StoryProvider):
     def __init__(self, rss_path: str, limit: int = 5) -> None:
         self.limit = limit
         self.feed_url = rss_path
+    
+    def parse_npr(self, content):
+        story_text = content.find('div', {'id': 'storytext'})
+        for item in story_text.findAll('div', {'class': 'caption'}):
+            item.decompose()
+        for item in story_text.findAll('span', {'class': 'credit'}):
+            item.decompose()
+        for item in story_text.findAll('div', {'class': 'enlarge-options'}):
+            item.decompose()
+        for item in story_text.findAll('div', {'class': 'credit-option'}):
+            item.decompose()
+        for item in story_text.findAll('div', {'class': 'image'}):
+            item.decompose()
+        for item in story_text.findAll('div', {'class': 'img'}):
+            item.decompose()
+        for item in story_text.findAll('div', {'class': 'video'}):
+            item.decompose()
+        for item in story_text.findAll('em'):
+            item.decompose()
+        return story_text
+    
+    def parse_nyt(self, content, limit):
+        story_text = content.find('article')
+        stories = []
+        idx = 0
+        for item in story_text.findAll('div', {'class': "live-blog-post"}):   
+            html = self.decompose(item)
+            
+            # headline = html.find('css-608m5d')
+            # headline.decompose()
+
+            title_div = item.find('div', {'class': 'live-blog-post-headline'})
+            title = str(title_div.find('a').contents[0])
+            title_div.decompose()
+
+            stories.append(Story(title, body_html=str(html)))
+            idx += 1
+            if idx >= limit:
+                break
+        return stories
+        # story_text = " \n".join(str(s) for s in stories)
+        # return story_text
+    
+    def decompose(self, content):
+        to_remove = ['script', 'img', 'figcaption', 'aside', 'form', 'header', 'button']
+        for remove in to_remove:
+            for item in content.findAll(remove):
+                item.decompose()
+        return content
 
     def get_stories(self, limit: int = 5) -> List[Story]:
         feed = feedparser.parse(self.feed_url)
         limit = min(self.limit, len(feed.entries))
         stories = []
+        # import ipdb; ipdb.set_trace()
         for entry in feed.entries[:limit]:
-            if "content" in entry:
-                html = entry.content[0]["value"]
-            elif "summary_detail" in entry:
-                html = entry.summary_detail["value"]
-            else:
-                html = entry.summary
-            html = clean_html(html)
-            try:
-                if len(entry.media_content):
-                    src = entry.media_content[0]["url"]
-                    html = (
-                        f"<figure><img class='hero-img' src='{src}' /></figure>'" + html
-                    )
-            except Exception:
-                pass
+            # import ipdb; ipdb.set_trace()
+            if "link" in entry.keys():
+                print(entry['link'])
+                req = requests.get(entry['link'])
+                if not req.ok:
+                    print("Honk! Couldnt grab content!")
+                    continue
+                
+                soup = bs4.BeautifulSoup(req.content, "html.parser")
+                content = self.decompose(soup)
 
-            stories.append(Story(entry.title, body_html=html))
+                if 'npr.org' in entry['link']:
+                    print("Honk! Found an NPR news story!")
+                    content = self.parse_npr(content)
+                elif 'nytimes.com' in entry['link']:
+                    print("Honk! Found an NYT story!")
+                    new_stories = self.parse_nyt(content, limit)
+                    stories.extend(new_stories)
+                    return stories
+                else:
+                    content = soup.find('section')
+                content = str(content)
+                html = clean_html(content)
+                stories.append(Story(entry.title, body_html=html))
+            # if "content" in entry:
+            #     html = entry.content[0]["value"]
+            # elif "summary_detail" in entry:
+            #     html = entry.summary_detail["value"]
+            # else:
+            #     html = entry.summary
+            # html = clean_html(html)
+            # try:
+            #     if len(entry.media_content):
+            #         src = entry.media_content[0]["url"]
+            #         html = (
+            #             f"<figure><img class='hero-img' src='{src}' /></figure>'" + html
+            #         )
+            # except Exception:
+            #     pass
+
+                
         return stories
 
 
@@ -371,7 +445,16 @@ class Goosepaper:
     def to_html(self) -> str:
         stories = []
         for prov in self.story_providers:
-            stories.extend(prov.get_stories())
+            new_stories = prov.get_stories()
+            for a in new_stories:
+                found = False
+                for b in stories:
+                    if a.headline == b.headline:
+                        found = True
+                        break
+                if not found:
+                    stories.append(a)
+        
 
         # Get ears:
         ears = [s for s in stories if s.placement_preference == PlacementPreference.EAR]
@@ -429,7 +512,6 @@ class Goosepaper:
         from weasyprint import HTML, CSS
 
         style = style()
-
         html = self.to_html()
         h = HTML(string=html)
         c = CSS(string=style.get_css())
@@ -437,14 +519,36 @@ class Goosepaper:
         return filename
 
 
-def transfer_file_to_remarkable(fname: str, config_dict: dict = None):
+def upload():
     from rmapy.document import ZipDocument
     from rmapy.api import Client
 
-    rm = Client(config_dict=config_dict)
-    rm.renew_token()
-    doc = ZipDocument(doc=fname)
-    rm.upload(doc)
+    parser = argparse.ArgumentParser(
+        "Upload Goosepaper to reMarkable tablet"
+    )
+    parser.add_argument(
+        "file",
+        default=None,
+        help="The file to upload",
+    )
+    args = parser.parse_args()
+    fpath = Path(args.file)
+
+    client = Client()
+    client.renew_token()
+    
+    for item in client.get_meta_items():
+        if item.VissibleName == fpath.stem:
+            print("Honk! Paper already exists!")
+            return True
+    
+    doc = ZipDocument(doc=str(fpath.resolve()))
+    if client.upload(doc):
+        print("Honk! Upload successful!")
+    else:
+        print("Honk! Error with upload!")
+
+    
     return True
 
 
