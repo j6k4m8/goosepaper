@@ -46,7 +46,7 @@ class AutumnStyle(Style):
     }
 
     .stories {
-        font-size: 14pt;
+        font-size: 18pt;
     }
 
     .ear article {
@@ -99,7 +99,7 @@ class AutumnStyle(Style):
     article>h3 {
         font-family: "Oswald";
         font-weight: 400;
-        font-size: 13pt;
+        font-size: 18pt;
         text-indent: 0;
     }
 
@@ -129,7 +129,6 @@ class AutumnStyle(Style):
     .row {
         column-count: 2;
     }
-
 
     /*
     .row {
