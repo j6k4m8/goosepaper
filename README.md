@@ -62,7 +62,7 @@ An example config file is included here: [example-config.json](example-config.js
 
 Check out [this example PDF](https://github.com/j6k4m8/goosepaper/blob/master/docs/Example-Nov-1-2020.pdf), generated on Nov 1 2020.
 
-## existing story providers (want to write your own?)
+## existing story providers ([want to write your own?](https://github.com/j6k4m8/goosepaper/blob/master/CONTRIBUTING.md))
 
 -   [Wikipedia Top News / Current Events](https://github.com/j6k4m8/goosepaper/blob/master/goosepaper/__init__.py#L112)
 -   [Tweets](https://github.com/j6k4m8/goosepaper/blob/master/goosepaper/__init__.py#L154) (Note: Currently borked, see [Issue #5](https://github.com/j6k4m8/goosepaper/issues/5))
