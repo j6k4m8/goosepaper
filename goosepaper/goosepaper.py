@@ -106,12 +106,14 @@ class Goosepaper:
         for prov in self.story_providers:
             new_stories = prov.get_stories()
             for a in new_stories:
-                found = False
+    
+                if not a.headline:
+                    stories.append(a)
+                    continue
                 for b in stories:
                     if a.headline == b.headline:
-                        found = True
                         break
-                if not found:
+                else:
                     stories.append(a)
         
         book = epub.EpubBook()
@@ -125,17 +127,28 @@ class Goosepaper:
 
         chapters = []
         links = []
+        no_headlines = []
         for story in stories:
-            file = uuid4().hex
-            title = story.headline if story.headline else ""
-            chapter = epub.EpubHtml(title=title, file_name=f'{file}.xhtml', lang='en')
-            links.append(f"{file}.xhtml")
+            if not story.headline:
+                no_headlines.append(story)
+        stories = [x for x in stories if x.headline]
+        for story in stories:
+            file = f'{uuid4().hex}.xhtml'
+            title = story.headline
+            chapter = epub.EpubHtml(title=title, file_name=file, lang='en')
+            links.append(file)
             chapter.content = story.to_html()
             book.add_item(chapter)
             chapters.append(chapter)
         
-        # links = [epub.Link()]
-        # book.toc = tuple(epub.Link(i, 'asdf') for i in links)
+        if no_headlines:
+            file = f'{uuid4().hex}.xhtml'
+            chapter = epub.EpubHtml(title="From Reddit", file_name=file, lang='en')
+            links.append(file)
+            chapter.content = '<br>'.join([s.to_html() for s in no_headlines])
+            book.add_item(chapter)
+            chapters.append(chapter)
+
         book.toc = chapters
         book.add_item(epub.EpubNcx())
         book.add_item(epub.EpubNav())
