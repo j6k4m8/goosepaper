@@ -5,8 +5,9 @@ from rmapy.document import ZipDocument
 from rmapy.api import Client
 from rmapy.exceptions import AuthError
 
+
 def upload():
-    
+
     parser = argparse.ArgumentParser(
         "Upload Goosepaper to reMarkable tablet"
     )
@@ -23,7 +24,8 @@ def upload():
     try:
         client.renew_token()
     except AuthError:
-        print("Looks like this if the first time you've uploaded, need to register the device")
+        print(
+            "Looks like this if the first time you've uploaded, need to register the device")
         print("Get the code from here: https://my.remarkable.com/connect/remarkable")
         code = input()
         print("registering")
@@ -32,17 +34,16 @@ def upload():
             print("registration failed D:")
         else:
             print("registration successful")
-    
+
     for item in client.get_meta_items():
         if item.VissibleName == fpath.stem:
             print("Honk! Paper already exists!")
             return True
-    
+
     doc = ZipDocument(doc=str(fpath.resolve()))
     if client.upload(doc):
         print("Honk! Upload successful!")
     else:
         print("Honk! Error with upload!")
 
-    
     return True

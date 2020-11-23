@@ -2,6 +2,7 @@ import datetime
 
 from goosepaper.util import StoryPriority, PlacementPreference, htmlize
 
+
 class Story:
     def __init__(
         self,

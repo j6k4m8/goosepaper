@@ -5,7 +5,7 @@ import datetime
 from goosepaper.goosepaper import Goosepaper
 from goosepaper.util import (
     construct_story_providers_from_config_dict,
-    load_config_file )
+    load_config_file)
 
 
 def main():
@@ -48,9 +48,11 @@ def main():
     elif args.output.endswith(".epub"):
         paper.to_epub(args.output)
     else:
-        raise ValueError(f"Unknown file extension '{args.output.split('.')[-1]}'.")
-    
+        raise ValueError(
+            f"Unknown file extension '{args.output.split('.')[-1]}'.")
+
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())

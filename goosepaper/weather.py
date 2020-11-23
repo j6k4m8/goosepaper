@@ -4,6 +4,7 @@ from typing import List
 from goosepaper.util import StoryProvider, PlacementPreference
 from goosepaper.story import Story
 
+
 class WeatherStoryProvider(StoryProvider):
     def __init__(self, woe: str = "2358820", F: bool = True):
         self.woe = woe

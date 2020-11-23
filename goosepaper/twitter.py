@@ -5,10 +5,11 @@ from typing import List
 import pandas as pd
 
 from goosepaper.util import (
-    StoryProvider, 
-    clean_text, 
-    PlacementPreference )
+    StoryProvider,
+    clean_text,
+    PlacementPreference)
 from goosepaper.story import Story
+
 
 class TwitterStoryProviderPriorityMode(enum.Enum):
     DEFAULT = 0

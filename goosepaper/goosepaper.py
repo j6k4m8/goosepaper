@@ -10,6 +10,7 @@ from .styles import Style, AutumnStyle
 from goosepaper.util import PlacementPreference, StoryProvider
 from goosepaper.story import Story
 
+
 class Goosepaper:
     def __init__(
         self,
@@ -37,7 +38,8 @@ class Goosepaper:
                     stories.append(a)
 
         # Get ears:
-        ears = [s for s in stories if s.placement_preference == PlacementPreference.EAR]
+        ears = [s for s in stories if s.placement_preference ==
+                PlacementPreference.EAR]
         right_ear = ""
         left_ear = ""
         if len(ears) > 0:
@@ -97,7 +99,7 @@ class Goosepaper:
         c = CSS(string=style.get_css())
         h.write_pdf(filename, stylesheets=[c, *style.get_stylesheets()])
         return filename
-    
+
     def to_epub(self, filename: str, style: Style = AutumnStyle) -> str:
         """
         Render the current Goosepaper to an epub file on disk
@@ -106,7 +108,7 @@ class Goosepaper:
         for prov in self.story_providers:
             new_stories = prov.get_stories()
             for a in new_stories:
-    
+
                 if not a.headline:
                     stories.append(a)
                     continue
@@ -115,14 +117,15 @@ class Goosepaper:
                         break
                 else:
                     stories.append(a)
-        
+
         book = epub.EpubBook()
         title = f"{self.title} - {self.subtitle}"
         book.set_title(title)
         book.set_language('en')
 
         style = Style()
-        css = epub.EpubItem(uid="style_default", file_name="style/default.css", media_type="text/css", content=style.get_css())
+        css = epub.EpubItem(uid="style_default", file_name="style/default.css",
+                            media_type="text/css", content=style.get_css())
         book.add_item(css)
 
         chapters = []
@@ -140,10 +143,11 @@ class Goosepaper:
             chapter.content = story.to_html()
             book.add_item(chapter)
             chapters.append(chapter)
-        
+
         if no_headlines:
             file = f'{uuid4().hex}.xhtml'
-            chapter = epub.EpubHtml(title="From Reddit", file_name=file, lang='en')
+            chapter = epub.EpubHtml(
+                title="From Reddit", file_name=file, lang='en')
             links.append(file)
             chapter.content = '<br>'.join([s.to_html() for s in no_headlines])
             book.add_item(chapter)
@@ -156,8 +160,3 @@ class Goosepaper:
 
         print(f"Honk! Writing out epub {filename}")
         epub.write_epub(filename, book)
-
-
-
-
-

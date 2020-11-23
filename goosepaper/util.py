@@ -1,3 +1,4 @@
+from goosepaper.story import Story
 import enum
 import re
 import abc
@@ -16,15 +17,18 @@ def htmlize(text: str) -> str:
         return "".join([f"<p>{line}</p>" for line in text])
     return f"<p>{text}</p>"
 
+
 def clean_html(html: str) -> str:
     html = html.replace("â€TM", "'")
     html = re.sub(r"http[s]?:\/\/[^\s\"']+", "", html)
     return html
 
+
 def clean_text(text: str) -> str:
     text = text.replace("â€TM", "'")
     text = re.sub(r"http[s]?:\/\/[^\s\"']+", "", text)
     return text
+
 
 class PlacementPreference(enum.Enum):
     NONE = 0
@@ -34,11 +38,13 @@ class PlacementPreference(enum.Enum):
     FOLIO = 4
     BANNER = 5
 
+
 class StoryPriority(enum.Enum):
     DEFAULT = 0
     LOW = 1
     HEADLINE = 5
     BANNER = 9
+
 
 class StoryProvider(abc.ABC):
     """
@@ -51,11 +57,13 @@ class StoryProvider(abc.ABC):
         """
         ...
 
+
 class TwitterStoryProviderPriorityMode(enum.Enum):
     DEFAULT = 0
     RECENT = 1
     TOP = 2
     RATIO = 3
+
 
 class LoremStoryProvider(StoryProvider):
     def __init__(self):
@@ -73,10 +81,12 @@ class LoremStoryProvider(StoryProvider):
             for _ in range(limit)
         ]
 
+
 def load_config_file(filepath: str) -> dict:
     with open(filepath, "r") as fh:
         config_dict = json.load(fh)
     return config_dict
+
 
 def construct_story_providers_from_config_dict(config: dict):
 
@@ -104,8 +114,7 @@ def construct_story_providers_from_config_dict(config: dict):
         if provider_name not in StoryProviderConfigNames:
             raise ValueError(f"Provider {provider_name} does not exist.")
         stories.append(
-            StoryProviderConfigNames[provider_name](**provider_config["config"])
+            StoryProviderConfigNames[provider_name](
+                **provider_config["config"])
         )
     return stories
-
-from goosepaper.story import Story
