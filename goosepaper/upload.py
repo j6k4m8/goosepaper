@@ -6,18 +6,19 @@ from rmapy.api import Client
 from rmapy.exceptions import AuthError
 
 
-def upload():
+def upload(filepath=None):
 
-    parser = argparse.ArgumentParser(
-        "Upload Goosepaper to reMarkable tablet"
-    )
-    parser.add_argument(
-        "file",
-        default=None,
-        help="The file to upload",
-    )
-    args = parser.parse_args()
-    fpath = Path(args.file)
+    if not filepath:
+        parser = argparse.ArgumentParser(
+            "Upload Goosepaper to reMarkable tablet"
+        )
+        parser.add_argument(
+            "file",
+            default=None,
+            help="The file to upload",
+        )
+        args = parser.parse_args()
+        filepath = Path(args.file)
 
     client = Client()
 
@@ -36,11 +37,11 @@ def upload():
             print("registration successful")
 
     for item in client.get_meta_items():
-        if item.VissibleName == fpath.stem:
+        if item.VissibleName == filepath.stem:
             print("Honk! Paper already exists!")
             return True
 
-    doc = ZipDocument(doc=str(fpath.resolve()))
+    doc = ZipDocument(doc=str(filepath.resolve()))
     if client.upload(doc):
         print("Honk! Upload successful!")
     else:
