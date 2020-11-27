@@ -4,7 +4,7 @@ from os import path
 from codecs import open as copen
 from setuptools import setup, find_packages
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 
 here = path.abspath(path.dirname(__file__))
@@ -27,15 +27,18 @@ setup(
     version=__version__,
     description="Generate and deliver a daily newspaper PDF",
     long_description=long_description,
+    long_description_content_type='text/markdown',
     download_url="https://github.com/j6k4m8/goosepaper/tarball/" + __version__,
     license="Apache 2.0",
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
-        "Programming Language :: Python :: 3.4",
-        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
     ],
-    keywords=["sqlite"],
+    keywords=["remarkable", "tablet", "pdf", "news"],
     packages=find_packages(exclude=["docs", "tests*"]),
     include_package_data=True,
     entry_points={"console_scripts": ["goosepaper=goosepaper:cli"],},
