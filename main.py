@@ -32,5 +32,5 @@ Goosepaper(
 logging.info(f"Saved to PDF, now transferring...")
 
 
-upload(FNAME)
+#upload(FNAME)
 logging.info(f"HONK! I'm done :)")

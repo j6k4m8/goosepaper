@@ -4,11 +4,9 @@ from typing import List
 
 import pandas as pd
 
-from goosepaper.util import (
-    StoryProvider,
-    clean_text,
-    PlacementPreference)
-from goosepaper.story import Story
+from .util import clean_text, PlacementPreference
+from .storyprovider import StoryProvider
+from .story import Story
 
 
 class TwitterStoryProviderPriorityMode(enum.Enum):
@@ -43,7 +41,7 @@ class TwitterStoryProvider(StoryProvider):
 
         c = twint.Config()
         c.Pandas = True
-        c.Username = self.username
+        c.Search = f"from:{self.username}"
         c.Limit = min(self.limit, limit)
         c.Hide_output = True
 
