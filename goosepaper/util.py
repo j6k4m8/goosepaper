@@ -52,15 +52,14 @@ def load_config_file(filepath: str) -> dict:
 
 def construct_story_providers_from_config_dict(config: dict):
 
-    from goosepaper.twitter import TwitterStoryProvider
     from goosepaper.rss import RSSFeedStoryProvider
-    from goosepaper.twitter import TwitterStoryProvider
+    from goosepaper.twitter import MultiTwitterStoryProvider
     from goosepaper.reddit import RedditHeadlineStoryProvider
     from goosepaper.weather import WeatherStoryProvider
     from goosepaper.wikipedia import WikipediaCurrentEventsStoryProvider
 
     StoryProviderConfigNames = {
-        "twitter": TwitterStoryProvider,
+        "twitter": MultiTwitterStoryProvider,
         "reddit": RedditHeadlineStoryProvider,
         "weather": WeatherStoryProvider,
         "wikipedia_current_events": WikipediaCurrentEventsStoryProvider,

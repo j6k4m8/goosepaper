@@ -20,10 +20,9 @@ class RSSFeedStoryProvider(StoryProvider):
 
         for entry in feed.entries[:limit]:
             if "link" in entry.keys():
-                print(entry["link"])
                 req = requests.get(entry["link"])
                 if not req.ok:
-                    print("Honk! Couldnt grab content!")
+                    print(f"Honk! Couldn't grab content for {self.feed_url}")
                     continue
 
                 doc = Document(req.content)

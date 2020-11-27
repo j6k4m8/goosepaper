@@ -5,6 +5,13 @@
             "config": { "woe": 2358820, "F": true }
         },
         {
+            "provider": "twitter",
+            "config": {
+                "usernames": ["reuters", "bbcWorld", "axios", "NPR"],
+                "limit_per": 8
+            }
+        },
+        {
             "provider": "wikipedia_current_events",
             "config": {}
         },
