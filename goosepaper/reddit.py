@@ -1,8 +1,9 @@
 import feedparser
 from typing import List
 
-from goosepaper.util import StoryProvider, PlacementPreference
-from goosepaper.story import Story
+from .util import PlacementPreference
+from .storyprovider import StoryProvider
+from .story import Story
 
 
 class RedditHeadlineStoryProvider(StoryProvider):
@@ -13,8 +14,7 @@ class RedditHeadlineStoryProvider(StoryProvider):
         self.subreddit = subreddit
 
     def get_stories(self, limit: int = 20) -> List[Story]:
-        feed = feedparser.parse(
-            f"https://www.reddit.com/r/{self.subreddit}.rss")
+        feed = feedparser.parse(f"https://www.reddit.com/r/{self.subreddit}.rss")
         limit = min(self.limit, len(feed.entries), limit)
         stories = []
         for entry in feed.entries[:limit]:

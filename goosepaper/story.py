@@ -1,6 +1,7 @@
 import datetime
 
-from goosepaper.util import StoryPriority, PlacementPreference, htmlize
+from .util import PlacementPreference, htmlize, StoryPriority
+from .storyprovider import StoryProvider
 
 
 class Story:

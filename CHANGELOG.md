@@ -1,6 +1,15 @@
 # CHANGELOG
 
-### **0.2.0**
+### **0.3.0** (Unreleased)
+
+> Some major codebase reorganization, thanks to @sterlingbaldwin. Thank you!!
+
+-   Improvements
+    -   Fixed Twitter story provider; we're back in business!
+    -   RSS stories are now downloaded in full (when available) — thanks again @sterlingbaldwin!
+    -   Specify your weather preferences in C/F units
+
+### **0.2.0** (Nov 27 2020)
 
 > This release converts Goosepaper to a Python module. You can now call it from the command-line with `goosepaper`. See `goosepaper --help` for more details.
 

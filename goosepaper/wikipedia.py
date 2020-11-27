@@ -2,8 +2,9 @@ import feedparser
 import bs4
 from typing import List
 
-from goosepaper.util import StoryProvider, PlacementPreference
-from goosepaper.story import Story
+from .util import PlacementPreference
+from .storyprovider import StoryProvider
+from .story import Story
 
 
 class WikipediaCurrentEventsStoryProvider(StoryProvider):
@@ -18,8 +19,7 @@ class WikipediaCurrentEventsStoryProvider(StoryProvider):
         """
         Get a list of current stories from Wikipedia.
         """
-        feed = feedparser.parse(
-            "https://www.to-rss.xyz/wikipedia/current_events/")
+        feed = feedparser.parse("https://www.to-rss.xyz/wikipedia/current_events/")
         # title = feed.entries[0].title
         title = "Today's Current Events"
         content = bs4.BeautifulSoup(feed.entries[0].summary, "lxml")

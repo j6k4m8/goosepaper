@@ -5,7 +5,7 @@ requests
 feedparser
 
 # for twitter stories:
-twint
+git+https://github.com/twintproject/twint.git@origin/master#egg=twint
 pandas
 
 # for wikipedia stories:

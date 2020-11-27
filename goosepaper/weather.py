@@ -1,8 +1,9 @@
 import requests
 from typing import List
 
-from goosepaper.util import StoryProvider, PlacementPreference
-from goosepaper.story import Story
+from .util import PlacementPreference
+from .storyprovider import StoryProvider
+from .story import Story
 
 
 class WeatherStoryProvider(StoryProvider):

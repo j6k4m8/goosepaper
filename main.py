@@ -4,7 +4,7 @@ from datetime import datetime
 from goosepaper.goosepaper import Goosepaper
 from goosepaper.reddit import RedditHeadlineStoryProvider
 from goosepaper.rss import RSSFeedStoryProvider
-from goosepaper.twitter import TwitterStoryProvider
+from goosepaper.twitter import MultiTwitterStoryProvider
 from goosepaper.weather import WeatherStoryProvider
 from goosepaper.wikipedia import WikipediaCurrentEventsStoryProvider
 from goosepaper.upload import upload
@@ -21,10 +21,7 @@ Goosepaper(
         WeatherStoryProvider(woe="2358820", F=False),
         RSSFeedStoryProvider("https://www.npr.org/feed/", limit=5),
         RSSFeedStoryProvider("https://www.statnews.com/feed/", limit=2),
-        # MultiTwitterStoryProvider(
-        # Pending this issue: https://github.com/j6k4m8/goosepaper/issues/5
-        #    ["reuters", "bbcWorld", "axios", "BethanyAllenEbr", "NPR"], limit_per=5
-        # ),
+        MultiTwitterStoryProvider(["reuters", "bbcWorld", "axios", "NPR"], limit_per=5),
         RedditHeadlineStoryProvider("news"),
         RedditHeadlineStoryProvider("todayilearned"),
     ]
@@ -32,5 +29,5 @@ Goosepaper(
 logging.info(f"Saved to PDF, now transferring...")
 
 
-upload(FNAME)
+# upload(FNAME)
 logging.info(f"HONK! I'm done :)")
