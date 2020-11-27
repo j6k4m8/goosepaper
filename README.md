@@ -4,8 +4,8 @@
 <p align=center>
   <a href="https://pypi.org/project/goosepaper/"><img alt="PyPI" src="https://img.shields.io/pypi/v/goosepaper?style=for-the-badge"></a>
   <a href="https://github.com/j6k4m8/goosepaper/" alt="GitHub repo size"><img src="https://img.shields.io/github/repo-size/j6k4m8/goosepaper?style=for-the-badge" /></a>
-  <a href="#" alt="GitHub last commit"><img src="https://img.shields.io/github/last-commit/j6k4m8/goosepaper?style=for-the-badge" /></a> 
-  <a href="#" alt="This repo is pretty dope."><img src="https://img.shields.io/badge/pretty%20dope-%F0%9F%91%8C-blue?style=for-the-badge" /></a> 
+  <a href="#" alt="GitHub last commit"><img src="https://img.shields.io/github/last-commit/j6k4m8/goosepaper?style=for-the-badge" /></a>
+  <a href="#" alt="This repo is pretty dope."><img src="https://img.shields.io/badge/pretty%20dope-%F0%9F%91%8C-blue?style=for-the-badge" /></a>
   <a href="#" alt="This repo is licensed under Apache 2.0"><img src="https://img.shields.io/github/license/j6k4m8/goosepaper?style=for-the-badge" /></a>
 </p>
 
@@ -15,7 +15,35 @@ goosepaper is a utility that delivers a daily newspaper to your remarkable table
 
 you can include RSS feeds, Twitter feeds, news articles, wikipedia articles-of-the-day, weather, and more. I read it when I wake up so that I can feel anxious without having to get my phone.
 
-## installation
+## get started with docker
+
+By far the easiest way to get started with Goosepaper is to use Docker.
+
+### step 0: write your config file
+
+Write a config file to tell Goosepaper what news you want to read. An example is provided in `example-config.json`.
+
+### step 1: generate your paper
+
+From the directory that has the config file in it, run the following:
+
+```shell
+docker run -it --rm -v $(pwd):/goosepaper j6k4m8/goosepaper goosepaper -c example-config.json
+```
+
+(where `example-config.json` is the name of the config file to use).
+
+### step 2: you are done!
+
+If you want to both generate the PDF as well as upload it to your reMarkable tablet, you can pass the `--upload` flag to the docker command above. You must additionally mount your `~/.rmapy` file:
+
+```shell
+docker run -it --rm -v $(pwd):/goosepaper -v $HOME/.rmapy:/root/.rmapy j6k4m8/goosepaper goosepaper -c example-config.json --upload
+```
+
+Otherwise, you can now email this PDF to your tablet, perhaps using [ReMailable](https://github.com/j6k4m8/remailable).
+
+## get started without docker: installation
 
 ### dependencies:
 
