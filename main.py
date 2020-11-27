@@ -1,15 +1,14 @@
-from goosepaper import (
-    Goosepaper,
-    RedditHeadlineStoryProvider,
-    RSSFeedStoryProvider,
-    WeatherStoryProvider,
-    WikipediaCurrentEventsStoryProvider,
-    # MultiTwitterStoryProvider,
-    transfer_file_to_remarkable,
-)
-
-from datetime import datetime
 import logging
+from datetime import datetime
+
+from goosepaper.goosepaper import Goosepaper
+from goosepaper.reddit import RedditHeadlineStoryProvider
+from goosepaper.rss import RSSFeedStoryProvider
+from goosepaper.twitter import TwitterStoryProvider
+from goosepaper.weather import WeatherStoryProvider
+from goosepaper.wikipedia import WikipediaCurrentEventsStoryProvider
+from goosepaper.upload import upload
+
 
 FNAME = datetime.now().strftime("%Y-%m-%d") + ".pdf"
 logging.info(f"Honk! I will save your temporary PDF to {FNAME}.")
@@ -18,7 +17,6 @@ logging.info(f"Honk! I will save your temporary PDF to {FNAME}.")
 logging.info(f"Generating paper...")
 Goosepaper(
     [
-        
         WikipediaCurrentEventsStoryProvider(),
         WeatherStoryProvider(woe="2358820", F=False),
         RSSFeedStoryProvider("https://www.npr.org/feed/", limit=5),
@@ -34,5 +32,5 @@ Goosepaper(
 logging.info(f"Saved to PDF, now transferring...")
 
 
-transfer_file_to_remarkable(FNAME)
+upload(FNAME)
 logging.info(f"HONK! I'm done :)")
