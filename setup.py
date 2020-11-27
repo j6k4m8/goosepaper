@@ -4,7 +4,7 @@ from os import path
 from codecs import open as copen
 from setuptools import setup, find_packages
 
-__version__ = "0.2.1"
+__version__ = "0.3.0"
 
 
 here = path.abspath(path.dirname(__file__))
@@ -27,7 +27,7 @@ setup(
     version=__version__,
     description="Generate and deliver a daily newspaper PDF",
     long_description=long_description,
-    long_description_content_type='text/markdown',
+    long_description_content_type="text/markdown",
     download_url="https://github.com/j6k4m8/goosepaper/tarball/" + __version__,
     license="Apache 2.0",
     classifiers=[
@@ -41,7 +41,12 @@ setup(
     keywords=["remarkable", "tablet", "pdf", "news"],
     packages=find_packages(exclude=["docs", "tests*"]),
     include_package_data=True,
-    entry_points={"console_scripts": ["goosepaper=goosepaper.__main__:main", "upload_to_remarkable=goosepaper.upload:upload"],},
+    entry_points={
+        "console_scripts": [
+            "goosepaper=goosepaper.__main__:main",
+            "upload_to_remarkable=goosepaper.upload:upload",
+        ],
+    },
     author="Jordan Matelsky",
     install_requires=install_requires,
     dependency_links=dependency_links,
