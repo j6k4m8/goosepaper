@@ -6,7 +6,8 @@
   <a href="https://github.com/j6k4m8/goosepaper" alt="GitHub last commit"><img src="https://img.shields.io/github/last-commit/j6k4m8/goosepaper?style=for-the-badge" /></a>
   <a href="https://github.com/j6k4m8/goosepaper" alt="This repo is pretty dope."><img src="https://img.shields.io/badge/pretty%20dope-%F0%9F%91%8C-blue?style=for-the-badge" /></a>
   <a href="https://github.com/j6k4m8/goosepaper" alt="This repo is licensed under Apache 2.0"><img src="https://img.shields.io/github/license/j6k4m8/goosepaper?style=for-the-badge" /></a>
-  <a href="https://hub.docker.com/repository/docker/j6k4m8/goosepaper"><img alt="Docker Cloud Automated build" src="https://img.shields.io/docker/cloud/automated/j6k4m8/goosepaper?style=for-the-badge"></a><a href="https://pypi.org/project/goosepaper/"><img alt="PyPI" src="https://img.shields.io/pypi/v/goosepaper?style=for-the-badge"></a>
+  <a href="https://hub.docker.com/repository/docker/j6k4m8/goosepaper"><img alt="Docker Cloud Automated build" src="https://img.shields.io/docker/cloud/automated/j6k4m8/goosepaper?style=for-the-badge"></a>
+  <a href="https://pypi.org/project/goosepaper/"><img alt="PyPI" src="https://img.shields.io/pypi/v/goosepaper?style=for-the-badge"></a>
 </p>
 
 ## what's up
