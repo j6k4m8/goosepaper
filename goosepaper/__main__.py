@@ -5,7 +5,9 @@ import datetime
 from goosepaper.goosepaper import Goosepaper
 from goosepaper.util import (
     construct_story_providers_from_config_dict,
-    load_config_file)
+    load_config_file,
+)
+from goosepaper.upload import upload
 
 
 def main():
@@ -25,6 +27,13 @@ def main():
         required=False,
         default=f"Goosepaper-{datetime.datetime.now().strftime('%Y-%B-%d-%H-%M')}.pdf",
         help="The output file path at which to save the paper",
+    )
+    parser.add_argument(
+        "-u",
+        "--upload",
+        action="store_true",
+        required=False,
+        help="Whether to upload the file to your remarkable using rmapy.",
     )
 
     args = parser.parse_args()
@@ -48,8 +57,10 @@ def main():
     elif args.output.endswith(".epub"):
         paper.to_epub(args.output)
     else:
-        raise ValueError(
-            f"Unknown file extension '{args.output.split('.')[-1]}'.")
+        raise ValueError(f"Unknown file extension '{args.output.split('.')[-1]}'.")
+
+    if args.upload:
+        upload(args.output)
 
     return 0
 

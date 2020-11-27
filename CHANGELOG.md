@@ -4,10 +4,12 @@
 
 > Some major codebase reorganization, thanks to @sterlingbaldwin. Thank you!!
 
--   Improvements
+-   Bugfixes
     -   Fixed Twitter story provider; we're back in business!
+-   Improvements
     -   RSS stories are now downloaded in full (when available) — thanks again @sterlingbaldwin!
     -   Specify your weather preferences in C/F units
+    -   Added a Docker image! Generate your goosepapers in a box!
 
 ### **0.2.0** (Nov 27 2020)
 
