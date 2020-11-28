@@ -1,6 +1,10 @@
 # CHANGELOG
 
-### **0.3.0** (Unreleased)
+### **???** (Unreleased)
+
+> This version adds a test suite.
+
+### **0.3.0** (November 27 2020)
 
 > Some major codebase reorganization, thanks to @sterlingbaldwin. Thank you!!
 
@@ -11,7 +15,7 @@
     -   Specify your weather preferences in C/F units
     -   Added a Docker image! Generate your goosepapers in a box!
 
-### **0.2.0** (Nov 27 2020)
+### **0.2.0** (November 27 2020)
 
 > This release converts Goosepaper to a Python module. You can now call it from the command-line with `goosepaper`. See `goosepaper --help` for more details.
 

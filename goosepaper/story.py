@@ -1,7 +1,6 @@
 import datetime
 
 from .util import PlacementPreference, htmlize, StoryPriority
-from .storyprovider import StoryProvider
 
 
 class Story:
