@@ -1,5 +1,9 @@
 # CHANGELOG
 
+### **???** (Unreleased)
+
+> This version adds a test suite.
+
 ### **0.3.0** (November 27 2020)
 
 > Some major codebase reorganization, thanks to @sterlingbaldwin. Thank you!!

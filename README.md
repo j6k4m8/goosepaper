@@ -11,6 +11,7 @@
 <p align=center>
   <a href="https://hub.docker.com/repository/docker/j6k4m8/goosepaper"><img alt="Docker Cloud Automated build" src="https://img.shields.io/docker/cloud/automated/j6k4m8/goosepaper?style=for-the-badge"></a>
   <a href="https://github.com/j6k4m8/goosepaper/actions?query=workflow%3A%22Python+Tests%22"><img alt="GitHub Workflow Status" src="https://img.shields.io/github/workflow/status/j6k4m8/goosepaper/Python%20Tests?label=GitHub%20Actions&style=for-the-badge"></a>
+  <a href="https://codecov.io/gh/j6k4m8/goosepaper"><img alt="Codecov" src="https://img.shields.io/codecov/c/github/j6k4m8/goosepaper?logo=codecov&style=for-the-badge"></a>
 </p>
 
 ## what's up

@@ -25,18 +25,23 @@ class Goosepaper:
             subtitle if subtitle else datetime.datetime.today().strftime("%B %d, %Y")
         )
 
-    def to_html(self) -> str:
+    def get_stories(self, deduplicate: bool = False):
         stories = []
         for prov in self.story_providers:
             new_stories = prov.get_stories()
             for a in new_stories:
-                found = False
-                for b in stories:
-                    if a.headline == b.headline:
-                        found = True
-                        break
-                if not found:
+                if deduplicate:
+                    for b in stories:
+                        if a.headline == b.headline:
+                            break
+                    else:
+                        stories.append(a)
+                else:
                     stories.append(a)
+        return stories
+
+    def to_html(self) -> str:
+        stories = self.get_stories()
 
         # Get ears:
         ears = [s for s in stories if s.placement_preference == PlacementPreference.EAR]
