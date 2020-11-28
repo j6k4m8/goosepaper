@@ -1,8 +1,8 @@
 import pytest
 
-from goosepaper import Goosepaper
+from .goosepaper import Goosepaper
 
-from goosepaper.storyprovider import LoremStoryProvider
+from .storyprovider import LoremStoryProvider
 
 
 def test_cannot_create_goosepaper_without_args():

@@ -1,12 +1,12 @@
 import pytest
 
-from goosepaper.util import (
+from .util import (
     htmlize,
     clean_html,
     clean_text,
     construct_story_providers_from_config_dict,
 )
-from goosepaper.twitter import MultiTwitterStoryProvider
+from .twitter import MultiTwitterStoryProvider
 
 
 def test_htmlize():
