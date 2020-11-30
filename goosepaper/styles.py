@@ -118,7 +118,7 @@ class AutumnStyle(Style):
         width: auto;
     }
 
-    figure>img {
+    .stories article.story img {
         width: 100%;
     }
 

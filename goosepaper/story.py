@@ -37,7 +37,7 @@ class Story:
             else ""
         )
         return f"""
-        <article>
+        <article class="story">
             {headline}
             {byline_h4}
             {self.body_html}
