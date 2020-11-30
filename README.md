@@ -20,6 +20,10 @@ goosepaper is a utility that delivers a daily newspaper to your remarkable table
 
 you can include RSS feeds, Twitter feeds, news articles, wikipedia articles-of-the-day, weather, and more. I read it when I wake up so that I can feel anxious without having to get my phone.
 
+## survey
+
+**[New!]** In response to feedback, I'm collecting anonymous survey responses. Do you want a goosepaper delivered but without requiring any code? Please [let me know your thoughts!](https://forms.gle/t3PUp2TxDQnzzs8x9)
+
 ## get started with docker
 
 By far the easiest way to get started with Goosepaper is to use Docker.
@@ -33,7 +37,7 @@ Write a config file to tell Goosepaper what news you want to read. An example is
 From the directory that has the config file in it, run the following:
 
 ```shell
-docker run -it --rm -v $(pwd):/goosepaper j6k4m8/goosepaper goosepaper -c example-config.json
+docker run -it --rm -v $(pwd):/goosepaper/mount j6k4m8/goosepaper goosepaper -c mount/example-config.json -o mount/Goosepaper.pdf
 ```
 
 (where `example-config.json` is the name of the config file to use).
@@ -43,7 +47,11 @@ docker run -it --rm -v $(pwd):/goosepaper j6k4m8/goosepaper goosepaper -c exampl
 If you want to both generate the PDF as well as upload it to your reMarkable tablet, you can pass the `--upload` flag to the docker command above. You must additionally mount your `~/.rmapy` file:
 
 ```shell
-docker run -it --rm -v $(pwd):/goosepaper -v $HOME/.rmapy:/root/.rmapy j6k4m8/goosepaper goosepaper -c example-config.json --upload
+docker run -it --rm \
+    -v $(pwd):/goosepaper/mount \
+    -v $HOME/.rmapy:/root/.rmapy \
+    j6k4m8/goosepaper \
+    goosepaper -c mount/example-config.json -o mount/Goosepaper.pdf --upload
 ```
 
 Otherwise, you can now email this PDF to your tablet, perhaps using [ReMailable](https://github.com/j6k4m8/remailable).
