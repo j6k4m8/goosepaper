@@ -18,7 +18,7 @@ def upload(filepath=None):
             help="The file to upload",
         )
         args = parser.parse_args()
-        filepath = Path(args.file)
+    filepath = Path(args.file)
 
     client = Client()
 
