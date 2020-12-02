@@ -2,7 +2,11 @@
 
 ### **???** (Unreleased)
 
-> This version adds a test suite.
+> This version adds a test suite and improvements to the upload mechanism.
+
+-   Improvements
+    -   Add test suite
+    -   Improvements to upload mechanism
 
 ### **0.3.0** (November 27 2020)
 
