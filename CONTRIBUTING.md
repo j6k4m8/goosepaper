@@ -14,10 +14,6 @@ Writing new Story Providers is a great place to start.
 * Maybe today's birthdays, pulled from Facebook? 
 * Maybe your upcoming calendar events, via Google Calendar or another service?
 
-### Fixing the Twitter Provider
-
-Twint is currently broken, as far as I know, which is what I was using previously. Aw!
-
 ### A "front-page" layout
 
 I'd love to have a big ol' headline area for the most important story of the day.
