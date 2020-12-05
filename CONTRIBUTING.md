@@ -13,6 +13,7 @@ Writing new Story Providers is a great place to start.
 * Maybe one for GitHub notifications? 
 * Maybe today's birthdays, pulled from Facebook? 
 * Maybe your upcoming calendar events, via Google Calendar or another service?
+* HackerNews top stories?
 
 ### A "front-page" layout
 
