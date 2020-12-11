@@ -1,0 +1,7 @@
+.github
+.git
+.DS_Store
+docs
+Dockerfile
+*.pdf
+*.json
