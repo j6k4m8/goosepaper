@@ -4,11 +4,11 @@ I'd love to see what you do with the codebase, and I want to see your configs to
 
 ## Help Wanted!
 
-If you're looking for a place to start getting your hands dirty, check out some potential options below.
+If you're looking for a place to start getting your hands dirty, check out some potential options below. [These `good-first-issue`s are also a great place to start!](https://github.com/j6k4m8/goosepaper/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
 
 ### New Story Providers
 
-Writing new Story Providers is a great place to start.
+Writing new Story Providers is a great place to start! Is there some news source you wish you could get in your Goosepaper?
 
 * Maybe one for GitHub notifications? 
 * Maybe today's birthdays, pulled from Facebook? 
