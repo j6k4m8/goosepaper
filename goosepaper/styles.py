@@ -20,7 +20,7 @@ class AutumnStyle(Style):
     @page {
         margin-top: 0.5in;
         margin-right: 0.2in;
-        margin-left: 0.5in;
+        margin-left: 0.65in;
     }
 
     body {
@@ -46,7 +46,7 @@ class AutumnStyle(Style):
     }
 
     .stories {
-        font-size: 18pt;
+        font-size: 16pt;
     }
 
     .ear article {
