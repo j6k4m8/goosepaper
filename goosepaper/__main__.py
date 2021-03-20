@@ -25,7 +25,6 @@ def main():
         "-o",
         "--output",
         required=False,
-        default=f"Goosepaper-{datetime.datetime.now().strftime('%Y-%B-%d-%H-%M')}.pdf",
         help="The output file path at which to save the paper",
     )
     parser.add_argument(
@@ -46,21 +45,29 @@ def main():
         ) from e
 
     story_providers = construct_story_providers_from_config_dict(config)
-
-    paper = Goosepaper(story_providers=story_providers)
-
-    if args.output.endswith(".html"):
-        with open(args.output, "w") as fh:
-            fh.write(paper.to_html())
-    elif args.output.endswith(".pdf"):
-        paper.to_pdf(args.output)
-    elif args.output.endswith(".epub"):
-        paper.to_epub(args.output)
+    title = config["title"] if "title" in config else None
+    subtitle = config["subtitle"] if "subtitle" in config else None
+    if args.output:
+        filename = args.output
+    elif "filename" in config:
+           filename = config["filename"]
     else:
-        raise ValueError(f"Unknown file extension '{args.output.split('.')[-1]}'.")
+        filename = f"Goosepaper-{datetime.datetime.now().strftime('%Y-%B-%d-%H-%M')}.pdf"
+
+    paper = Goosepaper(story_providers=story_providers, title=title, subtitle=subtitle)
+
+    if filename.endswith(".html"):
+        with open(filename, "w") as fh:
+            fh.write(paper.to_html())
+    elif filename.endswith(".pdf"):
+        paper.to_pdf(filename)
+    elif filename.endswith(".epub"):
+        paper.to_epub(filename)
+    else:
+        raise ValueError(f"Unknown file extension '{filename.split('.')[-1]}'.")
 
     if args.upload:
-        upload(args.output)
+        upload(filename)
 
     return 0
 
