@@ -22,8 +22,9 @@ class Goosepaper:
         self.story_providers = story_providers
         self.title = title if title else "Daily Goosepaper"
         self.subtitle = (
-            subtitle if subtitle else datetime.datetime.today().strftime("%B %d, %Y")
+            subtitle + "\n" if subtitle else ""
         )
+        self.subtitle += datetime.datetime.today().strftime("%B %d, %Y")
 
     def get_stories(self, deduplicate: bool = False):
         stories = []
