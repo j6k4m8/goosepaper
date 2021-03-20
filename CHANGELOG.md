@@ -8,6 +8,7 @@
     -   Add test suite
     -   Improvements to upload mechanism
     -   Add possibility to set title and subtile in config file - contribution by @traysh
+    -   Parallelize fetching RSS stories - contribution by @traysh
 
 ### **0.3.0** (November 27 2020)
 
