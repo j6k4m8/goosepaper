@@ -12,7 +12,8 @@ from goosepaper.upload import upload
 
 def main():
     parser = argparse.ArgumentParser(
-        "Goosepaper generates and delivers a daily newspaper in PDF format."
+        prog="goosepaper",
+        description="Goosepaper generates and delivers a daily newspaper in PDF format."
     )
     parser.add_argument(
         "-c",
