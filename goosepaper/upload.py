@@ -6,7 +6,7 @@ from rmapy.api import Client
 from rmapy.exceptions import AuthError
 
 
-def upload(filepath=None):
+def upload(filepath=None, replace=False):
 
     if not filepath:
         parser = argparse.ArgumentParser("Upload Goosepaper to reMarkable tablet")
@@ -37,8 +37,11 @@ def upload(filepath=None):
 
     for item in client.get_meta_items():
         if item.VissibleName == filepath.stem:
-            print("Honk! Paper already exists!")
-            return False
+            if replace:
+                client.delete(item)
+            else:
+                print("Honk! Paper already exists!")
+                return False
 
     doc = ZipDocument(doc=str(filepath.resolve()))
     if client.upload(doc):

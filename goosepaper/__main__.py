@@ -35,6 +35,12 @@ def main():
         required=False,
         help="Whether to upload the file to your remarkable using rmapy.",
     )
+    parser.add_argument(
+        "--replace",
+        action="store_true",
+        required=False,
+        help="Will replace a document with same name in your remarkable.",
+    )
 
     args = parser.parse_args()
 
@@ -54,6 +60,14 @@ def main():
            filename = config["filename"]
     else:
         filename = f"Goosepaper-{datetime.datetime.now().strftime('%Y-%B-%d-%H-%M')}.pdf"
+    if args.replace:
+        if not args.upload:
+            parser.error("--replace requires --upload.")
+        replace = args.replace
+    elif "replace" in config:
+        replace = config["replace"]
+    else:
+        replace = False
 
     paper = Goosepaper(story_providers=story_providers, title=title, subtitle=subtitle)
 
@@ -68,7 +82,7 @@ def main():
         raise ValueError(f"Unknown file extension '{filename.split('.')[-1]}'.")
 
     if args.upload:
-        upload(filename)
+        upload(filename, replace)
 
     return 0
 
