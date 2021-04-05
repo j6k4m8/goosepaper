@@ -32,7 +32,7 @@ class TwitterStoryProvider(StoryProvider):
         self.limit = limit
         self.priority_mode = priority_mode
 
-    def get_stories(self, limit: int = 10) -> List[Story]:
+    def get_stories(self, limit: int = 10, since = None) -> List[Story]:
         """
         Get a list of stories.
 

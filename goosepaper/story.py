@@ -24,6 +24,13 @@ class Story:
         self.body_html = body_html if body_html else htmlize(body_text)
         self.placement_preference = placement_preference
 
+
+    def __gt__(self, other):
+        if not self.date: return False
+        if not other.date: return True
+        return self.date > other.date
+
+
     def to_html(self) -> str:
         byline_h4 = f"<h4 class='byline'>{self.byline}</h4>" if self.byline else ""
         priority_class = {

@@ -15,7 +15,7 @@ class WikipediaCurrentEventsStoryProvider(StoryProvider):
     def __init__(self):
         pass
 
-    def get_stories(self, limit: int = 10) -> List[Story]:
+    def get_stories(self, limit: int = 10, since = None) -> List[Story]:
         """
         Get a list of current stories from Wikipedia.
         """

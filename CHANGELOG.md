@@ -11,6 +11,7 @@
     -   Parallelize fetching RSS stories - contribution by @traysh
     -   Add flag to allow replacing documents in remarkable cloud - contribution by @traysh
     -   Add class to resolve options both from command line and config file - contribution by @traysh
+    -   Add flag to only fetch new RSS stories - contribution by @traysh
 
 ### **0.3.0** (November 27 2020)
 

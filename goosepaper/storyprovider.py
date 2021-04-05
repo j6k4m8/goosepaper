@@ -7,7 +7,7 @@ class StoryProvider(abc.ABC):
     An abstract class for a class that provides stories to be rendered.
     """
 
-    def get_stories(self, limit: int = 5):
+    def get_stories(self, limit: int = 5, since = None):
         """
         Get a list of stories from this Provider.
         """
@@ -25,7 +25,7 @@ class LoremStoryProvider(StoryProvider):
         ]
         self.limit = limit
 
-    def get_stories(self, limit: int = 5):
+    def get_stories(self, limit: int = 5, since = None):
         return [
             Story(headline="Lorem Ipsum Dolor Sit Amet", body_text=self.text)
             for _ in range(min(self.limit, limit))

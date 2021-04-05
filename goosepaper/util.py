@@ -50,6 +50,12 @@ def load_config_file(filepath: str) -> dict:
     return config_dict
 
 
+def write_config_file(filepath: str, config: dict):
+    config_data = json.dumps(config, indent=4)
+    with open(filepath, "w") as fh:
+        fh.write(config_data)
+
+
 def construct_story_providers_from_config_dict(config: dict):
 
     from goosepaper.rss import RSSFeedStoryProvider

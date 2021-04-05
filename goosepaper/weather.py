@@ -14,7 +14,7 @@ class WeatherStoryProvider(StoryProvider):
     def CtoF(self, temp: float) -> float:
         return (temp * 9 / 5) + 32
 
-    def get_stories(self, limit: int = 1) -> List[Story]:
+    def get_stories(self, limit: int = 1, since = None) -> List[Story]:
         weatherReq = requests.get(
             f"https://www.metaweather.com/api/location/{self.woe}/"
         ).json()

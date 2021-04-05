@@ -26,10 +26,10 @@ class Goosepaper:
         )
         self.subtitle += datetime.datetime.today().strftime("%B %d, %Y")
 
-    def get_stories(self, deduplicate: bool = False):
+    def get_stories(self, deduplicate: bool = False, since = None):
         stories = []
         for prov in self.story_providers:
-            new_stories = prov.get_stories()
+            new_stories = prov.get_stories(since=since)
             for a in new_stories:
                 if deduplicate:
                     for b in stories:
@@ -41,9 +41,7 @@ class Goosepaper:
                     stories.append(a)
         return stories
 
-    def to_html(self) -> str:
-        stories = self.get_stories()
-
+    def to_html(self, stories) -> str:
         # Get ears:
         ears = [s for s in stories if s.placement_preference == PlacementPreference.EAR]
         right_ear = ""
@@ -90,7 +88,7 @@ class Goosepaper:
             </html>
         """
 
-    def to_pdf(self, filename: str, style: Style = AutumnStyle) -> str:
+    def to_pdf(self, stories, filename: str, style: Style = AutumnStyle) -> str:
         """
         Renders the current Goosepaper to a PDF file on disk.
 
@@ -100,7 +98,7 @@ class Goosepaper:
         from weasyprint import HTML, CSS
 
         style = style()
-        html = self.to_html()
+        html = self.to_html(stories)
         h = HTML(string=html)
         c = CSS(string=style.get_css())
         h.write_pdf(filename, stylesheets=[c, *style.get_stylesheets()])
