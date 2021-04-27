@@ -20,6 +20,7 @@ def main():
         default=f"Goosepaper-{datetime.datetime.now().strftime('%Y-%B-%d-%H-%M')}.pdf"
     )
     replace = multiparser.argumentOrConfig("replace", False)
+    folder = multiparser.argumentOrConfig("folder", None)
 
     paper = Goosepaper(story_providers=story_providers, title=title, subtitle=subtitle)
 
@@ -33,8 +34,8 @@ def main():
     else:
         raise ValueError(f"Unknown file extension '{filename.split('.')[-1]}'.")
 
-    if multiparser.argumentOrConfig("upload"):
-        upload(filename, replace)
+    if multiparser.argumentOrConfig("upload", folder):
+        upload(filename, replace, folder)
 
     return 0
 
