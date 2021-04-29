@@ -46,7 +46,7 @@ class TwitterStoryProvider(StoryProvider):
         c.Hide_output = True
 
         twint.run.Search(c)
-        df = twint.storage.panda.Tweets_df
+        df = twint.storage.panda.Tweets_df  # type: ignore
         return [
             Story(
                 headline=None,

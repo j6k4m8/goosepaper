@@ -1,4 +1,5 @@
 import datetime
+from typing import List, Optional, Union
 
 from .util import PlacementPreference, htmlize, StoryPriority
 
@@ -6,12 +7,12 @@ from .util import PlacementPreference, htmlize, StoryPriority
 class Story:
     def __init__(
         self,
-        headline: str,
+        headline: Optional[str],
         body_html: str = None,
-        body_text: str = None,
+        body_text: Union[str, List[str]] = None,
         byline: str = None,
         date: datetime.datetime = None,
-        priority: int = StoryPriority.DEFAULT,
+        priority: StoryPriority = StoryPriority.DEFAULT,
         placement_preference: PlacementPreference = PlacementPreference.NONE,
     ) -> None:
         """
@@ -21,7 +22,15 @@ class Story:
         self.priority = priority
         self.byline = byline
         self.date = date
-        self.body_html = body_html if body_html else htmlize(body_text)
+        if body_html is not None:
+            self.body_html = body_html
+        elif body_text is not None:
+            self.body_html = htmlize(body_text)
+        else:
+            raise ValueError(
+                "You must provide at least one of body_html or body_text "
+                "to the Story constructor"
+            )
         self.placement_preference = placement_preference
 
     def to_html(self) -> str:

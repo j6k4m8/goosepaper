@@ -2,7 +2,7 @@ import argparse
 from pathlib import Path
 
 from rmapy.document import ZipDocument
-from rmapy.api import Client, Folder
+from rmapy.api import Client, Document, Folder
 from rmapy.exceptions import AuthError
 
 def validateFolder(folder: str):
@@ -103,10 +103,14 @@ def upload(filepath=None, replace=False, folder=None):
     if not paperFolder:
         paperFolder = Folder()
         paperFolder.ID = ""
-    result = client.upload(doc, paperFolder)
-    if result:
-        print("Honk! Upload successful!")
+    if isinstance(paperFolder, Folder):
+        result = client.upload(doc, paperFolder)
+        if result:
+            print("Honk! Upload successful!")
+        else:
+            print("Honk! Error with upload!")
+        return result
     else:
-        print("Honk! Error with upload!")
+        print("Honk! Could not upload: Document already exists.")
+    return False
 
-    return result

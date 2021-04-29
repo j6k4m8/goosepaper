@@ -1,5 +1,10 @@
 # CHANGELOG
 
+### (Unreleased)
+
+-   Fixes
+    -   Improve typing support
+
 ### **0.3.1** (April 29 2021)
 
 > This version adds a test suite and improvements to the upload and config mechanisms, as well as several more performance and feature improvements.
