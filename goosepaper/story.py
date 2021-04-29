@@ -21,9 +21,9 @@ class Story:
         self.priority = priority
         self.byline = byline
         self.date = date
-        if body_html:
+        if body_html is not None:
             self.body_html = body_html
-        elif body_text:
+        elif body_text is not None:
             self.body_html = htmlize(body_text)
         else:
             raise ValueError(
