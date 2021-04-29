@@ -1,4 +1,5 @@
 import abc
+from typing import List
 from .story import Story
 
 
@@ -7,7 +8,7 @@ class StoryProvider(abc.ABC):
     An abstract class for a class that provides stories to be rendered.
     """
 
-    def get_stories(self, limit: int = 5):
+    def get_stories(self, limit: int = 5) -> List["Story"]:
         """
         Get a list of stories from this Provider.
         """

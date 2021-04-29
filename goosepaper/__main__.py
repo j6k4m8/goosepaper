@@ -17,10 +17,12 @@ def main():
     subtitle = config["subtitle"] if "subtitle" in config else None
     filename = multiparser.argumentOrConfig(
         "output",
-        default=f"Goosepaper-{datetime.datetime.now().strftime('%Y-%B-%d-%H-%M')}.pdf"
+        default=f"Goosepaper-{datetime.datetime.now().strftime('%Y-%B-%d-%H-%M')}.pdf",
     )
     replace = multiparser.argumentOrConfig("replace", False)
     folder = multiparser.argumentOrConfig("folder", None)
+    font_size = multiparser.argumentOrConfig("font_size", 14)
+    print(font_size)
 
     paper = Goosepaper(story_providers=story_providers, title=title, subtitle=subtitle)
 
@@ -28,9 +30,9 @@ def main():
         with open(filename, "w") as fh:
             fh.write(paper.to_html())
     elif filename.endswith(".pdf"):
-        paper.to_pdf(filename)
+        paper.to_pdf(filename, font_size=font_size)
     elif filename.endswith(".epub"):
-        paper.to_epub(filename)
+        paper.to_epub(filename, font_size=font_size)
     else:
         raise ValueError(f"Unknown file extension '{filename.split('.')[-1]}'.")
 
@@ -38,6 +40,7 @@ def main():
         upload(filename, replace, folder)
 
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())

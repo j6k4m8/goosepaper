@@ -1,8 +1,8 @@
 # CHANGELOG
 
-### **???** (Unreleased)
+### **0.3.1** (April 29 2021)
 
-> This version adds a test suite and improvements to the upload mechanism.
+> This version adds a test suite and improvements to the upload and config mechanisms, as well as several more performance and feature improvements.
 
 -   Improvements
     -   Add test suite

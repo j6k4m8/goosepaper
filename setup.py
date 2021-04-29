@@ -4,7 +4,7 @@ from os import path
 from codecs import open as copen
 from setuptools import setup, find_packages
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 
 here = path.abspath(path.dirname(__file__))
@@ -33,7 +33,6 @@ setup(
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
