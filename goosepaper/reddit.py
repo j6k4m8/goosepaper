@@ -24,8 +24,8 @@ class RedditHeadlineStoryProvider(StoryProvider):
                 author = "A Reddit user"
             stories.append(
                 Story(
-                    headline=None,
-                    body_text=entry.title,
+                    headline="",
+                    body_text=str(entry.title),
                     byline=f"{author} in r/{self.subreddit}",
                     date=entry.updated_parsed,
                     placement_preference=PlacementPreference.SIDEBAR,
