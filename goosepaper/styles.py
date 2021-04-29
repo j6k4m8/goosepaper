@@ -1,8 +1,11 @@
+from typing import Union
+
+
 class Style:
     def get_stylesheets(self) -> list:
         ...
 
-    def get_css(self, font_size: str = "14pt"):
+    def get_css(self, font_size: int = 14):
         ...
 
 
@@ -13,7 +16,7 @@ class AutumnStyle(Style):
             "https://fonts.googleapis.com/css?family=Playfair+Display",
         ]
 
-    def get_css(self, font_size: str = "14pt"):
+    def get_css(self, font_size: int = 14):
         return (
             """
         @page {
@@ -46,8 +49,8 @@ class AutumnStyle(Style):
 
         .stories {
             font-size: """
-            + font_size
-            + """;
+            + str(font_size)
+            + """pt;
         }
 
         .ear article {
@@ -91,7 +94,9 @@ class AutumnStyle(Style):
 
         article>h4.byline {
             font-family: "Oswald";
-            font-size: 12pt;
+            font-size: """
+            + str(font_size)
+            + """pt;
             font-weight: 400;
             text-indent: 0;
             border-bottom: 1px solid #dedede;

@@ -89,7 +89,7 @@ class Goosepaper:
         """
 
     def to_pdf(
-        self, filename: str, style: Type[Style] = AutumnStyle, font_size: str = "14pt"
+        self, filename: str, style: Type[Style] = AutumnStyle, font_size: int = 14
     ) -> str:
         """
         Renders the current Goosepaper to a PDF file on disk.
@@ -107,7 +107,7 @@ class Goosepaper:
         return filename
 
     def to_epub(
-        self, filename: str, style: Type[Style] = AutumnStyle, font_size: str = "14pt"
+        self, filename: str, style: Type[Style] = AutumnStyle, font_size: int = 14
     ) -> str:
         """
         Render the current Goosepaper to an epub file on disk
