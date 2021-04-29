@@ -1,9 +1,10 @@
 import enum
 import re
 import json
+from typing import List, Union
 
 
-def htmlize(text: str) -> str:
+def htmlize(text: Union[str, List[str]]) -> str:
     """
     Generate HTML text from a text string, correctly formatting paragraphs etc.
     """
