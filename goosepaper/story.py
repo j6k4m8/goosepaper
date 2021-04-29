@@ -1,4 +1,5 @@
 import datetime
+from typing import List, Union
 
 from .util import PlacementPreference, htmlize, StoryPriority
 
@@ -8,7 +9,7 @@ class Story:
         self,
         headline: str,
         body_html: str = None,
-        body_text: str = None,
+        body_text: Union[str, List[str]] = None,
         byline: str = None,
         date: datetime.datetime = None,
         priority: StoryPriority = StoryPriority.DEFAULT,
