@@ -2,7 +2,7 @@ import datetime
 import os
 
 from uuid import uuid4
-from typing import List
+from typing import List, Type
 from ebooklib import epub
 
 from .styles import Style, AutumnStyle
@@ -21,9 +21,7 @@ class Goosepaper:
     ):
         self.story_providers = story_providers
         self.title = title if title else "Daily Goosepaper"
-        self.subtitle = (
-            subtitle + "\n" if subtitle else ""
-        )
+        self.subtitle = subtitle + "\n" if subtitle else ""
         self.subtitle += datetime.datetime.today().strftime("%B %d, %Y")
 
     def get_stories(self, deduplicate: bool = False):
@@ -90,7 +88,9 @@ class Goosepaper:
             </html>
         """
 
-    def to_pdf(self, filename: str, style: Style = AutumnStyle) -> str:
+    def to_pdf(
+        self, filename: str, style: Type[Style] = AutumnStyle, font_size: str = "14pt"
+    ) -> str:
         """
         Renders the current Goosepaper to a PDF file on disk.
 
@@ -99,14 +99,16 @@ class Goosepaper:
         """
         from weasyprint import HTML, CSS
 
-        style = style()
+        style_obj = style()
         html = self.to_html()
         h = HTML(string=html)
-        c = CSS(string=style.get_css())
-        h.write_pdf(filename, stylesheets=[c, *style.get_stylesheets()])
+        c = CSS(string=style_obj.get_css(font_size))
+        h.write_pdf(filename, stylesheets=[c, *style_obj.get_stylesheets()])
         return filename
 
-    def to_epub(self, filename: str, style: Style = AutumnStyle) -> str:
+    def to_epub(
+        self, filename: str, style: Type[Style] = AutumnStyle, font_size: str = "14pt"
+    ) -> str:
         """
         Render the current Goosepaper to an epub file on disk
         """
@@ -129,12 +131,12 @@ class Goosepaper:
         book.set_title(title)
         book.set_language("en")
 
-        style = Style()
+        style_obj = Style()
         css = epub.EpubItem(
             uid="style_default",
             file_name="style/default.css",
             media_type="text/css",
-            content=style.get_css(),
+            content=style_obj.get_css(font_size),
         )
         book.add_item(css)
 
@@ -167,5 +169,5 @@ class Goosepaper:
         book.add_item(epub.EpubNav())
         book.spine = ["nav"] + chapters
 
-        print(f"Honk! Writing out epub {filename}")
         epub.write_epub(filename, book)
+        return filename
