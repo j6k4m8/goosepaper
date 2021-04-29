@@ -11,7 +11,7 @@ class Story:
         body_text: str = None,
         byline: str = None,
         date: datetime.datetime = None,
-        priority: int = StoryPriority.DEFAULT,
+        priority: StoryPriority = StoryPriority.DEFAULT,
         placement_preference: PlacementPreference = PlacementPreference.NONE,
     ) -> None:
         """
@@ -21,7 +21,15 @@ class Story:
         self.priority = priority
         self.byline = byline
         self.date = date
-        self.body_html = body_html if body_html else htmlize(body_text)
+        if body_html:
+            self.body_html = body_html
+        elif body_text:
+            self.body_html = htmlize(body_text)
+        else:
+            raise ValueError(
+                "You must provide at least one of body_html or body_text "
+                "to the Story constructor"
+            )
         self.placement_preference = placement_preference
 
     def to_html(self) -> str:
