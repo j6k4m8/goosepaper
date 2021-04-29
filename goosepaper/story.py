@@ -1,5 +1,5 @@
 import datetime
-from typing import List, Union
+from typing import List, Optional, Union
 
 from .util import PlacementPreference, htmlize, StoryPriority
 
@@ -7,7 +7,7 @@ from .util import PlacementPreference, htmlize, StoryPriority
 class Story:
     def __init__(
         self,
-        headline: str,
+        headline: Optional[str],
         body_html: str = None,
         body_text: Union[str, List[str]] = None,
         byline: str = None,
