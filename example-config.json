@@ -1,4 +1,7 @@
 {
+    "style": {
+        "fontSize": "12pt"
+    },
     "stories": [
         {
             "provider": "weather",
