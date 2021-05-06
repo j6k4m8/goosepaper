@@ -62,8 +62,6 @@ def upload(filepath=None, replace=False, folder=None):
         args = parser.parse_args()
         filepath = args.file
 
-    filepath = Path(filepath)
-
     client = auth_client()
     if not client:
         print ("Honk Honk! Couldn't auth! Is your rmapy configured?")
@@ -74,6 +72,20 @@ def upload(filepath=None, replace=False, folder=None):
 
     if not sanitycheck(folder,client):
         return False
+
+    filepath = Path(filepath)
+
+    # Added error handling to deal with possible race condition where the file is mangled
+    # or not written out before the upload actually occurs such as an AV false positive.
+    # 'pdf' is a simple throwaway file handle to make sure that we retain control of the
+    # file while it's being imported.
+    
+    try:
+        with open (filepath.resolve()) as pdf:
+            doc = ZipDocument(doc=str(filepath.resolve()))
+    except IOError as err:
+        print (f"Error locating or opening {filepath}")
+        return False
     
     paperCandidates = []
     paperFolder = None
@@ -82,12 +94,12 @@ def upload(filepath=None, replace=False, folder=None):
     for item in items:
         # is it the folder we are looking for?
         if (folder and item.Type == "CollectionType"              # is a folder
-                and item.VissibleName == folder                   # has the name we're looking for
+                and item.VissibleName.lower() == folder.lower()   # has the name we're looking for
                 and (item.Parent == None or item.Parent == "")):  # is not in another folder
             paperFolder = item
 
         # is it possibly the file we are looking for?
-        elif item.Type == "DocumentType" and item.VissibleName == filepath.stem:
+        elif item.Type == "DocumentType" and item.VissibleName.lower() == str(doc.metadata["VissibleName"]).lower():
             paperCandidates.append(item)
 
     for paper in paperCandidates:
@@ -124,7 +136,7 @@ def upload(filepath=None, replace=False, folder=None):
                 print("Honk! Failed to create the folder!")
                 return False
 
-    doc = ZipDocument(doc=str(filepath.resolve()))
+
     # workarround rmapy bug: client.upload(doc) would set a non-existing parent ID to the document
     if not paperFolder:
         paperFolder = Folder()
