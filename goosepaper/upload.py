@@ -6,6 +6,40 @@ from pathlib import Path
 
 from .auth import auth_client
 
+def sanitycheck(folder: str,client):
+
+    # First lets do a sanity check. Since RM cloud uses an object ID as a unique key
+    # it is entirely possible to have duplicate VissibleName attributes for both folders and
+    # documents, and you can have folders and documents that share the same name.
+    
+    # This is insanity and we have no programmatic way to resolve it so we're going to cheat.
+    # Check for duplicate folder names as the root level and if found we simply force the
+    # user to resolve it and check for duplicate document names.
+    
+    rootfolders = [ f for f in client.get_meta_items() if (f.Type == "CollectionType" and f.Parent == "") ]
+
+    uniquefolders = set()
+    [uniquefolders.add(folder.VissibleName.lower()) or folder
+     for folder in rootfolders if folder.VissibleName.lower() not in uniquefolders]
+    foldercountdif = abs(len(uniquefolders)-len(rootfolders))
+
+    folderduperr = ""
+    foldercountdiff = 0
+    
+    if foldercountdif == 1:
+        folderduperr = "I found a duplicate folder name in the root of your RM2.\n"
+    elif foldercountdif > 1:
+        folderduperr = "You have multiple duplicate folder names in the root of your RM2.\n"
+    else:
+        pass
+    
+    if (foldercountdif):
+        print ("{0}\n\nYou must fix this first.".format(folderduperr))
+        return False
+    else:
+        return True
+    
+
 def validateFolder(folder: str):
     if folder:
         if folder == "":
@@ -38,6 +72,9 @@ def upload(filepath=None, replace=False, folder=None):
     if not validateFolder(folder):
         return False
 
+    if not sanitycheck(folder,client):
+        return False
+    
     paperCandidates = []
     paperFolder = None
 
