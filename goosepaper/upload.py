@@ -6,7 +6,7 @@ from pathlib import Path
 
 from .auth import auth_client
 
-def sanitycheck(folder: str,client):
+def sanitycheck(folder: str, client):
 
     # First lets do a sanity check. Since RM cloud uses an object ID as a unique key
     # it is entirely possible to have duplicate VissibleName attributes for both folders and
@@ -52,18 +52,30 @@ def validateFolder(folder: str):
 
     return True
 
-def upload(filepath=None, replace=False, folder=None):
 
-    if not filepath:
-        parser = argparse.ArgumentParser("Upload Goosepaper to reMarkable tablet")
-        parser.add_argument(
-            "file", default=None, help="The file to upload",
-        )
-        args = parser.parse_args()
-        filepath = args.file
+def getallitems(client):
+
+    # So somehow I corrupted or broke my cloud during testing and any object
+    # which exists is getting returned twice in the object list from
+    # get_meta_items. Deleting items and re-adding them hasn't fixed it even
+    # using the official RM client. So this avoids that problem. I haven't found
+    # a real fix yet for my cloud though.
+    
+    allitems = [ item for item in client.get_meta_items() if (item.Parent != "trash") ]
+
+    items=[]
+    for tempitem in allitems:
+        if not any(item.ID == tempitem.ID for item in items):
+            items.append(tempitem)
+
+    return items
+
+
+def upload(filepath, replace=False, folder=None):
 
     client = auth_client()
-    if not client:
+    
+    if not client: 
         print ("Honk Honk! Couldn't auth! Is your rmapy configured?")
         return False
 
@@ -90,8 +102,8 @@ def upload(filepath=None, replace=False, folder=None):
     paperCandidates = []
     paperFolder = None
 
-    items = client.get_meta_items()
-    for item in items:
+    for item in getallitems(client):
+
         # is it the folder we are looking for?
         if (folder and item.Type == "CollectionType"              # is a folder
                 and item.VissibleName.lower() == folder.lower()   # has the name we're looking for
