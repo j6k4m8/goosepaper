@@ -1,6 +1,8 @@
 import enum
 import re
 import json
+import jsonschema
+from jsonschema import validate
 from typing import List, Union
 
 
@@ -46,10 +48,14 @@ class StoryPriority(enum.Enum):
 
 
 def load_config_file(filepath: str) -> dict:
-    with open(filepath, "r") as fh:
-        config_dict = json.load(fh)
+    try:
+        with open(filepath, "r") as fh:
+            config_dict = json.load(fh)
+    except ValueError as err:
+        print ("Honk Honk! Syntax Error in config file {0}".format(filepath))
+        exit(1)
+        
     return config_dict
-
 
 def construct_story_providers_from_config_dict(config: dict):
 
