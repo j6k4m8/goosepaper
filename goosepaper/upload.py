@@ -82,9 +82,6 @@ def upload(filepath, replace=False, folder=None):
     if not validateFolder(folder):
         return False
 
-    if not sanitycheck(folder,client):
-        return False
-
     filepath = Path(filepath)
 
     # Added error handling to deal with possible race condition where the file is mangled
