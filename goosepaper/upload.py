@@ -27,9 +27,9 @@ def sanitycheck(folder: str, client):
     foldercountdiff = 0
     
     if foldercountdif == 1:
-        folderduperr = "I found a duplicate folder name in the root of your RM2.\n"
+        folderduperr = "I found a duplicate folder name in the root of your RM.\n"
     elif foldercountdif > 1:
-        folderduperr = "You have multiple duplicate folder names in the root of your RM2.\n"
+        folderduperr = "You have multiple duplicate folder names in the root of your RM.\n"
     else:
         pass
     
