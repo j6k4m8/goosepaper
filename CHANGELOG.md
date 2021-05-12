@@ -1,5 +1,18 @@
 # CHANGELOG
 
+### (March 11 2021)
+
+> Multiple fixes and improvements
+
+-   Fixes
+    -   Changed some document name comparisons to case insensitive (prevent document overwrites, esp. for Windows users)
+    -   Switched upload to require named arguments rather than positional
+
+-   Improvements
+   -   Added more error handling for file and syntax handling
+   -   Change to using the VissibleName attribute in all cases rather than filename
+   -   Added code for upcoming additional sanity checks
+
 ### (Unreleased)
 
 -   Fixes

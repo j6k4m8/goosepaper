@@ -37,7 +37,7 @@ def main():
         raise ValueError(f"Unknown file extension '{filename.split('.')[-1]}'.")
 
     if multiparser.argumentOrConfig("upload", folder):
-        upload(filename, replace, folder)
+        upload(filepath=filename, replace=replace, folder=folder)
 
     return 0
 
