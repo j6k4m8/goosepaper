@@ -79,7 +79,6 @@ def construct_story_providers_from_config_dict(config: dict):
         provider_name = provider_config["provider"]
         if provider_name not in StoryProviderConfigNames:
             raise ValueError(f"Provider {provider_name} does not exist.")
-        print (provider_config["config"]["limit"])
         if provider_config["config"].get('skip')==True:
             continue
         else:
