@@ -74,7 +74,7 @@ def construct_story_providers_from_config_dict(config: dict):
         return []
 
     stories = []
-    import inspect
+
     for provider_config in config["stories"]:
         provider_name = provider_config["provider"]
         if provider_name not in StoryProviderConfigNames:
