@@ -1,6 +1,9 @@
 from rmapy.document import ZipDocument
 from rmapy.api import Client, Document, Folder
 
+import os
+from os import remove
+
 import argparse
 from pathlib import Path
 
@@ -71,7 +74,22 @@ def getallitems(client):
     return items
 
 
-def upload(filepath, replace=False, folder=None):
+def do_upload(filepath, multiparser):
+
+    filepath = Path(filepath)
+    replace = False if multiparser.argumentOrConfig("noreplace") else multiparser.argumentOrConfig("replace")
+    folder = multiparser.argumentOrConfig("folder")
+    cleanup = multiparser.argumentOrConfig("cleanup")
+    strictlysane = multiparser.argumentOrConfig("strictlysane")
+    nocase = multiparser.argumentOrConfig("nocase")
+    
+
+    if strictlysane:
+        nocase = True
+        
+    if multiparser.argumentOrConfig("showconfig"):
+        print ("\nParameters passed to do_upload\n----------------\n")
+        print ("Replace:\t{0}\nFolder:\t\t{1}\nCleanup:\t{2}\nStrictlysane:\t{3}\nNocase:\t\t{4}\nFilepath:\t{5}\n".format(replace,folder,cleanup,strictlysane,nocase,filepath))
 
     client = auth_client()
     
@@ -82,7 +100,6 @@ def upload(filepath, replace=False, folder=None):
     if not validateFolder(folder):
         return False
 
-    filepath = Path(filepath)
 
     # Added error handling to deal with possible race condition where the file is mangled
     # or not written out before the upload actually occurs such as an AV false positive.
@@ -102,9 +119,9 @@ def upload(filepath, replace=False, folder=None):
     for item in getallitems(client):
 
         # is it the folder we are looking for?
-        if (folder and item.Type == "CollectionType"              # is a folder
-                and item.VissibleName.lower() == folder.lower()   # has the name we're looking for
-                and (item.Parent == None or item.Parent == "")):  # is not in another folder
+        if (folder and item.Type == "CollectionType"          # is a folder
+            and item.VissibleName.lower() == folder.lower()   # has the name we're looking for
+            and (item.Parent == None or item.Parent == "")):  # is not in another folder
             paperFolder = item
 
         # is it possibly the file we are looking for?
@@ -112,11 +129,9 @@ def upload(filepath, replace=False, folder=None):
             paperCandidates.append(item)
 
     for paper in paperCandidates:
-        if paper.Parent == "trash":
-            continue
         parent = client.get_doc(paper.Parent)
 
-    # if the folder was found, check if a paper candidate is in it
+        # if the folder was found, check if a paper candidate is in it
     paper = None
     if len(paperCandidates) > 0:
         if folder:
@@ -146,14 +161,21 @@ def upload(filepath, replace=False, folder=None):
                 return False
 
 
-    # workarround rmapy bug: client.upload(doc) would set a non-existing parent ID to the document
+    # workarround rmapy bug: client.upload(doc) would set a non-existing parent
+    # ID to the document
     if not paperFolder:
-        paperFolder = Folder()
-        paperFolder.ID = ""
+       paperFolder = Folder()
+       paperFolder.ID = ""
     if isinstance(paperFolder, Folder):
         result = client.upload(doc, paperFolder)
         if result:
             print("Honk! Upload successful!")
+            if cleanup:
+                try:
+                    os.remove(filepath.resolve())
+                except:
+                    print ("Honk! Honk! Failed to remove file after upload: {0}".format(filepath.resolve()))
+                    return False
         else:
             print("Honk! Error with upload!")
         return result

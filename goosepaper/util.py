@@ -54,7 +54,6 @@ def load_config_file(filepath: str) -> dict:
         exit(1)
     return config_dict
 
-
 def construct_story_providers_from_config_dict(config: dict):
 
     from goosepaper.rss import RSSFeedStoryProvider
@@ -75,11 +74,16 @@ def construct_story_providers_from_config_dict(config: dict):
         return []
 
     stories = []
+    import inspect
     for provider_config in config["stories"]:
         provider_name = provider_config["provider"]
         if provider_name not in StoryProviderConfigNames:
             raise ValueError(f"Provider {provider_name} does not exist.")
-        stories.append(
-            StoryProviderConfigNames[provider_name](**provider_config["config"])
-        )
+        print (provider_config["config"]["limit"])
+        if provider_config["config"].get('skip')==True:
+            continue
+        else:
+            stories.append(
+                StoryProviderConfigNames[provider_name](**provider_config["config"])
+            )
     return stories
