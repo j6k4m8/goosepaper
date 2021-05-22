@@ -128,7 +128,7 @@ Storyprovider name is
 
 The parameters are as follows:
 ```json	
-	"limit"		:	5 								(int 	- Amount of Lorem Ipsum articles to provide.) 
+	"limit"		:	5 						(int 	- Amount of Lorem Ipsum articles to provide.) 
 ```
   
 ### <a name="Reddit">Reddit</a>
@@ -146,8 +146,8 @@ Storyprovider name is
 
 The parameters are as follows:
 ```json	
-	"subreddit"	:	"news"							(str 	- Subreddit you want to see headlines from.) 
-	"limit"		:	20 								(int 	- Amount of reddit headlines to provide.) 
+	"subreddit"	:	"news"						(str 	- Subreddit you want to see headlines from.) 
+	"limit"		:	20 						(int 	- Amount of reddit headlines to provide.) 
 ```
 
 ### <a name="RSS">RSS</a>
@@ -164,8 +164,8 @@ Storyprovider name is
 
 The parameters are as follows:
 ```json	
-	"rss_path"	:	"https://www.npr.org/feed/"		(str 	- RSS feed you want to see results from.) 
-	"limit"		:	20 								(int 	- Amount of reddit headlines to provide.) 
+	"rss_path"	:	"https://www.npr.org/feed/"			(str 	- RSS feed you want to see results from.) 
+	"limit"		:	20 						(int 	- Amount of reddit headlines to provide.) 
 ```
 
 ### <a name="Twitter">Twitter</a>
@@ -183,7 +183,7 @@ Storyprovider name is
 The parameters are as follows:
 ```json	
 	"usernames"	:	["axios", "NPR"]				([str] 	- Users you want to see results from.) 
-	"limit"		:	8 								(int 	- Amount of reddit headlines to provide.) 
+	"limit"		:	8 						(int 	- Amount of reddit headlines to provide.) 
 ```
 
 ### <a name="Weather">Weather</a>
@@ -201,9 +201,9 @@ Storyprovider name is
 
 The parameters are as follows:
 ```json	
-	"woe"		:	2358820 						(int 	- Where On Earth, can be collected from 
-															  www.metaweather.com. Default is for Boston)
-	"F"			:	true/false						(bool 	- Fahreheit(true) or Celsius(false))
+	"woe"		:	2358820 					(int 	- Where On Earth, can be collected from 
+												  www.metaweather.com. Default is forBoston)
+	"F"		:	true/false					(bool 	- Fahreheit(true) or Celsius(false))
 ```
 
 ### <a name="Wikipedia">Wikipedia Current Events</a>
