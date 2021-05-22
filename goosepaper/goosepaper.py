@@ -11,6 +11,7 @@ from .util import PlacementPreference
 from .storyprovider import StoryProvider
 from .story import Story
 
+
 class Goosepaper:
     def __init__(
         self,
@@ -86,7 +87,7 @@ class Goosepaper:
             </body>
             </html>
         """
-    
+
     def to_pdf(
         self, filename: str, style: Type[Style] = AutumnStyle, font_size: int = 14
     ) -> str:
@@ -125,7 +126,6 @@ class Goosepaper:
                         break
                 else:
                     stories.append(a)
-
 
         book = epub.EpubBook()
         title = f"{self.title} - {self.subtitle}"

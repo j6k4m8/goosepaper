@@ -50,9 +50,10 @@ def load_config_file(filepath: str) -> dict:
         with open(filepath, "r") as fh:
             config_dict = json.load(fh)
     except ValueError as err:
-        print ("Honk Honk! Syntax Error in config file {0}".format(filepath))
+        print("Honk Honk! Syntax Error in config file {0}".format(filepath))
         exit(1)
     return config_dict
+
 
 def construct_story_providers_from_config_dict(config: dict):
 
@@ -79,7 +80,7 @@ def construct_story_providers_from_config_dict(config: dict):
         provider_name = provider_config["provider"]
         if provider_name not in StoryProviderConfigNames:
             raise ValueError(f"Provider {provider_name} does not exist.")
-        if provider_config["config"].get('skip')==True:
+        if provider_config["config"].get("skip") == True:
             continue
         else:
             stories.append(

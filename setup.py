@@ -44,7 +44,7 @@ setup(
         "console_scripts": [
             "goosepaper=goosepaper.__main__:main",
             "upload_to_remarkable=goosepaper.upload:upload",
-        ],
+        ]
     },
     author="Jordan Matelsky",
     install_requires=install_requires,

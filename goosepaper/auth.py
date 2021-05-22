@@ -1,6 +1,7 @@
 from rmapy.api import Client
 from rmapy.exceptions import AuthError
 
+
 def auth_client():
     client = Client()
 

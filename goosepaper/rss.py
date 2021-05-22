@@ -31,7 +31,6 @@ class RSSFeedStoryProvider(StoryProvider):
 
         doc = Document(req.content)
         source = entry["link"].split(".")[1]
-        story = Story(doc.title(), body_html=doc.summary(), byline=source) 
+        story = Story(doc.title(), body_html=doc.summary(), byline=source)
 
         return story
-
