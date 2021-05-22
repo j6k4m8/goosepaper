@@ -60,10 +60,12 @@ def construct_story_providers_from_config_dict(config: dict):
     from goosepaper.rss import RSSFeedStoryProvider
     from goosepaper.twitter import MultiTwitterStoryProvider
     from goosepaper.reddit import RedditHeadlineStoryProvider
+    from goosepaper.storyprovider import LoremStoryProvider
     from goosepaper.weather import WeatherStoryProvider
     from goosepaper.wikipedia import WikipediaCurrentEventsStoryProvider
 
     StoryProviderConfigNames = {
+        "lorem": LoremStoryProvider,
         "twitter": MultiTwitterStoryProvider,
         "reddit": RedditHeadlineStoryProvider,
         "weather": WeatherStoryProvider,
