@@ -96,20 +96,6 @@ class MultiParser:
             action="store_true",
             help="Delete the output file after upload.",
         )
-        self.parser.add_argument(
-            "--nocase",
-            required=False,
-            default=None,
-            action="store_true",
-            help='** COMING SOON: Enables case insensitivity on upload. By default folders "My Goosepapers" and "my goosepapers" are NOT the same folder. Enabling this feature means that they would be considered the same. No effect unless "-u" is specified.',
-        )
-        self.parser.add_argument(
-            "--strictlysane",
-            required=False,
-            default=None,
-            action="store_true",
-            help='** COMING SOON: Force strict sanity checking, implies "--no-case". Fail on ANY duplicate folder or document names in the root or target upload folders. No effect unless "-u" is specified.',
-        )
         self.args = self.parser.parse_args()
 
         # These are in order of precedence, low to highest
