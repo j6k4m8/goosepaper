@@ -16,10 +16,10 @@ class RSSFeedStoryProvider(StoryProvider):
 
     def get_stories(self, limit: int = 5) -> List[Story]:
         feed = feedparser.parse(self.feed_url)
-        limit = min(self.limit, len(feed.entries))
+        limit = min(limit, self.limit, len(feed.entries))
 
         with multiprocessing.Pool(multiprocessing.cpu_count()) as pool:
-            stories = pool.map(self.parallelizable_request, feed.entries)
+            stories = pool.map(self.parallelizable_request, feed.entries[:limit])
 
         return list(filter(None, stories))
 
