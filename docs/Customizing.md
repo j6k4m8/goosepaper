@@ -66,7 +66,7 @@ Default value is
 
 ### Fontsize
 
-The fontsize determines the fontsize for all text in the goosepaper, but not the title, subtitle, or weather if this i set in `stories`(covered later). The default value is 
+The fontsize determines the fontsize for all text in the goosepaper, but not the title, subtitle, or weather if this is set in `stories` (covered later). The default value is 
 ```json
 "font_size" : 14
 ```
