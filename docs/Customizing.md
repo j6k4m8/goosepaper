@@ -70,7 +70,7 @@ The fontsize determines the fontsize for all text in the goosepaper, but not the
 ```json
 "font_size" : 14
 ```
-(This only matters if your ouptup is set as a `.pdf`)
+(This only matters if your output is set as a `.pdf`)
   
 ## Style
 
