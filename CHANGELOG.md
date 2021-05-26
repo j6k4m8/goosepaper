@@ -13,6 +13,7 @@
     -   Added more error handling for file and syntax handling
     -   Change to using the `VissibleName` attribute in all cases rather than filename
     -   Added code for upcoming additional sanity checks
+    -   Added more information on how to customize your goospaper in the docs, @kwillno (#54)
 
 
 ### **0.3.1** (April 29 2021)
