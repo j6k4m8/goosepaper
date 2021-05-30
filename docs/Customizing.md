@@ -177,7 +177,7 @@ The parameters are as follows:
 ```json
 	"rss_path"	:	"https://feeds.npr.org/1001/rss.xml" (str 	- RSS feed you want to see results from.)
 	"limit"		:	20 				(int 	- Amount of reddit headlines to provide.)
-	"paralell"	:	true 			(bool 	- Whether to use multiprocessing to fetch in parallel)
+	"parallel"	:	true 			(bool 	- Whether to use multiprocessing to fetch in parallel)
 ```
 
 ### <a name="Twitter">Twitter</a>
