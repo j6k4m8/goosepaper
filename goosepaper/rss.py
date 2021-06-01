@@ -10,16 +10,22 @@ from .storyprovider import StoryProvider
 
 
 class RSSFeedStoryProvider(StoryProvider):
-    def __init__(self, rss_path: str, limit: int = 5) -> None:
+    def __init__(self, rss_path: str, limit: int = 5, parallel: bool = True) -> None:
         self.limit = limit
         self.feed_url = rss_path
+        self._parallel = parallel
 
     def get_stories(self, limit: int = 5) -> List[Story]:
         feed = feedparser.parse(self.feed_url)
         limit = min(limit, self.limit, len(feed.entries))
+        if limit == 0:
+            print(f"Sad honk :/ No entries found for feed {self.feed_url}...")
 
-        with multiprocessing.Pool(multiprocessing.cpu_count()) as pool:
-            stories = pool.map(self.parallelizable_request, feed.entries[:limit])
+        if self._parallel:
+            with multiprocessing.Pool(multiprocessing.cpu_count()) as pool:
+                stories = pool.map(self.parallelizable_request, feed.entries[:limit])
+        else:
+            stories = [self.parallelizable_request(e) for e in feed.entries[:limit]]
 
         return list(filter(None, stories))
 
@@ -31,7 +37,7 @@ class RSSFeedStoryProvider(StoryProvider):
 
         doc = Document(req.content)
         source = entry["link"].split(".")[1]
-        story = Story(doc.title(), body_html=doc.summary(), byline=source) 
+        story = Story(doc.title(), body_html=doc.summary(), byline=source)
 
         return story
 
