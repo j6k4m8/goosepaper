@@ -19,7 +19,7 @@
         {
             "provider": "rss",
             "config": {
-                "rss_path": "https://www.npr.org/feed/",
+                "rss_path": "https://feeds.npr.org/1001/rss.xml",
                 "limit": 5
             }
         },
