@@ -10,7 +10,16 @@ from .storyprovider import StoryProvider
 
 
 class RSSFeedStoryProvider(StoryProvider):
-    def __init__(self, rss_path: str, limit: int = 5, parallel: bool = True) -> None:
+    def __init__(
+        self,
+        title: str,
+        link: str,
+        rss_path: str,
+        limit: int = 5,
+        parallel: bool = True,
+    ) -> None:
+        self.title = title
+        self.link = link
         self.limit = limit
         self.feed_url = rss_path
         self._parallel = parallel
@@ -18,6 +27,11 @@ class RSSFeedStoryProvider(StoryProvider):
     def get_stories(self, limit: int = 5) -> List[Story]:
         feed = feedparser.parse(self.feed_url)
         limit = min(limit, self.limit, len(feed.entries))
+        title = Story(
+            headline=f"<h1>{self.title}</h1>",
+            body_html=f"""<a href={self.link}>{self.link}</a><br><br>""",
+        )
+
         if limit == 0:
             print(f"Sad honk :/ No entries found for feed {self.feed_url}...")
 
@@ -26,6 +40,8 @@ class RSSFeedStoryProvider(StoryProvider):
                 stories = pool.map(self.parallelizable_request, feed.entries[:limit])
         else:
             stories = [self.parallelizable_request(e) for e in feed.entries[:limit]]
+
+        stories.insert(0, title)
 
         return list(filter(None, stories))
 
@@ -37,7 +53,10 @@ class RSSFeedStoryProvider(StoryProvider):
 
         doc = Document(req.content)
         source = entry["link"].split(".")[1]
-        story = Story(doc.title(), body_html=doc.summary(), byline=source)
+        story = Story(
+            headline=f"<h2>{doc.title()}</h2>",
+            body_html=doc.summary().replace("h2", "h3").replace("h1", "h2"),
+            byline=source,
+        )
 
         return story
-

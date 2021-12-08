@@ -2,6 +2,7 @@ import argparse
 
 from goosepaper.util import load_config_file
 
+
 class MultiParser:
     def __init__(self):
         """
@@ -12,7 +13,7 @@ class MultiParser:
 
         self.parser = argparse.ArgumentParser(
             prog="goosepaper",
-            description="Goosepaper generates and delivers a daily newspaper in PDF format."
+            description="Goosepaper generates and delivers a daily newspaper in PDF format.",
         )
         self.parser.add_argument(
             "-c",
@@ -56,14 +57,13 @@ class MultiParser:
                 f"Could not find the configuration file at {self.args.config}"
             ) from e
 
-
     def argumentOrConfig(self, key, default=None, dependency=None):
         """
         Returns a command line argument or an entry from the config file
 
         Arguments:
             key: the command line option name (as in --key) or config file entry
-            default (str: None): the default value, returned  if the key was not set both as a 
+            default (str: None): the default value, returned  if the key was not set both as a
             command line argument and a config entry
             dependency (str: None): the name of a dependency command line argument or config
             entry that must be present for this call to be valid
@@ -86,5 +86,3 @@ class MultiParser:
             value = default
 
         return value
-
-

@@ -50,7 +50,7 @@ def load_config_file(filepath: str) -> dict:
         with open(filepath, "r") as fh:
             config_dict = json.load(fh)
     except ValueError as err:
-        print ("Honk Honk! Syntax Error in config file {0}".format(filepath))
+        print("Honk Honk! Syntax Error in config file {0}".format(filepath))
         exit(1)
     return config_dict
 
@@ -64,6 +64,9 @@ def construct_story_providers_from_config_dict(config: dict):
     from goosepaper.weather import WeatherStoryProvider
     from goosepaper.wikipedia import WikipediaCurrentEventsStoryProvider
 
+    # Custom storyproviders
+    from goosepaper.YrStoryProvider import YrStoryProvider
+
     StoryProviderConfigNames = {
         "lorem": LoremStoryProvider,
         "twitter": MultiTwitterStoryProvider,
@@ -71,6 +74,8 @@ def construct_story_providers_from_config_dict(config: dict):
         "weather": WeatherStoryProvider,
         "wikipedia_current_events": WikipediaCurrentEventsStoryProvider,
         "rss": RSSFeedStoryProvider,
+        # Custom providers
+        "yr": YrStoryProvider,
     }
 
     if "stories" not in config:
