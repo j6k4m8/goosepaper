@@ -1,5 +1,6 @@
 import datetime
 from typing import List, Optional, Union
+from hashlib import md5
 
 from .util import PlacementPreference, htmlize, StoryPriority
 
@@ -52,3 +53,6 @@ class Story:
             {self.body_html}
         </article>
         """
+
+    def to_hex(self) -> str:
+        return md5(self.headline.encode(encoding = 'UTF-8')).hexdigest()

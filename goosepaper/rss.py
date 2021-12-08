@@ -3,6 +3,7 @@ import feedparser
 from typing import List
 from readability import Document
 import multiprocessing
+import time
 
 from .story import Story
 from .util import PlacementPreference
@@ -17,12 +18,14 @@ class RSSFeedStoryProvider(StoryProvider):
         rss_path: str,
         limit: int = 5,
         parallel: bool = True,
+        memory: bool = False,
     ) -> None:
         self.title = title
         self.link = link
         self.limit = limit
         self.feed_url = rss_path
         self._parallel = parallel
+        self.memory = memory
 
     def get_stories(self, limit: int = 5) -> List[Story]:
         feed = feedparser.parse(self.feed_url)
@@ -41,6 +44,48 @@ class RSSFeedStoryProvider(StoryProvider):
         else:
             stories = [self.parallelizable_request(e) for e in feed.entries[:limit]]
 
+        if self.memory:
+            try:
+                # Find file and make target
+                with open(f"data/{self.title}.txt", "r") as f:
+                    data = f.readlines()
+                    f.close()
+
+                data = [data[i].strip() for i in range(len(data))]
+
+            except IOError:
+                with open(f"data/{self.title}.txt", "w") as f:
+                    f.write("")
+                    f.close()
+
+                data = []
+            
+            # Check if hash of newsstory is in file
+            hex_stories = [stories[i].to_hex() for i in range(len(stories))]
+
+            i = 0
+            while i < len(hex_stories):
+                if hex_stories[i] in data:
+                    del hex_stories[i]
+                    del stories[i]
+                else:
+                    i = i+1
+            
+            # Store new hashes of titles in datafile for each rss source
+            with open(f"data/{self.title}.txt", "a") as f:
+                    for digest in hex_stories:
+                        f.write(digest + "\n")
+                    f.close()
+
+        if len(stories) == 0:
+            emptyStory = Story(
+                headline= f"<h2>No new stories from {self.title}.</h2>",
+                body_html=f"""<p>You should add some new sources in your config file.</p>
+                <p>This message appears as you have enabled RSS-memory. This can be disabled in your config-file.</p>
+                """
+                )
+            stories.insert(0, emptyStory)
+
         stories.insert(0, title)
 
         return list(filter(None, stories))
@@ -51,12 +96,30 @@ class RSSFeedStoryProvider(StoryProvider):
             print(f"Honk! Couldn't grab content for {self.feed_url}")
             return None
 
+        byline = ""
+        try:
+            byline += entry["author"]
+        except KeyError:
+            print(f"Honk! Couldn't get author for {self.feed_url}")
+            byline += f"Unknown author"
+
+        try:
+            byline += " - " + entry["published"]
+            try:
+                byline += " (Updated: " + time.asctime(entry["updated_parsed"]) + " )"
+            except KeyError:
+                pass
+        except KeyError:
+            print(f"Honk! Couldn't get date for {self.feed_url}")
+            byline += f" - Unknown Date"
+        
+
         doc = Document(req.content)
         source = entry["link"].split(".")[1]
         story = Story(
             headline=f"<h2>{doc.title()}</h2>",
             body_html=doc.summary().replace("h2", "h3").replace("h1", "h2"),
-            byline=source,
+            byline=byline,
         )
 
         return story

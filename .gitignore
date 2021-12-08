@@ -143,3 +143,6 @@ dmypy.json
 .pyre/
 
 # End of https://www.gitignore.io/api/code,python,macos
+
+# Data-directories
+goosepaper/data/
