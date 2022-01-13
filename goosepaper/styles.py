@@ -1,6 +1,3 @@
-from typing import Union
-
-
 class Style:
     def get_stylesheets(self) -> list:
         ...

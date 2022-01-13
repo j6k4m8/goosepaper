@@ -7,14 +7,14 @@ from goosepaper.rss import RSSFeedStoryProvider
 from goosepaper.twitter import MultiTwitterStoryProvider
 from goosepaper.weather import WeatherStoryProvider
 from goosepaper.wikipedia import WikipediaCurrentEventsStoryProvider
-from goosepaper.upload import upload
+from goosepaper.upload import do_upload
 
 
 FNAME = datetime.now().strftime("%Y-%m-%d") + ".pdf"
 logging.info(f"Honk! I will save your temporary PDF to {FNAME}.")
 
 
-logging.info(f"Generating paper...")
+logging.info("Generating paper...")
 Goosepaper(
     [
         WikipediaCurrentEventsStoryProvider(),
@@ -29,5 +29,5 @@ Goosepaper(
 logging.info(f"Saved to PDF, now transferring...")
 
 
-# upload(FNAME)
+do_upload(FNAME)
 logging.info(f"HONK! I'm done :)")

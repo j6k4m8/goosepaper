@@ -1,6 +1,5 @@
 import argparse
-import os
-from os import getenv
+import pathlib
 
 from goosepaper.util import load_config_file
 
@@ -104,7 +103,7 @@ class MultiParser:
         #  3. Specified on the command line.
 
         defaultconfigs = [
-            os.getenv("HOME") + "/.goosepaper.json",
+            str(pathlib.Path("~").expanduser()) + "/.goosepaper.json",
             "./goosepaper.json",
             self.args.config,
         ]
@@ -128,7 +127,7 @@ class MultiParser:
 
         if self.args.config:
             try:
-                valid = load_config_file(self.args.config)
+                load_config_file(self.args.config)
             except FileNotFoundError:
                 print(
                     "Honk! Honk! Somebody stole my egg! Couldn't find config file ({0}) specified on the command line. Aborting migration.".format(
@@ -190,7 +189,7 @@ class MultiParser:
 
         Arguments:
             key: the command line option name (as in --key) or config file entry
-            default (str: None): the default value, returned  if the key was not set both as a 
+            default (str: None): the default value, returned if the key was not set both as a
             command line argument and a config entry
             dependency (str: None): the name of a dependency command line argument or config
             entry that must be present for this call to be valid
@@ -208,7 +207,7 @@ class MultiParser:
                 self.parser.error(f"--{key} requires --{dependency}.")
             value = d[key]
         elif key in self.config:
-            value = self.config[key]
+            value = self.config[key] or default
         else:
             value = default
 

@@ -1,10 +1,8 @@
+from goosepaper.multiparser import MultiParser
 from rmapy.document import ZipDocument
-from rmapy.api import Client, Document, Folder
+from rmapy.api import Folder
 
 import os
-from os import remove
-
-import argparse
 from pathlib import Path
 
 from .auth import auth_client
@@ -84,7 +82,10 @@ def getallitems(client):
     return items
 
 
-def do_upload(filepath, multiparser):
+def upload(filepath, multiparser=None):
+
+    if not multiparser:
+        multiparser = MultiParser()
 
     filepath = Path(filepath)
     replace = (
