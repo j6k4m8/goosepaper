@@ -3,7 +3,7 @@ import datetime
 
 from goosepaper.goosepaper import Goosepaper
 from goosepaper.util import construct_story_providers_from_config_dict
-from goosepaper.upload import do_upload
+from goosepaper.upload import upload
 from goosepaper.multiparser import MultiParser
 
 
@@ -48,7 +48,7 @@ def main():
                 )
             )
         else:
-            do_upload(filepath=filename, multiparser=multiparser)
+            upload(filepath=filename, multiparser=multiparser)
 
     return 0
 

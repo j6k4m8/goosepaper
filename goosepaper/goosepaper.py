@@ -1,5 +1,4 @@
 import datetime
-import os
 
 from uuid import uuid4
 from typing import List, Type
@@ -9,7 +8,6 @@ from .styles import Style, AutumnStyle
 
 from .util import PlacementPreference
 from .storyprovider import StoryProvider
-from .story import Story
 
 
 class Goosepaper:
@@ -43,7 +41,12 @@ class Goosepaper:
         stories = self.get_stories()
 
         # Get ears:
-        ears = [s for s in stories if s.placement_preference == PlacementPreference.EAR]
+        ears = [
+            s
+            for s in stories
+            # TODO: Which to prioritize?
+            if s.placement_preference == PlacementPreference.EAR
+        ]
         right_ear = ""
         left_ear = ""
         if len(ears) > 0:
@@ -67,7 +70,10 @@ class Goosepaper:
         return f"""
             <html>
             <head>
-                <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+                <meta
+                    http-equiv="Content-type"
+                    content="text/html;
+                    charset=utf-8" />
                 <meta charset="UTF-8" />
             </head>
             <body>
@@ -89,7 +95,10 @@ class Goosepaper:
         """
 
     def to_pdf(
-        self, filename: str, style: Type[Style] = AutumnStyle, font_size: int = 14
+        self,
+        filename: str,
+        style: Type[Style] = AutumnStyle,
+        font_size: int = 14,
     ) -> str:
         """
         Renders the current Goosepaper to a PDF file on disk.
@@ -107,7 +116,10 @@ class Goosepaper:
         return filename
 
     def to_epub(
-        self, filename: str, style: Type[Style] = AutumnStyle, font_size: int = 14
+        self,
+        filename: str,
+        style: Type[Style] = AutumnStyle,
+        font_size: int = 14,
     ) -> str:
 
         """
@@ -159,7 +171,11 @@ class Goosepaper:
 
         if no_headlines:
             file = f"{uuid4().hex}.xhtml"
-            chapter = epub.EpubHtml(title="From Reddit", file_name=file, lang="en")
+            chapter = epub.EpubHtml(
+                title="From Reddit",
+                file_name=file,
+                lang="en",
+            )
             links.append(file)
             chapter.content = "<br>".join([s.to_html() for s in no_headlines])
             book.add_item(chapter)

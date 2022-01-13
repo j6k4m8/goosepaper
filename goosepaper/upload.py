@@ -1,10 +1,8 @@
+from goosepaper.multiparser import MultiParser
 from rmapy.document import ZipDocument
-from rmapy.api import Client, Document, Folder
+from rmapy.api import Folder
 
 import os
-from os import remove
-
-import argparse
 from pathlib import Path
 
 from .auth import auth_client
@@ -35,7 +33,6 @@ def sanitycheck(folder: str, client):
     foldercountdif = abs(len(uniquefolders) - len(rootfolders))
 
     folderduperr = ""
-    foldercountdiff = 0
 
     if foldercountdif == 1:
         folderduperr = "I found a duplicate folder name in the root of your RM.\n"
@@ -84,7 +81,10 @@ def getallitems(client):
     return items
 
 
-def do_upload(filepath, multiparser):
+def upload(filepath, multiparser=None):
+
+    if not multiparser:
+        multiparser = MultiParser()
 
     filepath = Path(filepath)
     replace = (
@@ -101,9 +101,10 @@ def do_upload(filepath, multiparser):
         nocase = True
 
     if multiparser.argumentOrConfig("showconfig"):
-        print("\nParameters passed to do_upload\n----------------\n")
+        print("\nParameters passed to upload\n----------------\n")
         print(
-            "Replace:\t{0}\nFolder:\t\t{1}\nCleanup:\t{2}\nStrictlysane:\t{3}\nNocase:\t\t{4}\nFilepath:\t{5}\n".format(
+            "Replace:\t{0}\nFolder:\t\t{1}\nCleanup:\t{2}"
+            "\nStrictlysane:\t{3}\nNocase:\t\t{4}\nFilepath:\t{5}\n".format(
                 replace, folder, cleanup, strictlysane, nocase, filepath
             )
         )
@@ -117,17 +118,17 @@ def do_upload(filepath, multiparser):
     if not validateFolder(folder):
         return False
 
-    # Added error handling to deal with possible race condition where the file is mangled
-    # or not written out before the upload actually occurs such as an AV false positive.
-    # 'pdf' is a simple throwaway file handle to make sure that we retain control of the
-    # file while it's being imported.
+    # Added error handling to deal with possible race condition where the file
+    # is mangled or not written out before the upload actually occurs such as
+    # an AV false positive. 'pdf' is a simple throwaway file handle to make
+    # sure that we retain control of the file while it's being imported.
+
+    fpr = filepath.resolve()
 
     try:
-        with open(filepath.resolve()) as pdf:
-            doc = ZipDocument(doc=str(filepath.resolve()))
+        doc = ZipDocument(doc=str(fpr))
     except IOError as err:
-        print(f"Error locating or opening {filepath}")
-        return False
+        raise IOError(f"Error locating or opening {filepath} during upload.") from err
 
     paperCandidates = []
     paperFolder = None
@@ -140,39 +141,39 @@ def do_upload(filepath, multiparser):
             and item.Type == "CollectionType"  # is a folder
             and item.VissibleName.lower()
             == folder.lower()  # has the name we're looking for
-            and (item.Parent == None or item.Parent == "")
+            and (item.Parent is None or item.Parent == "")
         ):  # is not in another folder
             paperFolder = item
 
         # is it possibly the file we are looking for?
-        elif (
-            item.Type == "DocumentType"
-            and item.VissibleName.lower() == str(doc.metadata["VissibleName"]).lower()
+        elif item.Type == "DocumentType" and (
+            item.VissibleName.lower() == str(doc.metadata["VissibleName"]).lower()
         ):
             paperCandidates.append(item)
 
-    for paper in paperCandidates:
-        parent = client.get_doc(paper.Parent)
+    # TODO: if the folder was found, check if a paper candidate is in it
+    # for paper in paperCandidates:
+    #     parent = client.get_doc(paper.Parent)
 
-        # if the folder was found, check if a paper candidate is in it
     paper = None
     if len(paperCandidates) > 0:
         if folder:
-            filtered = list(
-                filter(lambda item: item.Parent == paperFolder.ID, paperCandidates)
-            )
+            filtered = [
+                item for item in paperCandidates if item.Parent == paperFolder.ID
+            ]
         else:
             filtered = list(
                 filter(
                     lambda item: item.Parent != "trash"
-                    and client.get_doc(item.Parent) == None,
+                    and client.get_doc(item.Parent) is None,
                     paperCandidates,
                 )
             )
 
         if len(filtered) > 1 and replace:
             print(
-                f"multiple candidate papers with the same name {filtered[0].VissibleName}, don't know which to delete"
+                "multiple candidate papers with the same name "
+                f"{filtered[0].VissibleName}, don't know which to delete"
             )
             return False
         if len(filtered) == 1:  # found the outdated paper
@@ -202,14 +203,9 @@ def do_upload(filepath, multiparser):
             print("Honk! Upload successful!")
             if cleanup:
                 try:
-                    os.remove(filepath.resolve())
-                except:
-                    print(
-                        "Honk! Honk! Failed to remove file after upload: {0}".format(
-                            filepath.resolve()
-                        )
-                    )
-                    return False
+                    os.remove(fpr)
+                except Exception as err:
+                    raise IOError(f"Failed to remove file after upload: {fpr}") from err
         else:
             print("Honk! Error with upload!")
         return result

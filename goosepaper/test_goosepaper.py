@@ -1,13 +1,6 @@
-import pytest
-
 from .goosepaper import Goosepaper
 
 from .storyprovider import LoremStoryProvider
-
-
-def test_cannot_create_goosepaper_without_args():
-    with pytest.raises(TypeError):
-        g = Goosepaper()  # type: ignore
 
 
 def test_can_create_goosepaper_with_no_providers():
