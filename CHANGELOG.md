@@ -1,6 +1,6 @@
 # CHANGELOG
 
-### **Unreleased**
+### **0.4.0** (January 13 2022)
 
 > Multiple fixes and improvements
 
