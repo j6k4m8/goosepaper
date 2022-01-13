@@ -4,7 +4,6 @@ from .util import (
     clean_text,
     construct_story_providers_from_config_dict,
 )
-from .twitter import MultiTwitterStoryProvider
 
 
 def test_htmlize():

@@ -1,1 +1,1 @@
-from .goosepaper import Goosepaper
+from .goosepaper import Goosepaper  # noqa

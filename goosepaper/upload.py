@@ -33,7 +33,6 @@ def sanitycheck(folder: str, client):
     foldercountdif = abs(len(uniquefolders) - len(rootfolders))
 
     folderduperr = ""
-    foldercountdiff = 0
 
     if foldercountdif == 1:
         folderduperr = "I found a duplicate folder name in the root of your RM.\n"
@@ -127,11 +126,9 @@ def upload(filepath, multiparser=None):
     fpr = filepath.resolve()
 
     try:
-        with open(fpr) as pdf:
-            doc = ZipDocument(doc=str(fpr))
+        doc = ZipDocument(doc=str(fpr))
     except IOError as err:
-        print(f"Error locating or opening {filepath}")
-        return False
+        raise IOError(f"Error locating or opening {filepath} during upload.") from err
 
     paperCandidates = []
     paperFolder = None
@@ -144,7 +141,7 @@ def upload(filepath, multiparser=None):
             and item.Type == "CollectionType"  # is a folder
             and item.VissibleName.lower()
             == folder.lower()  # has the name we're looking for
-            and (item.Parent == None or item.Parent == "")
+            and (item.Parent is None or item.Parent == "")
         ):  # is not in another folder
             paperFolder = item
 
@@ -154,10 +151,10 @@ def upload(filepath, multiparser=None):
         ):
             paperCandidates.append(item)
 
-    for paper in paperCandidates:
-        parent = client.get_doc(paper.Parent)
+    # TODO: if the folder was found, check if a paper candidate is in it
+    # for paper in paperCandidates:
+    #     parent = client.get_doc(paper.Parent)
 
-        # if the folder was found, check if a paper candidate is in it
     paper = None
     if len(paperCandidates) > 0:
         if folder:
@@ -168,7 +165,7 @@ def upload(filepath, multiparser=None):
             filtered = list(
                 filter(
                     lambda item: item.Parent != "trash"
-                    and client.get_doc(item.Parent) == None,
+                    and client.get_doc(item.Parent) is None,
                     paperCandidates,
                 )
             )
@@ -207,9 +204,8 @@ def upload(filepath, multiparser=None):
             if cleanup:
                 try:
                     os.remove(fpr)
-                except:
-                    print(f"Failed to remove file after upload: {fpr}")
-                    return False
+                except Exception as err:
+                    raise IOError(f"Failed to remove file after upload: {fpr}") from err
         else:
             print("Honk! Error with upload!")
         return result
