@@ -22,7 +22,7 @@ class Goosepaper:
         self.story_providers = story_providers
         self.title = title if title else "Daily Goosepaper"
         self.subtitle = subtitle + "\n" if subtitle else ""
-        self.subtitle += datetime.datetime.today().strftime("%B %d, %Y")
+        self.subtitle += datetime.datetime.today().strftime("%B %d, %Y %H:%M")
 
     def get_stories(self, deduplicate: bool = False):
         stories = []
@@ -109,14 +109,15 @@ class Goosepaper:
     def to_epub(
         self, filename: str, style: Type[Style] = AutumnStyle, font_size: int = 14
     ) -> str:
+
         """
         Render the current Goosepaper to an epub file on disk
         """
         stories = []
+
         for prov in self.story_providers:
             new_stories = prov.get_stories()
             for a in new_stories:
-
                 if not a.headline:
                     stories.append(a)
                     continue

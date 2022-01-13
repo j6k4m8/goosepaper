@@ -30,6 +30,14 @@
         {
             "provider": "reddit",
             "config": { "subreddit": "todayilearned" }
-        }
+        },
+	{
+	    "provider": "rss",
+	    "config": {
+		"rss_path": "https://krebsonsecurity.com/feed/",
+		"limit": 1,
+		"skip": true
+	    }
+	}
     ]
 }

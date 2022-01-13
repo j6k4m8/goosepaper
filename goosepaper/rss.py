@@ -40,4 +40,3 @@ class RSSFeedStoryProvider(StoryProvider):
         story = Story(doc.title(), body_html=doc.summary(), byline=source)
 
         return story
-
