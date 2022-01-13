@@ -5,12 +5,29 @@ from readability import Document
 import multiprocessing
 
 from .story import Story
-from .util import PlacementPreference
 from .storyprovider import StoryProvider
 
 
+def parallelizable_request(entry):
+    req = requests.get(entry["link"])
+    if not req.ok:
+        print(f"Honk! Couldn't get content for {entry['link']}")
+        return None
+
+    doc = Document(req.content)
+    source = entry["link"].split(".")[1]
+    story = Story(doc.title(), body_html=doc.summary(), byline=source)
+
+    return story
+
+
 class RSSFeedStoryProvider(StoryProvider):
-    def __init__(self, rss_path: str, limit: int = 5, parallel: bool = True) -> None:
+    def __init__(
+        self,
+        rss_path: str,
+        limit: int = 5,
+        parallel: bool = True,
+    ) -> None:
         self.limit = limit
         self.feed_url = rss_path
         self._parallel = parallel
@@ -23,20 +40,11 @@ class RSSFeedStoryProvider(StoryProvider):
 
         if self._parallel:
             with multiprocessing.Pool(multiprocessing.cpu_count()) as pool:
-                stories = pool.map(self.parallelizable_request, feed.entries[:limit])
+                stories = pool.map(
+                    parallelizable_request,
+                    feed.entries[:limit],
+                )
         else:
-            stories = [self.parallelizable_request(e) for e in feed.entries[:limit]]
+            stories = [parallelizable_request(e) for e in feed.entries[:limit]]
 
         return list(filter(None, stories))
-
-    def parallelizable_request(self, entry):
-        req = requests.get(entry["link"])
-        if not req.ok:
-            print(f"Honk! Couldn't grab content for {self.feed_url}")
-            return None
-
-        doc = Document(req.content)
-        source = entry["link"].split(".")[1]
-        story = Story(doc.title(), body_html=doc.summary(), byline=source)
-
-        return story

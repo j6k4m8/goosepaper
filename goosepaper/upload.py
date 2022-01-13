@@ -102,9 +102,10 @@ def upload(filepath, multiparser=None):
         nocase = True
 
     if multiparser.argumentOrConfig("showconfig"):
-        print("\nParameters passed to do_upload\n----------------\n")
+        print("\nParameters passed to upload\n----------------\n")
         print(
-            "Replace:\t{0}\nFolder:\t\t{1}\nCleanup:\t{2}\nStrictlysane:\t{3}\nNocase:\t\t{4}\nFilepath:\t{5}\n".format(
+            "Replace:\t{0}\nFolder:\t\t{1}\nCleanup:\t{2}"
+            "\nStrictlysane:\t{3}\nNocase:\t\t{4}\nFilepath:\t{5}\n".format(
                 replace, folder, cleanup, strictlysane, nocase, filepath
             )
         )
@@ -118,14 +119,16 @@ def upload(filepath, multiparser=None):
     if not validateFolder(folder):
         return False
 
-    # Added error handling to deal with possible race condition where the file is mangled
-    # or not written out before the upload actually occurs such as an AV false positive.
-    # 'pdf' is a simple throwaway file handle to make sure that we retain control of the
-    # file while it's being imported.
+    # Added error handling to deal with possible race condition where the file
+    # is mangled or not written out before the upload actually occurs such as
+    # an AV false positive. 'pdf' is a simple throwaway file handle to make
+    # sure that we retain control of the file while it's being imported.
+
+    fpr = filepath.resolve()
 
     try:
-        with open(filepath.resolve()) as pdf:
-            doc = ZipDocument(doc=str(filepath.resolve()))
+        with open(fpr) as pdf:
+            doc = ZipDocument(doc=str(fpr))
     except IOError as err:
         print(f"Error locating or opening {filepath}")
         return False
@@ -146,9 +149,8 @@ def upload(filepath, multiparser=None):
             paperFolder = item
 
         # is it possibly the file we are looking for?
-        elif (
-            item.Type == "DocumentType"
-            and item.VissibleName.lower() == str(doc.metadata["VissibleName"]).lower()
+        elif item.Type == "DocumentType" and (
+            item.VissibleName.lower() == str(doc.metadata["VissibleName"]).lower()
         ):
             paperCandidates.append(item)
 
@@ -159,9 +161,9 @@ def upload(filepath, multiparser=None):
     paper = None
     if len(paperCandidates) > 0:
         if folder:
-            filtered = list(
-                filter(lambda item: item.Parent == paperFolder.ID, paperCandidates)
-            )
+            filtered = [
+                item for item in paperCandidates if item.Parent == paperFolder.ID
+            ]
         else:
             filtered = list(
                 filter(
@@ -173,7 +175,8 @@ def upload(filepath, multiparser=None):
 
         if len(filtered) > 1 and replace:
             print(
-                f"multiple candidate papers with the same name {filtered[0].VissibleName}, don't know which to delete"
+                "multiple candidate papers with the same name "
+                f"{filtered[0].VissibleName}, don't know which to delete"
             )
             return False
         if len(filtered) == 1:  # found the outdated paper
@@ -203,13 +206,9 @@ def upload(filepath, multiparser=None):
             print("Honk! Upload successful!")
             if cleanup:
                 try:
-                    os.remove(filepath.resolve())
+                    os.remove(fpr)
                 except:
-                    print(
-                        "Honk! Honk! Failed to remove file after upload: {0}".format(
-                            filepath.resolve()
-                        )
-                    )
+                    print(f"Failed to remove file after upload: {fpr}")
                     return False
         else:
             print("Honk! Error with upload!")

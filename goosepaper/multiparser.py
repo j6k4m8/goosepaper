@@ -14,8 +14,8 @@ class NewLineFormatter(argparse.HelpFormatter):
 class MultiParser:
     def __init__(self):
         """
-        Creates a new MultiParser, which abstracts acessing command line arguments and config
-        file entries.
+        Creates a new MultiParser, which abstracts acessing command line
+        arguments and config file entries.
 
         """
 
@@ -107,7 +107,6 @@ class MultiParser:
             "./goosepaper.json",
             self.args.config,
         ]
-        foundconfig = False
         self.config = {}
         outputcount = 0
         debug_configs = True if self.args.showconfig else None
@@ -118,21 +117,26 @@ class MultiParser:
 
             pp = pprint.PrettyPrinter(indent=3)
             print(
-                "Command line arguments received:\n(including default values)\n--------------------------------"
+                "\n".join(
+                    [
+                        "Command line arguments received:",
+                        "(including default values)",
+                        "--------------------------------",
+                    ]
+                )
             )
             pp.pprint(self.args)
 
-        # If passed a config file on the command line, assume it's important so fail
-        # if not readable.
+        # If passed a config file on the command line, assume it's important
+        # so fail if not readable.
 
         if self.args.config:
             try:
                 load_config_file(self.args.config)
             except FileNotFoundError:
                 print(
-                    "Honk! Honk! Somebody stole my egg! Couldn't find config file ({0}) specified on the command line. Aborting migration.".format(
-                        self.args.config
-                    )
+                    f"Couldn't find config file ({self.args.config}) "
+                    "specified on the command line. Aborting."
                 )
                 exit(1)
 
@@ -146,13 +150,13 @@ class MultiParser:
                         tempconfig["stories"].append(story)
 
                 self.config.update(tempconfig)
-                foundconfig = True
                 if debug_configs:
                     print(
-                        f"\nConfig options found in {defconfigfile}:\n---------------------\n"
+                        f"\nConfig options found in {defconfigfile}:"
+                        "\n---------------------\n"
                     )
                     pp.pprint(load_config_file(defconfigfile))
-            except FileNotFoundError as e:
+            except FileNotFoundError:
                 pass
 
         if debug_configs:
@@ -160,50 +164,32 @@ class MultiParser:
             pp.pprint(self.config)
             print("")
 
-        if foundconfig is not True:
-            print(
-                "Honk! Honk! Unable to locate a config file. You must have at least one of the following! '$HOME/.goosepaper.json', './goosepaper.json', or a config file specified on the command line."
-            )
-            exit(1)
-
-        # Not sure if you should able to override the output destination or not.
-
-        # if outputcount > 0:
-        #    print ("Honk! Honk! You've specified more than one output destination in your config files. A flying flock can only have one lead goose in a skein. Please resolve this.")
-        #    exit(1)
-        # if 'output' in self.config and self.args.output:
-        #    print ("Honk! Honk! You have both config file and command line output file options. I don't know which flock with which to fly with so I'm not flying anywhere. Please fix.")
-        #    exit(1)
-
-        # --noreplace only makes sense to me on the command line, so if present in a config file ignore it.
-        # Same with --noupload.
-
         if "noreplace" in self.config:
             del self.config["noreplace"]
-        if "noupload" in self.config:
-            del self.config["upload"]
 
     def argumentOrConfig(self, key, default=None, dependency=None):
         """
         Returns a command line argument or an entry from the config file
 
         Arguments:
-            key: the command line option name (as in --key) or config file entry
-            default (str: None): the default value, returned if the key was not set both as a
-            command line argument and a config entry
-            dependency (str: None): the name of a dependency command line argument or config
-            entry that must be present for this call to be valid
+            key: the command line option name (as in --key) or config entry
+            default (str: None): the default value, returned if the key was not
+                set both as a command line argument and a config entry
+            dependency (str: None): the name of a dependency command line
+                argument or config entry that must be present for this call to
+                be valid
 
         Returns:
-            If a command line option with 'key' name was set, returns it. Else, if a config
-            entry named 'key' was set, returns it. If none of the previous was returned,
-            returns the default value specified by the 'default' argument.
+            If a command line option with 'key' name was set, returns it. Else,
+                if a config entry named 'key' was set, returns it. If none of
+                the previous was returned, returns the default value specified
+                by the 'default' argument.
 
         """
 
         d = vars(self.args)
         if key in d and d[key] is not None:
-            if dependency and (not dependency in d):
+            if dependency and dependency not in d:
                 self.parser.error(f"--{key} requires --{dependency}.")
             value = d[key]
         elif key in self.config:
