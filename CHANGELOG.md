@@ -5,16 +5,24 @@
 > Multiple fixes and improvements
 
 -   Fixes
+
     -   Changed some document name comparisons to case insensitive (prevent document overwrites, esp. for Windows users)
     -   Switched upload to require named arguments rather than positional
     -   Fixes the `limit` arg in the RSS provider, which was being ignored
+
 -   Improvements
+
     -   Improve typing support
     -   Added more error handling for file and syntax handling
     -   Change to using the `VissibleName` attribute in all cases rather than filename
     -   Added code for upcoming additional sanity checks
     -   Added more information on how to customize your goospaper in the docs, @kwillno (#54)
+    -   Adds the option to provide a global config (thanks @sedennial! #48)
+    -   Lots of new options to customize the upload and generation process (thanks @sedennial! #48)
 
+-   Housekeeping
+
+    -   Fixes a bunch of flake8 errors and warnings to keep things tidy
 
 ### **0.3.1** (April 29 2021)
 
