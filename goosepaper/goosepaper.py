@@ -7,7 +7,7 @@ from ebooklib import epub
 from .styles import Style, AutumnStyle
 
 from .util import PlacementPreference
-from .storyprovider import StoryProvider
+from .storyprovider.storyprovider import StoryProvider
 
 
 class Goosepaper:

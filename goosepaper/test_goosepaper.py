@@ -1,6 +1,6 @@
 from .goosepaper import Goosepaper
 
-from .storyprovider import LoremStoryProvider
+from .storyprovider.storyprovider import LoremStoryProvider
 
 
 def test_can_create_goosepaper_with_no_providers():

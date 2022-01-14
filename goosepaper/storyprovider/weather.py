@@ -1,9 +1,9 @@
 import requests
 from typing import List
 
-from .util import PlacementPreference
+from ..util import PlacementPreference
 from .storyprovider import StoryProvider
-from .story import Story
+from ..story import Story
 
 
 class WeatherStoryProvider(StoryProvider):
@@ -14,7 +14,7 @@ class WeatherStoryProvider(StoryProvider):
     def CtoF(self, temp: float) -> float:
         return (temp * 9 / 5) + 32
 
-    def get_stories(self, limit: int = 1) -> List[Story]:
+    def get_stories(self, limit: int = 1, **kwargs) -> List[Story]:
         weatherReq = requests.get(
             f"https://www.metaweather.com/api/location/{self.woe}/"
         ).json()

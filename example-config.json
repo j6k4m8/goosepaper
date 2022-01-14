@@ -8,6 +8,7 @@
         {
             "provider": "twitter",
             "config": {
+                "since_days_ago": 0.5,
                 "usernames": ["axios", "NPR"],
                 "limit_per": 8
             }
@@ -31,13 +32,13 @@
             "provider": "reddit",
             "config": { "subreddit": "todayilearned" }
         },
-	{
-	    "provider": "rss",
-	    "config": {
-		"rss_path": "https://krebsonsecurity.com/feed/",
-		"limit": 1,
-		"skip": true
-	    }
-	}
+        {
+            "provider": "rss",
+            "config": {
+                "rss_path": "https://krebsonsecurity.com/feed/",
+                "limit": 1,
+                "skip": true
+            }
+        }
     ]
 }
