@@ -11,16 +11,17 @@ from .storyprovider.storyprovider import StoryProvider
 
 
 def _get_style(style):
-    if isinstance(style, Style):
-        style_obj = style()
-    elif isinstance(style, str):
+    if isinstance(style, str):
         style_obj = {
             "FifthAvenue": FifthAvenueStyle,
             "Autumn": AutumnStyle,
             "Academy": AcademyStyle,
         }.get(style, FifthAvenueStyle)()
     else:
-        raise ValueError(f"Invalid style {style}")
+        try:
+            style_obj = style()
+        except Exception as e:
+            raise ValueError(f"Invalid style {style}") from e
     return style_obj
 
 
