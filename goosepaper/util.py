@@ -58,12 +58,12 @@ def load_config_file(filepath: str) -> dict:
 
 def construct_story_providers_from_config_dict(config: dict):
 
-    from goosepaper.rss import RSSFeedStoryProvider
-    from goosepaper.twitter import MultiTwitterStoryProvider
-    from goosepaper.reddit import RedditHeadlineStoryProvider
-    from goosepaper.storyprovider import LoremStoryProvider
-    from goosepaper.weather import WeatherStoryProvider
-    from goosepaper.wikipedia import WikipediaCurrentEventsStoryProvider
+    from goosepaper.storyprovider.rss import RSSFeedStoryProvider
+    from goosepaper.storyprovider.twitter import MultiTwitterStoryProvider
+    from goosepaper.storyprovider.reddit import RedditHeadlineStoryProvider
+    from goosepaper.storyprovider.storyprovider import LoremStoryProvider
+    from goosepaper.storyprovider.weather import WeatherStoryProvider
+    from goosepaper.storyprovider.wikipedia import WikipediaCurrentEventsStoryProvider
 
     StoryProviderConfigNames = {
         "lorem": LoremStoryProvider,
