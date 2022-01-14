@@ -83,10 +83,9 @@ def construct_story_providers_from_config_dict(config: dict):
         provider_name = provider_config["provider"]
         if provider_name not in StoryProviderConfigNames:
             raise ValueError(f"Provider {provider_name} does not exist.")
-        if provider_config["config"].get("skip"):
+        arguments = provider_config["config"] if "config" in provider_config else {}
+        if arguments.get("skip"):
             continue
         else:
-            stories.append(
-                StoryProviderConfigNames[provider_name](**provider_config["config"])
-            )
+            stories.append(StoryProviderConfigNames[provider_name](**arguments))
     return stories
