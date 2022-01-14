@@ -21,6 +21,7 @@ def main():
     if not nostory:  # global nostory flag
         story_providers = construct_story_providers_from_config_dict(config)
         font_size = multiparser.argumentOrConfig("font_size", 14)
+        style = multiparser.argumentOrConfig("style", "FifthAvenue")
 
         title = config["title"] if "title" in config else None
         subtitle = config["subtitle"] if "subtitle" in config else None
@@ -33,9 +34,9 @@ def main():
             with open(filename, "w") as fh:
                 fh.write(paper.to_html())
         elif filename.endswith(".pdf"):
-            paper.to_pdf(filename, font_size=font_size)
+            paper.to_pdf(filename, font_size=font_size, style=style)
         elif filename.endswith(".epub"):
-            paper.to_epub(filename, font_size=font_size)
+            paper.to_epub(filename, font_size=font_size, style=style)
         else:
             print(f"Unknown file extension '{filename.split('.')[-1]}'.")
             exit(1)

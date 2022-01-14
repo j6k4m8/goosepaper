@@ -23,6 +23,7 @@ class AutumnStyle(Style):
             margin-top: 0.5in;
             margin-right: 0.2in;
             margin-left: 0.65in;
+            margin-bottom: 0.2in;
         }
 
         body {
@@ -156,10 +157,11 @@ class FifthAvenueStyle(Style):
             margin-top: 0.5in;
             margin-right: 0.2in;
             margin-left: 0.65in;
+            margin-bottom: 0.2in;
         }
 
         body {
-            font-family: "Source Serif Pro";
+            font-family: "Open Sans";
         }
 
         .header {
@@ -267,6 +269,124 @@ class FifthAvenueStyle(Style):
 
         .row {
             column-count: 2;
+        }
+
+        """
+        )
+
+
+class AcademyStyle(Style):
+    def get_stylesheets(self) -> list:
+        return []
+
+    def get_name(self):
+        return "Academy"
+
+    def get_css(self, font_size: int = 14):
+        return (
+            """
+        @page {
+            margin-top: 0.5in;
+            margin-right: 0.2in;
+            margin-left: 0.65in;
+            margin-bottom: 0.2in;
+        }
+
+        body {
+            font-family: "Times New Roman";
+        }
+
+        .header {
+            padding: 1em;
+            height: 10em;
+        }
+
+        .header div {
+            float: left;
+            display: block;
+        }
+
+        .header .ear {
+            float: right;
+        }
+
+        .stories {
+            font-size: """
+            + str(font_size)
+            + """pt;
+        }
+
+        .ear article {
+            border: 3px groove black;
+            padding: 1em;
+            margin: 1em;
+            font-size: 11pt;
+        }
+        .ear article h1 {
+            font-family: "Times New Roman";
+            font-size: 10pt;
+            font-weight: normal;
+        }
+
+        article {
+            text-align: left;
+            line-height: 1.4em;
+        }
+
+        article>h1 {
+            font-family: "Times New Roman";
+            font-weight: 400;
+            font-size: 23pt;
+            text-indent: 0;
+            margin-bottom: 0.25em;
+            line-height: 1.2em;
+            text-align: left;
+        }
+        article>h1.priority-low {
+            font-family: "Times New Roman";
+            font-size: 18pt;
+            font-weight: 400;
+            text-indent: 0;
+            margin-bottom: 0.15em;
+        }
+
+        article>h4.byline {
+            font-family: "Times New Roman";
+            font-size: """
+            + str(font_size)
+            + """pt;
+            font-weight: 400;
+            text-indent: 0;
+        }
+
+        article>h3 {
+            font-family: "Times New Roman";
+            font-weight: 400;
+            font-size: 18pt;
+            text-indent: 0;
+        }
+
+        section>h1,
+        section>h2,
+        section>h3,
+        section>h4,
+        section>h5 {
+            border-left: 5px solid #dedede;
+            padding-left: 1em;
+        }
+
+        figure {
+            border: 1px solid black;
+            text-indent: 0;
+            width: auto;
+        }
+
+        .stories article.story img {
+            width: 100%;
+        }
+
+        figure>span {
+            font-size: 0;
         }
 
         """

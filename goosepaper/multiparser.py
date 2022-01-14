@@ -102,11 +102,15 @@ class MultiParser:
         #  2. Local directory from which goosepaper is called
         #  3. Specified on the command line.
 
-        defaultconfigs = list(set([
-            str(pathlib.Path("~").expanduser()) + "/.goosepaper.json",
-            "goosepaper.json",
-            self.args.config,
-        ]))
+        defaultconfigs = list(
+            set(
+                [
+                    str(pathlib.Path("~").expanduser()) + "/.goosepaper.json",
+                    "goosepaper.json",
+                    self.args.config,
+                ]
+            )
+        )
         self.config = {}
         outputcount = 0
         debug_configs = True if self.args.showconfig else None

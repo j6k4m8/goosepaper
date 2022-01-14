@@ -2,11 +2,11 @@ import logging
 from datetime import datetime
 
 from goosepaper.goosepaper import Goosepaper
-from goosepaper.reddit import RedditHeadlineStoryProvider
-from goosepaper.rss import RSSFeedStoryProvider
-from goosepaper.twitter import MultiTwitterStoryProvider
-from goosepaper.weather import WeatherStoryProvider
-from goosepaper.wikipedia import WikipediaCurrentEventsStoryProvider
+from goosepaper.storyprovider.reddit import RedditHeadlineStoryProvider
+from goosepaper.storyprovider.rss import RSSFeedStoryProvider
+from goosepaper.storyprovider.twitter import MultiTwitterStoryProvider
+from goosepaper.storyprovider.weather import WeatherStoryProvider
+from goosepaper.storyprovider.wikipedia import WikipediaCurrentEventsStoryProvider
 from goosepaper.upload import upload
 
 
