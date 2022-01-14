@@ -1,13 +1,27 @@
 import datetime
 
 from uuid import uuid4
-from typing import List, Type
+from typing import List, Type, Union
 from ebooklib import epub
 
-from .styles import Style, AutumnStyle
+from .styles import Style, AutumnStyle, FifthAvenueStyle, AcademyStyle
 
 from .util import PlacementPreference
 from .storyprovider.storyprovider import StoryProvider
+
+
+def _get_style(style):
+    if isinstance(style, Style):
+        style_obj = style()
+    elif isinstance(style, str):
+        style_obj = {
+            "FifthAvenue": FifthAvenueStyle,
+            "Autumn": AutumnStyle,
+            "Academy": AcademyStyle,
+        }.get(style, FifthAvenueStyle)()
+    else:
+        raise ValueError(f"Invalid style {style}")
+    return style_obj
 
 
 class Goosepaper:
@@ -97,7 +111,7 @@ class Goosepaper:
     def to_pdf(
         self,
         filename: str,
-        style: Type[Style] = AutumnStyle,
+        style: Union[str, Type[Style]] = FifthAvenueStyle,
         font_size: int = 14,
     ) -> str:
         """
@@ -108,7 +122,7 @@ class Goosepaper:
         """
         from weasyprint import HTML, CSS
 
-        style_obj = style()
+        style_obj = _get_style(style)
         html = self.to_html()
         h = HTML(string=html)
         c = CSS(string=style_obj.get_css(font_size))
@@ -118,15 +132,15 @@ class Goosepaper:
     def to_epub(
         self,
         filename: str,
-        style: Type[Style] = AutumnStyle,
+        style: Union[str, Type[Style]] = FifthAvenueStyle,
         font_size: int = 14,
     ) -> str:
-
         """
         Render the current Goosepaper to an epub file on disk
         """
-        stories = []
+        style_obj = _get_style(style)
 
+        stories = []
         for prov in self.story_providers:
             new_stories = prov.get_stories()
             for a in new_stories:
@@ -144,7 +158,6 @@ class Goosepaper:
         book.set_title(title)
         book.set_language("en")
 
-        style_obj = Style()
         css = epub.EpubItem(
             uid="style_default",
             file_name="style/default.css",
