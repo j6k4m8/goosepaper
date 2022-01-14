@@ -1,11 +1,16 @@
 # CHANGELOG
 
-### **Unreleased**
+### **0.5.0** (January 14 2022)
 
 -   Improvements
+
     -   RSS stories now "fall back" gracefully on just rendering the title, if the full body cannot be rendered. This is in contrast with the old behavior, in which the story would not be rendered at all.
     -   RSS, Reddit, and Twitter story providers now support a `since_days_ago` argument in their `config` dictionaries that enables you to specify how many days ago to start the search for stories. Older stories will not be included.
     -   Add support for multiple styles, using the `"styles" config option. Options are `"Academy"`, `"FifthAvenue"`, and `"Autumn"`. Previous style (before v0.4.0) was `Autumn`.
+
+-   Housekeeping
+
+    -   Moved the story providers into their own submodule: Note that this may break backward compatibility if you import these directly.
 
 ### **0.4.0** (January 13 2022)
 
