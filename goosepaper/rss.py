@@ -10,12 +10,16 @@ from .storyprovider import StoryProvider
 
 def parallelizable_request(entry):
     req = requests.get(entry["link"])
+    source = entry["link"].split(".")[1]
     if not req.ok:
-        print(f"Honk! Couldn't get content for {entry['link']}")
-        return None
+        # Just return the headline content:
+        return Story(
+            entry["title"],
+            body_text=entry["description"] + " ⋮",
+            byline=source,
+        )
 
     doc = Document(req.content)
-    source = entry["link"].split(".")[1]
     story = Story(doc.title(), body_html=doc.summary(), byline=source)
 
     return story

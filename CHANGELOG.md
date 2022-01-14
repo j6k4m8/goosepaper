@@ -1,5 +1,10 @@
 # CHANGELOG
 
+### **Unreleased**
+
+-   Improvements
+    -   RSS stories now "fall back" gracefully on just rendering the title, if the full body cannot be rendered. This is in contrast with the old behavior, in which the story would not be rendered at all.
+
 ### **0.4.0** (January 13 2022)
 
 > Multiple fixes and improvements
