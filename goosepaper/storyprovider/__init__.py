@@ -1,1 +1,1 @@
-from .storyprovider import StoryProvider
+from .storyprovider import StoryProvider # noqa
