@@ -1,5 +1,12 @@
 # CHANGELOG
 
+### **0.5.1**
+
+-   Improvements
+    -   Adds a new `CustomTextStoryProvider` to let you add your own text stories.
+-   Housekeeping
+    -   Adds automated builds for docker hub and ghcr.io.
+
 ### **0.5.0** (January 14 2022)
 
 -   Improvements
