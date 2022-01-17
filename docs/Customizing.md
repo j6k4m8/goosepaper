@@ -1,6 +1,6 @@
 # Customizing Your Feed
 
-## Example-config
+## Example config
 
 You can choose what content is added to your daily goosepaper by writing your own config-file.
 As an example we give the config delivered as an example `example-config.json`:
@@ -43,24 +43,23 @@ As an example we give the config delivered as an example `example-config.json`:
 }
 ```
 
-## Titles and font Size
+## Look & Feel
 
-In the first part of the config you can set global parameters for your goosepaper.
-These do not need to be set as they have default parameters.
+### Titles and font size
 
-### Title
+In the first part of the config you can set global parameters for your goosepaper. These do not need to be set as they have default parameters.
 
-The title is at the top of the first page if your paper.
-Default value is
+### Goosepaper Title
+
+The title is at the top of the first page if your paper. The default value is "Daily Goosepaper" but you can change it like this:
 
 ```json
-"title" : "Daily Goosepaper"
+"title" : "Jordan's Daily Goosepaper"
 ```
 
 ### Subtitle
 
 The subtitle is at the second line at the top of the first page after yout title.
-Default value is
 
 ```json
 "subtitle" : ""
@@ -68,7 +67,7 @@ Default value is
 
 ### Font Size
 
-The fontsize determines the fontsize for all text in the goosepaper, but not the title, subtitle, or weather if this is set in `stories` (covered later). The default value is
+The fontsize determines the fontsize for all text in the goosepaper. Other text will be scaled accordingly, so a large body font will generally correspond (ideally, if the style is well-built) with larger headliner font sizes as well. The default is 12.
 
 ```json
 "font_size" : 14
@@ -76,13 +75,19 @@ The fontsize determines the fontsize for all text in the goosepaper, but not the
 
 (This only matters if your output is set as a `.pdf`)
 
-## Style
+### Styles
 
-Something about styles needs to go here!!!
+There are a few prepackaged stylesheets that can be applied to your goosepaper. The default is `"FifthAvenue"`. You can change this to any of the following:
+
+    -   Academy
+    -   FifthAvenue
+    -   Autumn
+
+For more information on the styles and to see a gallery of the different stylesheets on the same goosepaper content, see the [Style Gallery](StyleGallery.md) page.
 
 ## Stories and StoryProviders
 
-The stories is the content you read in your goosepaper, and can be customized in a variety of ways.
+Stories in a Goosepaper are created by a StoryProvider. You can think of a StoryProvider as a "source." So you might have Twitter stories (`TwitterStoryProvider`), some blog posts (`RSSFeedStoryProvider`), etc.
 
 This section aims to be a comprehensive list of all storyproviders and how to configure them.
 (This was the case at time of writing.)
@@ -95,14 +100,14 @@ Stories and storyproviders are given in the config-file using the `"stories"`-ke
 ```json
 "stories" : [
 	{
-		"provider" 	: "Storyprovider 1",
+		"provider" 	: "Storyprovider1",
 		"config" 	: {
 			"PARAMETER"	: "VALUE",
 			"PARAMETER"	: "VALUE"
 		}
 	},
 	{
-		"provider" 	: "Storyprovider 2",
+		"provider" 	: "Storyprovider2",
 		"config" 	: {
 			"PARAMETER"	: "VALUE",
 			"PARAMETER"	: "VALUE"
@@ -111,125 +116,117 @@ Stories and storyproviders are given in the config-file using the `"stories"`-ke
 ]
 ```
 
-As per now these storyproviders are available:
+Right now, these are the storyproviders built into this repository:
 
--   [Lorem Ipsum](#LoremIpsum)
+-   [CustomText](#CustomText)
 -   [Reddit](#Reddit)
 -   [RSS](#RSS)
 -   [Twitter](#Twitter)
 -   [Weather](#Weather)
 -   [Wikipedia Current Events](#Wikipedia)
 
-### <a name="LoremIpsum">Lorem Ipsum</a>
-
-This storyprovider fills paragraphs with Lorem Ipsum, and is mainly used for testing.
-
-Default limiting value is `5`.
-
-Storyprovider name is
+### <a name="CustomText">CustomTextStoryProvider</a>
 
 ```json
-	"provider"	: "lorem"
+"provider": "text"
 ```
 
-The parameters are as follows:
+This storyprovider fills paragraphs with your own custom text, or with Lorem Ipsum text if you don't provide anything.
+
+#### Paramaeters:
+
+| Parameter  | Type | Default | Description                                                    |
+| ---------- | ---- | ------- | -------------------------------------------------------------- |
+| `headline` | str  | None    | The text to use. If not provided, the default is Lorem Ipsum.  |
+| `text`     | str  | None    | The text to use. If not provided, the default is Lorem Ipsum.  |
+| `limit`    | int  | 5       | The number of paragraphs to generate, if text is not provided. |
+
+#### Example:
 
 ```json
-	"limit"		:	5 	(int 	- Amount of Lorem Ipsum articles to provide.)
+{
+    "provider": "text",
+    "config": {
+        "headline": "This is a headline",
+        "text": "This is some text"
+    }
+}
 ```
 
 ### <a name="Reddit">Reddit</a>
 
-This storyprovider gives headlines from a selected subreddit given in config file.
-The story gives the title, the user and some text.
-
-The parameter `subreddit` has to be given a value in configfile.
-Default limiting value is `20`.
-
-Storyprovider name is
-
 ```json
-	"provider"	: "reddit"
+"provider"	: "reddit"
 ```
 
-The parameters are as follows:
+This storyprovider gives headlines from a selected subreddit given in config file. The story gives the title, the username of the poster, and some text.
 
-```json
-	"subreddit"	:	"news"	(str 	- Subreddit you want to see headlines from.)
-	"limit"		:	20 	(int 	- Amount of reddit headlines to provide.)
-```
+#### Parameters:
+
+| Parameter        | Type | Default | Description                             |
+| ---------------- | ---- | ------- | --------------------------------------- |
+| `subreddit`      | str  | None    | The subreddit to use.                   |
+| `limit`          | int  | 20      | The number of stories to get.           |
+| `since_days_ago` | int  | None    | If provided, filter stories by recency. |
 
 ### <a name="RSS">RSS</a>
 
-Returns results from a given RSS feed. This has to be specified in config file.
+```json
+"provider"	: "rss"
+```
+
+Returns results from a given RSS feed. Feed URL must be specified in the config file.
 
 The parameter `rss_path` has to be given a value in configfile.
 Default limiting value is `5`.
 
-Storyprovider name is
+#### Parameters:
 
-```json
-	"provider"	: "rss"
-```
-
-The parameters are as follows:
-
-```json
-	"rss_path"	:	"https://feeds.npr.org/1001/rss.xml" (str 	- RSS feed you want to see results from.)
-	"limit"		:	20 				(int 	- Amount of reddit headlines to provide.)
-	"parallel"	:	true 			(bool 	- Whether to use multiprocessing to fetch in parallel)
-```
+| Parameter        | Type | Default | Description                             |
+| ---------------- | ---- | ------- | --------------------------------------- |
+| `rss_path`       | str  | None    | The RSS feed to use.                    |
+| `limit`          | int  | 5       | The number of stories to get.           |
+| `since_days_ago` | int  | None    | If provided, filter stories by recency. |
 
 ### <a name="Twitter">Twitter</a>
 
-Returns tweets from given users. These have to be specified in config file.
-
-The parameter `usernames` has to be given a value in configfile.
-Default limiting value is `8`.
-
-Storyprovider name is
-
 ```json
-	"provider"	: "twitter"
+"provider"	: "twitter"
 ```
 
-The parameters are as follows:
+Returns tweets from given users.
 
-```json
-	"usernames"	:	["axios", "NPR"]	([str] 	- Users you want to see results from.)
-	"limit"		:	8 			(int 	- Amount of reddit headlines to provide.)
-```
+#### Parameters:
+
+| Parameter        | Type             | Default | Description                                                 |
+| ---------------- | ---------------- | ------- | ----------------------------------------------------------- |
+| `usernames`      | str or list[str] | None    | Twitter usernames to use. Can be a single username or list. |
+| `limit`          | int              | 8       | The number of stories to get.                               |
+| `since_days_ago` | int              | None    | If provided, filter stories by recency.                     |
 
 ### <a name="Weather">Weather</a>
 
-Storyprovider for the weatherforecast on the first page.
+```json
+"provider"	: "weather"
+```
+
+Get the weather forecast for the day. This story provider is placed in the "ear" of the Goosepaper front page, as you'd expect on a real newspaper.
+
 The weatherdata for this storyprovider is collected from [www.metaweather.com](https://www.metaweather.com/).
 
-With `example-config.json` the forecast will look something like this:
-![Weather forcast with `example-config.json`](exampleWeather.png)
+#### Parameters:
 
-Storyprovider name is
-
-```json
-	"provider"	: "weather"
-```
-
-The parameters are as follows:
-
-```json
-	"woe"		:	2358820 	(int 	- Where On Earth, can be collected from
-							  www.metaweather.com.)
-	"F"		:	true/false	(bool 	- Fahreheit(true) or Celsius(false))
-```
+| Parameter | Type | Default | Description                                                 |
+| --------- | ---- | ------- | ----------------------------------------------------------- |
+| `woe`     | str  | None    | The WOEID of your location. See [here](www.metaweather.com) |
+| `F`       | bool | True    | If set to True, the forecast will be in Fahrenheit.         |
 
 ### <a name="Wikipedia">Wikipedia Current Events</a>
 
-Returns current events section from Wikipedia. These have to be specified in config file.
-
-Storyprovider name is
-
 ```json
-	"provider"	: "wikipedia_current_events"
+"provider"	: "wikipedia_current_events"
 ```
 
-The parameters are no parameters for this storyprovider.
+Returns current events section from Wikipedia.
+
+There are no configurable parameters for this story provider.
