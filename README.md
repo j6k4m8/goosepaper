@@ -111,11 +111,11 @@ Check out [this example PDF](https://github.com/j6k4m8/goosepaper/blob/master/do
 
 ## existing story providers ([want to write your own?](https://github.com/j6k4m8/goosepaper/blob/master/CONTRIBUTING.md))
 
--   [Wikipedia Top News / Current Events](https://github.com/j6k4m8/goosepaper/blob/master/goosepaper/wikipedia.py)
--   [Tweets](https://github.com/j6k4m8/goosepaper/blob/master/goosepaper/twitter.py)
--   [Weather](https://github.com/j6k4m8/goosepaper/blob/master/goosepaper/weather.py). These stories appear in the "ear" of the front page, just like a regular ol' newspaper
--   [RSS Feeds](https://github.com/j6k4m8/goosepaper/blob/master/goosepaper/rss.py)
--   [Reddit Subreddits](https://github.com/j6k4m8/goosepaper/blob/master/goosepaper/reddit.py)
+-   [Wikipedia Top News / Current Events](https://github.com/j6k4m8/goosepaper/blob/master/goosepaper/storyprovider/wikipedia.py)
+-   [Tweets](https://github.com/j6k4m8/goosepaper/blob/master/goosepaper/storyprovider/twitter.py)
+-   [Weather](https://github.com/j6k4m8/goosepaper/blob/master/goosepaper/storyprovider/weather.py). These stories appear in the "ear" of the front page, just like a regular ol' newspaper
+-   [RSS Feeds](https://github.com/j6k4m8/goosepaper/blob/master/goosepaper/storyprovider/rss.py)
+-   [Reddit Subreddits](https://github.com/j6k4m8/goosepaper/blob/master/goosepaper/storyprovider/reddit.py)
 
 # More Questions, Infrequently Asked
 
