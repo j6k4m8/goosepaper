@@ -2,9 +2,9 @@ import feedparser
 import bs4
 from typing import List
 
-from .util import PlacementPreference
+from ..util import PlacementPreference
 from .storyprovider import StoryProvider
-from .story import Story
+from ..story import Story
 
 
 class WikipediaCurrentEventsStoryProvider(StoryProvider):
@@ -15,7 +15,7 @@ class WikipediaCurrentEventsStoryProvider(StoryProvider):
     def __init__(self):
         pass
 
-    def get_stories(self, limit: int = 10) -> List[Story]:
+    def get_stories(self, limit: int = 10, **kwargs) -> List[Story]:
         """
         Get a list of current stories from Wikipedia.
         """

@@ -4,7 +4,7 @@ from os import path
 from codecs import open as copen
 from setuptools import setup, find_packages
 
-__version__ = "0.3.1"
+__version__ = "0.5.0"
 
 
 here = path.abspath(path.dirname(__file__))
@@ -44,7 +44,7 @@ setup(
         "console_scripts": [
             "goosepaper=goosepaper.__main__:main",
             "upload_to_remarkable=goosepaper.upload:upload",
-        ],
+        ]
     },
     author="Jordan Matelsky",
     install_requires=install_requires,

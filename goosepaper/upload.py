@@ -1,7 +1,8 @@
+from goosepaper.multiparser import MultiParser
 from rmapy.document import ZipDocument
-from rmapy.api import Client, Document, Folder
+from rmapy.api import Folder
 
-import argparse
+import os
 from pathlib import Path
 
 from .auth import auth_client
@@ -32,7 +33,6 @@ def sanitycheck(folder: str, client):
     foldercountdif = abs(len(uniquefolders) - len(rootfolders))
 
     folderduperr = ""
-    foldercountdiff = 0
 
     if foldercountdif == 1:
         folderduperr = "I found a duplicate folder name in the root of your RM.\n"
@@ -81,7 +81,33 @@ def getallitems(client):
     return items
 
 
-def upload(filepath, replace=False, folder=None):
+def upload(filepath, multiparser=None):
+
+    if not multiparser:
+        multiparser = MultiParser()
+
+    filepath = Path(filepath)
+    replace = (
+        False
+        if multiparser.argumentOrConfig("noreplace")
+        else multiparser.argumentOrConfig("replace")
+    )
+    folder = multiparser.argumentOrConfig("folder")
+    cleanup = multiparser.argumentOrConfig("cleanup")
+    strictlysane = multiparser.argumentOrConfig("strictlysane")
+    nocase = multiparser.argumentOrConfig("nocase")
+
+    if strictlysane:
+        nocase = True
+
+    if multiparser.argumentOrConfig("showconfig"):
+        print("\nParameters passed to upload\n----------------\n")
+        print(
+            "Replace:\t{0}\nFolder:\t\t{1}\nCleanup:\t{2}"
+            "\nStrictlysane:\t{3}\nNocase:\t\t{4}\nFilepath:\t{5}\n".format(
+                replace, folder, cleanup, strictlysane, nocase, filepath
+            )
+        )
 
     client = auth_client()
 
@@ -92,7 +118,12 @@ def upload(filepath, replace=False, folder=None):
     if not validateFolder(folder):
         return False
 
-    filepath = Path(filepath)
+    # Added error handling to deal with possible race condition where the file
+    # is mangled or not written out before the upload actually occurs such as
+    # an AV false positive. 'pdf' is a simple throwaway file handle to make
+    # sure that we retain control of the file while it's being imported.
+
+    fpr = filepath.resolve()
 
     # Added error handling to deal with possible race condition where the file is mangled
     # or not written out before the upload actually occurs such as an AV false positive.
@@ -128,12 +159,10 @@ def upload(filepath, replace=False, folder=None):
         ):
             paperCandidates.append(item)
 
-    for paper in paperCandidates:
-        if paper.Parent == "trash":
-            continue
-        parent = client.get_doc(paper.Parent)
+    # TODO: if the folder was found, check if a paper candidate is in it
+    # for paper in paperCandidates:
+    #     parent = client.get_doc(paper.Parent)
 
-    # if the folder was found, check if a paper candidate is in it
     paper = None
     if len(paperCandidates) > 0:
         if folder:
@@ -178,6 +207,11 @@ def upload(filepath, replace=False, folder=None):
         result = client.upload(doc, paperFolder)
         if result:
             print("Honk! Upload successful!")
+            if cleanup:
+                try:
+                    os.remove(fpr)
+                except Exception as err:
+                    raise IOError(f"Failed to remove file after upload: {fpr}") from err
         else:
             print("Honk! Error with upload!")
         return result

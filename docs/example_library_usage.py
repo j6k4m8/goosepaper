@@ -2,19 +2,19 @@ import logging
 from datetime import datetime
 
 from goosepaper.goosepaper import Goosepaper
-from goosepaper.reddit import RedditHeadlineStoryProvider
-from goosepaper.rss import RSSFeedStoryProvider
-from goosepaper.twitter import MultiTwitterStoryProvider
-from goosepaper.weather import WeatherStoryProvider
-from goosepaper.wikipedia import WikipediaCurrentEventsStoryProvider
+from goosepaper.storyprovider.reddit import RedditHeadlineStoryProvider
+from goosepaper.storyprovider.rss import RSSFeedStoryProvider
+from goosepaper.storyprovider.twitter import MultiTwitterStoryProvider
+from goosepaper.storyprovider.weather import WeatherStoryProvider
+from goosepaper.storyprovider.wikipedia import WikipediaCurrentEventsStoryProvider
 from goosepaper.upload import upload
 
 
 FNAME = datetime.now().strftime("%Y-%m-%d") + ".pdf"
-logging.info(f"Honk! I will save your temporary PDF to {FNAME}.")
+logging.info("Honk! I will save your temporary PDF to {FNAME}.")
 
 
-logging.info(f"Generating paper...")
+logging.info("Generating paper...")
 Goosepaper(
     [
         WikipediaCurrentEventsStoryProvider(),
@@ -26,8 +26,8 @@ Goosepaper(
         RedditHeadlineStoryProvider("todayilearned"),
     ]
 ).to_pdf(FNAME)
-logging.info(f"Saved to PDF, now transferring...")
+logging.info("Saved to PDF, now transferring...")
 
 
-# upload(FNAME)
-logging.info(f"HONK! I'm done :)")
+upload(FNAME)
+logging.info("HONK! I'm done :)")

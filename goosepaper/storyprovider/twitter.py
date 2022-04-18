@@ -1,12 +1,13 @@
+import datetime
 import enum
 import twint
 from typing import List
 
 import pandas as pd
 
-from .util import clean_text, PlacementPreference
+from ..util import PlacementPreference, clean_text
 from .storyprovider import StoryProvider
-from .story import Story
+from ..story import Story
 
 
 class TwitterStoryProviderPriorityMode(enum.Enum):
@@ -21,6 +22,7 @@ class TwitterStoryProvider(StoryProvider):
         self,
         username: str,
         limit: int = 5,
+        since_days_ago: int = None,
         priority_mode: TwitterStoryProviderPriorityMode = TwitterStoryProviderPriorityMode.DEFAULT,
     ) -> None:
         """
@@ -31,8 +33,13 @@ class TwitterStoryProvider(StoryProvider):
         self.username = username
         self.limit = limit
         self.priority_mode = priority_mode
+        self._since = (
+            datetime.datetime.now() - datetime.timedelta(days=since_days_ago)
+            if since_days_ago
+            else None
+        )
 
-    def get_stories(self, limit: int = 10) -> List[Story]:
+    def get_stories(self, limit: int = 10, **kwargs) -> List[Story]:
         """
         Get a list of stories.
 
@@ -47,16 +54,23 @@ class TwitterStoryProvider(StoryProvider):
 
         twint.run.Search(c)
         df = twint.storage.panda.Tweets_df  # type: ignore
-        return [
-            Story(
-                headline=None,
-                body_text=clean_text(row.tweet),
-                byline=f"@{self.username} on Twitter at {pd.to_datetime(row.date).strftime('%I:%M %p')}",
-                date=pd.to_datetime(row.date),
-                placement_preference=PlacementPreference.SIDEBAR,
+        stories = []
+        for _, row in list(df.iterrows()):
+            date = pd.to_datetime(row.date)
+            if self._since is not None and date < self._since:
+                continue
+            stories.append(
+                Story(
+                    headline=None,
+                    body_text=clean_text(row.tweet),
+                    byline=f"@{self.username} on Twitter at {date.strftime('%I:%M %p')}",
+                    date=date,
+                    placement_preference=PlacementPreference.SIDEBAR,
+                )
             )
-            for i, row in list(df.iterrows())[: min(self.limit, limit)]
-        ]
+            if len(stories) >= limit:
+                break
+        return stories
 
 
 class MultiTwitterStoryProvider(StoryProvider):
@@ -64,6 +78,7 @@ class MultiTwitterStoryProvider(StoryProvider):
         self,
         usernames: List[str],
         limit_per: int = 5,
+        since_days_ago: int = None,
         priority_mode: TwitterStoryProviderPriorityMode = TwitterStoryProviderPriorityMode.DEFAULT,
     ) -> None:
         """
@@ -80,8 +95,9 @@ class MultiTwitterStoryProvider(StoryProvider):
         self.usernames = usernames
         self.limit_per = limit_per
         self.priority_mode = priority_mode
+        self._since_days_ago = since_days_ago
 
-    def get_stories(self, limit: int = 42) -> List[Story]:
+    def get_stories(self, limit: int = 42, **kwargs) -> List[Story]:
         """
         Get a list of tweets where each tweet is a story.
 
@@ -96,7 +112,7 @@ class MultiTwitterStoryProvider(StoryProvider):
         for username in self.usernames:
             stories.extend(
                 TwitterStoryProvider(
-                    username, self.limit_per, self.priority_mode
+                    username, self.limit_per, self._since_days_ago, self.priority_mode
                 ).get_stories(limit=self.limit_per)
             )
         stories = sorted(stories, key=lambda story: story.date)

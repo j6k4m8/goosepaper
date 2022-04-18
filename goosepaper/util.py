@@ -50,25 +50,27 @@ def load_config_file(filepath: str) -> dict:
         with open(filepath, "r") as fh:
             config_dict = json.load(fh)
     except ValueError as err:
-        print("Honk Honk! Syntax Error in config file {0}".format(filepath))
-        exit(1)
+        raise ValueError(
+            "Honk Honk! Syntax Error in config file {0}".format(filepath)
+        ) from err
     return config_dict
 
 
 def construct_story_providers_from_config_dict(config: dict):
 
-    from goosepaper.rss import RSSFeedStoryProvider
-    from goosepaper.twitter import MultiTwitterStoryProvider
-    from goosepaper.reddit import RedditHeadlineStoryProvider
-    from goosepaper.storyprovider import LoremStoryProvider
-    from goosepaper.weather import WeatherStoryProvider
-    from goosepaper.wikipedia import WikipediaCurrentEventsStoryProvider
+    from goosepaper.storyprovider.rss import RSSFeedStoryProvider
+    from goosepaper.storyprovider.twitter import MultiTwitterStoryProvider
+    from goosepaper.storyprovider.reddit import RedditHeadlineStoryProvider
+    from goosepaper.storyprovider.storyprovider import CustomTextStoryProvider
+    from goosepaper.storyprovider.weather import WeatherStoryProvider
+    from goosepaper.storyprovider.wikipedia import WikipediaCurrentEventsStoryProvider
 
     # Custom storyproviders
     from goosepaper.YrStoryProvider import YrStoryProvider
 
     StoryProviderConfigNames = {
-        "lorem": LoremStoryProvider,
+        "lorem": CustomTextStoryProvider,
+        "text": CustomTextStoryProvider,
         "twitter": MultiTwitterStoryProvider,
         "reddit": RedditHeadlineStoryProvider,
         "weather": WeatherStoryProvider,
@@ -82,11 +84,14 @@ def construct_story_providers_from_config_dict(config: dict):
         return []
 
     stories = []
+
     for provider_config in config["stories"]:
         provider_name = provider_config["provider"]
         if provider_name not in StoryProviderConfigNames:
             raise ValueError(f"Provider {provider_name} does not exist.")
-        stories.append(
-            StoryProviderConfigNames[provider_name](**provider_config["config"])
-        )
+        arguments = provider_config["config"] if "config" in provider_config else {}
+        if arguments.get("skip"):
+            continue
+        else:
+            stories.append(StoryProviderConfigNames[provider_name](**arguments))
     return stories
