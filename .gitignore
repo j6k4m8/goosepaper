@@ -146,3 +146,4 @@ dmypy.json
 
 # Data-directories
 goosepaper/data/
+data

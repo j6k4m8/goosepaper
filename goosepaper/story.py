@@ -55,4 +55,4 @@ class Story:
         """
 
     def to_hex(self) -> str:
-        return md5(self.headline.encode(encoding = 'UTF-8')).hexdigest()
+        return md5(self.headline.encode(encoding="UTF-8")).hexdigest()

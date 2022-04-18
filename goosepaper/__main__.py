@@ -22,7 +22,6 @@ def main():
     replace = multiparser.argumentOrConfig("replace", False)
     folder = multiparser.argumentOrConfig("folder", None)
     font_size = multiparser.argumentOrConfig("font_size", 14)
-    print(font_size)
 
     paper = Goosepaper(story_providers=story_providers, title=title, subtitle=subtitle)
 

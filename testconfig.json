@@ -1,0 +1,25 @@
+{
+    "title": "Daily Newspaper",
+    "style": "Academy",
+    "font_size": 12,
+    "stories": [
+        {
+            "provider": "yr",
+            "config": { 
+                "lat": 63.446827,
+                "lon": 10.421906,
+                "locationName": "Trondheim"
+                 }
+        },
+        {
+            "provider": "rss",
+            "config": {
+                "title": "E24",
+                "link": "e24.no",
+                "rss_path": "https://e24.no/rss",
+                "limit": 10,
+                "parallel": true
+            }
+        }
+    ]
+}
