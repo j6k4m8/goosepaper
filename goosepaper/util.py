@@ -62,7 +62,7 @@ def construct_story_providers_from_config_dict(config: dict):
     from goosepaper.storyprovider.twitter import MultiTwitterStoryProvider
     from goosepaper.storyprovider.reddit import RedditHeadlineStoryProvider
     from goosepaper.storyprovider.storyprovider import CustomTextStoryProvider
-    from goosepaper.storyprovider.weather import WeatherStoryProvider
+    from goosepaper.storyprovider.weather import OpenMeteoWeatherStoryProvider
     from goosepaper.storyprovider.wikipedia import WikipediaCurrentEventsStoryProvider
 
     StoryProviderConfigNames = {
@@ -70,7 +70,8 @@ def construct_story_providers_from_config_dict(config: dict):
         "text": CustomTextStoryProvider,
         "twitter": MultiTwitterStoryProvider,
         "reddit": RedditHeadlineStoryProvider,
-        "weather": WeatherStoryProvider,
+        "weather": OpenMeteoWeatherStoryProvider,
+        "openmeteo_weather": OpenMeteoWeatherStoryProvider,
         "wikipedia_current_events": WikipediaCurrentEventsStoryProvider,
         "rss": RSSFeedStoryProvider,
     }
