@@ -1,5 +1,15 @@
 # CHANGELOG
 
+### **0.6.0** (June 5 2022)
+
+-   Improvements
+
+    -   Enable writing a BytesIO object instead of creating a file. Good for cases where you're running goosepaper on unprivileged systems.
+
+-   Fixes
+    -   Fixed the old broken weather provider by switching to Open-Meteo.
+    -   No longer builds images on pull-request branches.
+
 ### **0.5.1**
 
 -   Improvements
