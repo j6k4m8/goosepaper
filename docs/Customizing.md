@@ -11,7 +11,11 @@ As an example we give the config delivered as an example `example-config.json`:
     "stories": [
         {
             "provider": "weather",
-            "config": { "woe": 2358820, "F": true }
+            "config": {
+                "lat": 59.3293,
+                "lon": 18.0686,
+                "F": true
+            }
         },
         {
             "provider": "twitter",
@@ -216,10 +220,11 @@ The weatherdata for this storyprovider is collected from [www.metaweather.com](h
 
 #### Parameters:
 
-| Parameter | Type | Default | Description                                                 |
-| --------- | ---- | ------- | ----------------------------------------------------------- |
-| `woe`     | str  | None    | The WOEID of your location. See [here](www.metaweather.com) |
-| `F`       | bool | True    | If set to True, the forecast will be in Fahrenheit.         |
+| Parameter | Type  | Default | Description                                         |
+| --------- | ----- | ------- | --------------------------------------------------- |
+| `lat`     | float | None    | The latitude of the location to get weather for.    |
+| `lon`     | float | None    | The longitude of the location to get weather for.   |
+| `F`       | bool  | True    | If set to True, the forecast will be in Fahrenheit. |
 
 ### <a name="Wikipedia">Wikipedia Current Events</a>
 

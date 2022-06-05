@@ -3,13 +3,20 @@
     "stories": [
         {
             "provider": "weather",
-            "config": { "woe": 2358820, "F": true }
+            "config": {
+                "lat": 36.5,
+                "lon": -75.1,
+                "F": true
+            }
         },
         {
             "provider": "twitter",
             "config": {
                 "since_days_ago": 0.5,
-                "usernames": ["axios", "NPR"],
+                "usernames": [
+                    "axios",
+                    "NPR"
+                ],
                 "limit_per": 8
             }
         },
@@ -26,11 +33,15 @@
         },
         {
             "provider": "reddit",
-            "config": { "subreddit": "news" }
+            "config": {
+                "subreddit": "news"
+            }
         },
         {
             "provider": "reddit",
-            "config": { "subreddit": "todayilearned" }
+            "config": {
+                "subreddit": "todayilearned"
+            }
         },
         {
             "provider": "rss",
