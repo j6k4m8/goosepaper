@@ -120,7 +120,7 @@ class OpenMeteoWeatherStoryProvider(StoryProvider):
         return [
             Story(
                 headline=headline,
-                body_text=f"{weathercode_string}",  #  with {todays_precip:.1f}mm of rain
+                body_text=f"{weathercode_string}",
                 placement_preference=PlacementPreference.EAR,
             )
         ]
