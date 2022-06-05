@@ -1,11 +1,12 @@
+from typing import List, Optional, Type, Union
 import datetime
-
+import io
+import tempfile
 from uuid import uuid4
-from typing import List, Type, Union
-from ebooklib import epub
+
+from goosepaper.story import Story
 
 from .styles import Style, AutumnStyle, FifthAvenueStyle, AcademyStyle
-
 from .util import PlacementPreference
 from .storyprovider.storyprovider import StoryProvider
 
@@ -26,25 +27,50 @@ def _get_style(style):
 
 
 class Goosepaper:
+    """
+    A high-level class that manages the creation and styling of a goosepaper
+    periodical delivery.
+
+    """
+
     def __init__(
         self,
         story_providers: List[StoryProvider],
         title: str = None,
         subtitle: str = None,
     ):
+        """
+        Create a new Goosepaper.
+
+        Arguments:
+            story_providers: A list of StoryProvider objects to render
+            title: The title of the goosepaper
+            subtitle: The subtitle of the goosepaper
+
+        """
         self.story_providers = story_providers
         self.title = title if title else "Daily Goosepaper"
         self.subtitle = subtitle + "\n" if subtitle else ""
         self.subtitle += datetime.datetime.today().strftime("%B %d, %Y %H:%M")
 
-    def get_stories(self, deduplicate: bool = False):
-        stories = []
+    def get_stories(self, deduplicate: bool = False) -> List[Story]:
+        """
+        Retrieve the complete list of stories to render in this Goosepaper.
+
+        Arguments:
+            deduplicate: Whether to remove duplicate stories. Default: False
+
+        Returns:
+            List[Story]
+
+        """
+        stories: List[Story] = []
         for prov in self.story_providers:
             new_stories = prov.get_stories()
             for a in new_stories:
                 if deduplicate:
                     for b in stories:
-                        if a.headline == b.headline:
+                        if a.headline == b.headline and a.date == b.date:
                             break
                     else:
                         stories.append(a)
@@ -53,6 +79,16 @@ class Goosepaper:
         return stories
 
     def to_html(self) -> str:
+        """
+        Produce an HTML version of the Goosepaper.
+
+        Arguments:
+            None
+
+        Returns:
+            str: An HTML version of the paper
+
+        """
         stories = self.get_stories()
 
         # Get ears:
@@ -111,14 +147,23 @@ class Goosepaper:
 
     def to_pdf(
         self,
-        filename: str,
+        filename: Union[str, io.BytesIO],
         style: Union[str, Type[Style]] = FifthAvenueStyle,
         font_size: int = 14,
-    ) -> str:
+    ) -> Optional[str]:
         """
         Renders the current Goosepaper to a PDF file on disk.
 
-        TODO: If an IO type is provided, write bytes instead.
+        Arguments:
+            filename: The filename to save the PDF to. If this is an io.BytesIO
+                object, the PDF will be written to the object instead and this
+                function will return None.
+            style: The style to use for the paper. Default: FifthAvenueStyle
+            font_size: The font size to use for the paper. Default: 14
+
+        Returns:
+            str: The filename of the PDF file. If `filename` is an IO object,
+                then this will return None.
 
         """
         from weasyprint import HTML, CSS
@@ -127,18 +172,45 @@ class Goosepaper:
         html = self.to_html()
         h = HTML(string=html)
         c = CSS(string=style_obj.get_css(font_size))
-        h.write_pdf(filename, stylesheets=[c, *style_obj.get_stylesheets()])
-        return filename
+        # Check if the file is a filepath (str):
+        if isinstance(filename, str):
+            h.write_pdf(
+                filename,
+                stylesheets=[c, *style_obj.get_stylesheets()],
+            )
+            return filename
+        elif isinstance(filename, io.BytesIO):
+            # Create a tempfile to save the PDF to:
+            tf = tempfile.NamedTemporaryFile(suffix=".pdf")
+            h.write_pdf(
+                tf,
+                stylesheets=[c, *style_obj.get_stylesheets()],
+            )
+            tf.seek(0)
+            filename.write(tf.read())
+            return None
+        else:
+            raise ValueError(f"Invalid filename {filename}")
 
     def to_epub(
         self,
-        filename: str,
+        filename: Union[str, io.BytesIO],
         style: Union[str, Type[Style]] = FifthAvenueStyle,
         font_size: int = 14,
-    ) -> str:
+    ) -> Optional[str]:
         """
-        Render the current Goosepaper to an epub file on disk
+        Render the current Goosepaper to an epub file on disk.
+
+        Arguments:
+            filename: The filename to save the epub to. If `filename` is an
+                IO object, then this will return None and the epub will be
+                written to that object.
+            style: The style to use for the paper. Default: FifthAvenueStyle
+            font_size: The font size to use for the paper. Default: 14
+
         """
+        from ebooklib import epub
+
         style_obj = _get_style(style)
 
         stories = []
@@ -200,5 +272,13 @@ class Goosepaper:
         book.add_item(epub.EpubNav())
         book.spine = ["nav"] + chapters
 
-        epub.write_epub(filename, book)
-        return filename
+        if isinstance(filename, str):
+            epub.write_epub(filename, book)
+            return filename
+        elif isinstance(filename, io.BytesIO):
+            # Create a tempfile buffer:
+            tf = tempfile.NamedTemporaryFile(suffix=".epub")
+            epub.write_epub(tf, book)
+            tf.seek(0)
+            filename.write(tf.read())
+            return None
