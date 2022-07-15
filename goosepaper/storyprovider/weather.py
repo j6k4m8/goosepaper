@@ -116,7 +116,8 @@ class OpenMeteoWeatherStoryProvider(StoryProvider):
         todays_low = daily["temperature_2m_min"][0]
         # todays_precip = daily["precipitation_sum"][0]
         weathercode_string = self._weather_code_to_string(daily["weathercode"][0])
-        headline = f"{todays_high:.1f}ºF/{todays_low:.1f}ºF"
+        unit = "F" if self.F else "C"
+        headline = f"{todays_high:.1f}º{unit}/{todays_low:.1f}º{unit}"
         return [
             Story(
                 headline=headline,
