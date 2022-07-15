@@ -1,5 +1,10 @@
 # CHANGELOG
 
+### **0.?.?** (Unreleased)
+
+- Fixes
+      - Fixed a bug where the weather provider would not correctly render celsius unit marker
+
 ### **0.6.0** (June 5 2022)
 
 -   Improvements
