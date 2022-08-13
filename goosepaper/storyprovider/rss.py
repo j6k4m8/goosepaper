@@ -34,25 +34,32 @@ class RSSFeedStoryProvider(StoryProvider):
             date = datetime.datetime(*entry.updated_parsed[:6])
             if self._since is not None and date < self._since:
                 continue
-
-            req = requests.get(entry["link"])
             source = entry["link"].split(".")[1]
-            if not req.ok:
-                # Just return the headline content:
-                story = Story(
-                    entry["title"],
-                    body_text=entry["description"] + " ⋮",
-                    byline=source,
-                    date=date,
-                )
-            else:
-                doc = Document(req.content)
-                story = Story(
-                    doc.title(),
-                    body_html=doc.summary(),
-                    byline=source,
-                    date=date,
-                )
+            try:
+                req = requests.get(entry["link"])
+                if req.ok:
+                    doc = Document(req.content)
+                    story = Story(
+                        doc.title(),
+                        body_html=doc.summary(),
+                        byline=source,
+                        date=date,
+                        )
+                    req_ok = True
+                else:
+                    req_ok = False
+            except requests.exceptions.ContentDecodingError:
+                req_ok = False
+            finally:
+                if not req_ok:
+                    # Just return the headline content:
+                    story = Story(
+                        entry["title"],
+                        body_text=entry["description"] + " ⋮",
+                        byline=source,
+                        date=date,
+                    )
+
 
             stories.append(story)
             if len(stories) >= limit:
