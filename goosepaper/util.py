@@ -12,6 +12,7 @@ def htmlize(text: Union[str, List[str]]) -> str:
     #   * Escaping
     #   * Paragraph delims
     #   * Remove illegal elements
+    text = text.replace("<br />", "")
     if isinstance(text, list):
         return "".join([f"<p>{line}</p>" for line in text])
     return f"<p>{text}</p>"
