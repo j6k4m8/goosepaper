@@ -1,0 +1,11 @@
+---
+version: "2.1"
+services:
+  goosepaper:
+    image: goosepaper 
+    container_name: mygoosepaper
+    volumes:
+      - /absolute/path/to/goosepaper.json:/app/goosepaper.json
+      - /absolute/path/to/output/folder/:/output #(optional) config.json： "output":"/output/Goose.pdf"
+      - /absolute/path/to/customstyle:/app/styles/customstyle #(optional) config.json: "style":"customstyle"
+    command: goosepaper

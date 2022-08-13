@@ -117,6 +117,18 @@ Check out [this example PDF](https://github.com/j6k4m8/goosepaper/blob/master/do
 -   [RSS Feeds](https://github.com/j6k4m8/goosepaper/blob/master/goosepaper/storyprovider/rss.py)
 -   [Reddit Subreddits](https://github.com/j6k4m8/goosepaper/blob/master/goosepaper/storyprovider/reddit.py)
 
+## Edit your own styles!
+
+The pdf styles are controlled by css. You may find three available styles in `styles` folder: `FifthAvenue`, `Autumn` and `Academy`. Choose your style by adding one line in your `config.json` file:
+
+```
+"style": "<style name>"
+```
+
+Adding a custom style is simple, by creating a new folder in styles folder with the name your prefer (e.g. `my-custom-style`), and put your css file in this folder. Then, just change the <style name> in your `config.json` to this new folder name (i.e. "style": "my-custom-style").
+
+If you want to use online stylesheets, you may create a `stylesheet.txt` file. Each line in `stylesheets.txt` contains a link to the stylesheet. 
+
 # More Questions, Infrequently Asked
 
 ### yes but pardon me — i haven't a remarkable tablet
