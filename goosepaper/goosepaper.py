@@ -145,7 +145,7 @@ class Goosepaper:
     def to_pdf(
         self,
         filename: Union[str, io.BytesIO],
-        style: Union[str] = 'FifthAvenue',
+        style: Union[str] = '',
         font_size: int = 14,
     ) -> Optional[str]:
         """
