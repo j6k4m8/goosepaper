@@ -2,24 +2,32 @@ import pathlib
 
 
 def read_stylesheets(path: pathlib.Path) -> list:
-    if (path/"stylesheets.txt").is_file():
-        return (path / "stylesheets.txt").read_text()\
+    if path.is_file():
+        return path.read_text()\
             .strip("\n").split("\n")
     else:
         return []
 
 def read_css(path: pathlib.Path):
-    return (path / "stylesheet.css") \
-        .read_text()
+    return path.read_text()
 
 class Style:
+    def __init__(self, style = ''):
+        if style:
+            try:
+                self.read_style(style)
+            except (FileNotFoundError, StopIteration) as e:
+                print(f"Oops! {style} style not found or broken. Use default style.")
+        self.read_default_style() # if style not found
+        return
+    
     def get_stylesheets(self) -> list:
-        return getattr(self,"__stylesheets__","")
+        return getattr(self,"_stylesheets",[])
 
     def get_css(self, font_size: int = None):
         font_size=str(font_size)
         if font_size:
-            self.__css__+= f"""
+            self._css+= f"""
         .stories {{
             font-size: {font_size}pt !important; 
         }}
@@ -27,20 +35,24 @@ class Style:
             font-size: {font_size}pt !important; 
         }}
         """
-        return getattr(self, "__css__", "")
+        return getattr(self, "_css", "")
 
-    def read_style(self, path):
-        path = pathlib.Path("./styles/") / path
-        if not hasattr(self, '__css__'):
-            self.__stylesheets__ = read_stylesheets(path)
-            self.__css__ = read_css(path)
+    def read_style(self, style):
+        path = pathlib.Path("./styles/") / style
+        if path.is_dir():
+            if not hasattr(self, '_css'):
+                self._stylesheets = read_stylesheets(path/"stylesheets.txt")
+                self._css = read_css(next(path.glob("*.css")))
+        elif path.with_suffix('.css').is_file():
+                self._stylesheets = [] 
+                self._css = read_css(path.with_suffix('.css'))
 
     def read_default_style(self): #code copied from FifthAvenueStyle
-        if not hasattr(self, '__css__'):
-            self.__stylesheets__ = [
+        if not hasattr(self, '_css'):
+            self._stylesheets = [
             "https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,700;1,400;1,700&family=Source+Serif+Pro:ital,wght@0,400;0,700;1,400&display=swap",
         ]
-            self.__css__ = """
+            self._css = """
                 @page {
                     margin-top: 0.5in;
                     margin-right: 0.2in;
@@ -155,11 +167,4 @@ class Style:
                     column-count: 2;
                 }"""
 
-    def __init__(self, path = ''):
-        if path:
-            try:
-                self.read_style(path)
-            except FileNotFoundError:
-                print(f"Oops! {path} style not found or broken. Use default style.")
-        self.read_default_style() # if style not found
-        return
+    
