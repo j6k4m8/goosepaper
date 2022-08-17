@@ -1,3 +1,4 @@
+import pathlib
 from typing import List, Optional, Type, Union
 import datetime
 import io
@@ -169,7 +170,10 @@ class Goosepaper:
         style_obj = _get_style(style)
         html = self.to_html()
         h = HTML(string=html)
-        c = CSS(string=style_obj.get_css(font_size),font_config=font_config)
+        base_url = str(pathlib.Path.cwd())
+        c = CSS(string=style_obj.get_css(font_size),
+            font_config=font_config,
+            base_url=base_url)
         # Check if the file is a filepath (str):
         if isinstance(filename, str):
             h.write_pdf(
