@@ -145,7 +145,7 @@ class Goosepaper:
     def to_pdf(
         self,
         filename: Union[str, io.BytesIO],
-        style: Union[str] = '',
+        style: Union[str] = "",
         font_size: int = 14,
     ) -> Optional[str]:
         """
@@ -171,15 +171,17 @@ class Goosepaper:
         html = self.to_html()
         h = HTML(string=html)
         base_url = str(pathlib.Path.cwd())
-        c = CSS(string=style_obj.get_css(font_size),
+        c = CSS(
+            string=style_obj.get_css(font_size),
             font_config=font_config,
-            base_url=base_url)
+            base_url=base_url,
+        )
         # Check if the file is a filepath (str):
         if isinstance(filename, str):
             h.write_pdf(
                 filename,
                 stylesheets=[c, *style_obj.get_stylesheets()],
-                font_config=font_config
+                font_config=font_config,
             )
             return filename
         elif isinstance(filename, io.BytesIO):
@@ -198,7 +200,7 @@ class Goosepaper:
     def to_epub(
         self,
         filename: Union[str, io.BytesIO],
-        style: Union[str, Type[Style]] = '',
+        style: Union[str, Type[Style]] = "",
         font_size: int = 14,
     ) -> Optional[str]:
         """

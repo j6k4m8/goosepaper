@@ -3,8 +3,7 @@ import pathlib
 
 def read_stylesheets(path: pathlib.Path) -> list:
     if path.is_file():
-        return path.read_text()\
-            .strip("\n").split("\n")
+        return path.read_text().strip("\n").split("\n")
     else:
         return []
 
@@ -14,13 +13,12 @@ def read_css(path: pathlib.Path):
 
 
 class Style:
-    def __init__(self, style=''):
+    def __init__(self, style=""):
         if style:
             try:
                 self.read_style(style)
             except (FileNotFoundError, StopIteration):
-                print(f"Oops! {style} style not found or broken. "
-                      "Use default style.")
+                print(f"Oops! {style} style not found or broken. Use default style.")
         self.read_default_style()  # if style not found
         return
 
@@ -43,18 +41,18 @@ class Style:
     def read_style(self, style):
         path = pathlib.Path("./styles/") / style
         if path.is_dir():
-            if not hasattr(self, '_css'):
-                self._stylesheets = read_stylesheets(path/"stylesheets.txt")
+            if not hasattr(self, "_css"):
+                self._stylesheets = read_stylesheets(path / "stylesheets.txt")
                 self._css = read_css(next(path.glob("*.css")))
-        elif path.with_suffix('.css').is_file():
+        elif path.with_suffix(".css").is_file():
             self._stylesheets = []
-            self._css = read_css(path.with_suffix('.css'))
+            self._css = read_css(path.with_suffix(".css"))
 
     def read_default_style(self):  # code copied from FifthAvenueStyle
-        if not hasattr(self, '_css'):
+        if not hasattr(self, "_css"):
             self._stylesheets = [
-                                 "https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,700;1,400;1,700&family=Source+Serif+Pro:ital,wght@0,400;0,700;1,400&display=swap"
-                                 ]
+                "https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,700;1,400;1,700&family=Source+Serif+Pro:ital,wght@0,400;0,700;1,400&display=swap"
+            ]
             self._css = """
                 @page {
                     margin-top: 0.5in;
