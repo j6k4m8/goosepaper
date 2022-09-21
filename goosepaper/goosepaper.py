@@ -1,3 +1,4 @@
+import pathlib
 from typing import List, Optional, Type, Union
 import datetime
 import io
@@ -6,18 +7,14 @@ from uuid import uuid4
 
 from goosepaper.story import Story
 
-from .styles import Style, AutumnStyle, FifthAvenueStyle, AcademyStyle
+from .styles import Style
 from .util import PlacementPreference
 from .storyprovider.storyprovider import StoryProvider
 
 
 def _get_style(style):
     if isinstance(style, str):
-        style_obj = {
-            "FifthAvenue": FifthAvenueStyle,
-            "Autumn": AutumnStyle,
-            "Academy": AcademyStyle,
-        }.get(style, FifthAvenueStyle)()
+        style_obj = Style(style)
     else:
         try:
             style_obj = style()
@@ -148,7 +145,7 @@ class Goosepaper:
     def to_pdf(
         self,
         filename: Union[str, io.BytesIO],
-        style: Union[str, Type[Style]] = FifthAvenueStyle,
+        style: Union[str] = "",
         font_size: int = 14,
     ) -> Optional[str]:
         """
@@ -167,16 +164,24 @@ class Goosepaper:
 
         """
         from weasyprint import HTML, CSS
+        from weasyprint.text.fonts import FontConfiguration
 
+        font_config = FontConfiguration()
         style_obj = _get_style(style)
         html = self.to_html()
         h = HTML(string=html)
-        c = CSS(string=style_obj.get_css(font_size))
+        base_url = str(pathlib.Path.cwd())
+        c = CSS(
+            string=style_obj.get_css(font_size),
+            font_config=font_config,
+            base_url=base_url,
+        )
         # Check if the file is a filepath (str):
         if isinstance(filename, str):
             h.write_pdf(
                 filename,
                 stylesheets=[c, *style_obj.get_stylesheets()],
+                font_config=font_config,
             )
             return filename
         elif isinstance(filename, io.BytesIO):
@@ -195,7 +200,7 @@ class Goosepaper:
     def to_epub(
         self,
         filename: Union[str, io.BytesIO],
-        style: Union[str, Type[Style]] = FifthAvenueStyle,
+        style: Union[str, Type[Style]] = "",
         font_size: int = 14,
     ) -> Optional[str]:
         """
