@@ -1,7 +1,5 @@
 import datetime
-import requests
 import feedparser
-import urllib.parse
 from typing import List
 
 from .storyprovider import StoryProvider
