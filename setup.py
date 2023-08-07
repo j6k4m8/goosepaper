@@ -4,7 +4,7 @@ from os import path
 from codecs import open as copen
 from setuptools import setup, find_packages
 
-__version__ = "0.6.0"
+__version__ = "0.7.0"
 
 
 here = path.abspath(path.dirname(__file__))

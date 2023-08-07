@@ -18,13 +18,6 @@ As an example we give the config delivered as an example `example-config.json`:
             }
         },
         {
-            "provider": "twitter",
-            "config": {
-                "usernames": ["axios", "NPR"],
-                "limit_per": 8
-            }
-        },
-        {
             "provider": "wikipedia_current_events",
             "config": {}
         },
@@ -91,7 +84,7 @@ For more information on the styles and to see a gallery of the different stylesh
 
 ## Stories and StoryProviders
 
-Stories in a Goosepaper are created by a StoryProvider. You can think of a StoryProvider as a "source." So you might have Twitter stories (`TwitterStoryProvider`), some blog posts (`RSSFeedStoryProvider`), etc.
+Stories in a Goosepaper are created by a StoryProvider. You can think of a StoryProvider as a "source." So you might have wikipedia stories (`WikipediaCurrentEventsStoryProvider`), some blog posts (`RSSFeedStoryProvider`), etc.
 
 This section aims to be a comprehensive list of all storyproviders and how to configure them.
 (This was the case at time of writing.)
@@ -125,7 +118,6 @@ Right now, these are the storyproviders built into this repository:
 -   [CustomText](#CustomText)
 -   [Reddit](#Reddit)
 -   [RSS](#RSS)
--   [Twitter](#Twitter)
 -   [Weather](#Weather)
 -   [Wikipedia Current Events](#Wikipedia)
 
@@ -192,21 +184,22 @@ Default limiting value is `5`.
 | `limit`          | int  | 5       | The number of stories to get.           |
 | `since_days_ago` | int  | None    | If provided, filter stories by recency. |
 
-### <a name="Twitter">Twitter</a>
+### <a name="Mastodon">Mastodon</a>
 
 ```json
-"provider"	: "twitter"
+"provider"	: "mastodon"
 ```
 
-Returns tweets from given users.
+Returns toots from given users.
 
 #### Parameters:
 
-| Parameter        | Type             | Default | Description                                                 |
-| ---------------- | ---------------- | ------- | ----------------------------------------------------------- |
-| `usernames`      | str or list[str] | None    | Twitter usernames to use. Can be a single username or list. |
-| `limit`          | int              | 8       | The number of stories to get.                               |
-| `since_days_ago` | int              | None    | If provided, filter stories by recency.                     |
+| Parameter        | Type | Default | Description                                           |
+| ---------------- | ---- | ------- | ----------------------------------------------------- |
+| `username`       | str  | None    | Mastodon username to use.                             |
+| `limit`          | int  | 8       | The number of stories to get.                         |
+| `since_days_ago` | int  | None    | If provided, filter stories by recency.               |
+| `server`         | str  | None    | The server to use (e.g., "https://neuromatch.social") |
 
 ### <a name="Weather">Weather</a>
 

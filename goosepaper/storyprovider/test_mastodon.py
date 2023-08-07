@@ -1,5 +1,3 @@
-# neuromatch.social/@jordan.rss
-
 from .mastodon import MastodonStoryProvider
 
 
