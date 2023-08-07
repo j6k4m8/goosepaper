@@ -10,13 +10,11 @@
             }
         },
         {
-            "provider": "twitter",
+            "provider": "mastodon",
             "config": {
                 "since_days_ago": 0.5,
-                "usernames": [
-                    "axios",
-                    "NPR"
-                ],
+                "username": "jordan",
+                "server": "https://neuromatch.social",
                 "limit_per": 8
             }
         },

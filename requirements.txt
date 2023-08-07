@@ -4,10 +4,6 @@ requests
 # for rss feeds and reddit:
 feedparser
 
-# for twitter stories:
-git+https://github.com/twintproject/twint.git@origin/master#egg=twint
-pandas
-
 # for wikipedia stories:
 bs4
 lxml

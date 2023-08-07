@@ -21,14 +21,32 @@ def test_clean_text():
 def test_construct_story_providers_from_config_dict():
     assert construct_story_providers_from_config_dict({}) == []
     stories = construct_story_providers_from_config_dict(
-        {"stories": [{"provider": "twitter", "config": {"usernames": "j6m8"}}]}
+        {
+            "stories": [
+                {
+                    "provider": "mastodon",
+                    "config": {
+                        "server": "https://neuromatch.social",
+                        "username": "j6m8",
+                        "limit": 1,
+                    },
+                }
+            ]
+        }
     )
     assert len(stories) == 1
 
     stories = construct_story_providers_from_config_dict(
         {
             "stories": [
-                {"provider": "twitter", "config": {"usernames": ["j6m8"]}},
+                {
+                    "provider": "mastodon",
+                    "config": {
+                        "server": "https://neuromatch.social",
+                        "username": "j6m8",
+                        "limit": 1,
+                    },
+                },
                 {"provider": "reddit", "config": {"subreddit": "worldnews"}},
             ]
         }

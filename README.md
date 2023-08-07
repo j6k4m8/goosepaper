@@ -23,7 +23,7 @@
 
 goosepaper is a utility that delivers a daily newspaper to your remarkable tablet. that's cute!
 
-you can include RSS feeds, Twitter feeds, news articles, wikipedia articles-of-the-day, weather, and more. I read it when I wake up so that I can feel anxious without having to get my phone.
+you can include RSS feeds, Mastodon feeds, news articles, wikipedia articles-of-the-day, weather, and more. I read it when I wake up so that I can feel anxious without having to get my phone.
 
 ## survey
 
@@ -112,7 +112,7 @@ Check out [this example PDF](https://github.com/j6k4m8/goosepaper/blob/master/do
 ## existing story providers ([want to write your own?](https://github.com/j6k4m8/goosepaper/blob/master/CONTRIBUTING.md))
 
 -   [Wikipedia Top News / Current Events](https://github.com/j6k4m8/goosepaper/blob/master/goosepaper/storyprovider/wikipedia.py)
--   [Tweets](https://github.com/j6k4m8/goosepaper/blob/master/goosepaper/storyprovider/twitter.py)
+-   [Mastodon Toots](https://github.com/j6k4m8/goosepaper/blob/master/goosepaper/storyprovider/mastodon.py)
 -   [Weather](https://github.com/j6k4m8/goosepaper/blob/master/goosepaper/storyprovider/weather.py). These stories appear in the "ear" of the front page, just like a regular ol' newspaper
 -   [RSS Feeds](https://github.com/j6k4m8/goosepaper/blob/master/goosepaper/storyprovider/rss.py)
 -   [Reddit Subreddits](https://github.com/j6k4m8/goosepaper/blob/master/goosepaper/storyprovider/reddit.py)
@@ -135,7 +135,9 @@ I do not think so, but it is a good question!
 
 ### may i use this to browse twitter?
 
-yes you may! you can add a list of usernames to the feed generator and it will make a print-ready version of twitter. this is helpful for when you are on twitter on your laptop but wish you had Other Twitter as well, in print form.
+~~yes you may! you can add a list of usernames to the feed generator and it will make a print-ready version of twitter. this is helpful for when you are on twitter on your laptop but wish you had Other Twitter as well, in print form.~~
+
+no! twitter has changed and now no one can play nicely with them. sorry! it is sad!
 
 # You May Also Like...
 

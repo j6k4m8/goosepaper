@@ -1,16 +1,18 @@
 # CHANGELOG
 
-### **0.?.?** (Unreleased)
+### **0.7.0** (August 7 2023)
 
-- Fixes
-      - Fixed a bug where the weather provider would not correctly render celsius unit marker
+-   Fixes
+    -   Fixed a bug where the weather provider would not correctly render celsius unit marker
+    -   Fixed the RSS story provider,
+-   Improvements
+    -   added a Mastodon story provider (#82)
+    -   Removed the Twitter story provider, which no longer works due to Twitter's API changes
 
 ### **0.6.0** (June 5 2022)
 
 -   Improvements
-
     -   Enable writing a BytesIO object instead of creating a file. Good for cases where you're running goosepaper on unprivileged systems.
-
 -   Fixes
     -   Fixed the old broken weather provider by switching to Open-Meteo.
     -   No longer builds images on pull-request branches.
@@ -25,13 +27,10 @@
 ### **0.5.0** (January 14 2022)
 
 -   Improvements
-
     -   RSS stories now "fall back" gracefully on just rendering the title, if the full body cannot be rendered. This is in contrast with the old behavior, in which the story would not be rendered at all.
     -   RSS, Reddit, and Twitter story providers now support a `since_days_ago` argument in their `config` dictionaries that enables you to specify how many days ago to start the search for stories. Older stories will not be included.
     -   Add support for multiple styles, using the `"styles" config option. Options are `"Academy"`, `"FifthAvenue"`, and `"Autumn"`. Previous style (before v0.4.0) was `Autumn`.
-
 -   Housekeeping
-
     -   Moved the story providers into their own submodule: Note that this may break backward compatibility if you import these directly.
 
 ### **0.4.0** (January 13 2022)
@@ -39,13 +38,10 @@
 > Multiple fixes and improvements
 
 -   Fixes
-
     -   Changed some document name comparisons to case insensitive (prevent document overwrites, esp. for Windows users)
     -   Switched upload to require named arguments rather than positional
     -   Fixes the `limit` arg in the RSS provider, which was being ignored
-
 -   Improvements
-
     -   Improve typing support
     -   Added more error handling for file and syntax handling
     -   Change to using the `VissibleName` attribute in all cases rather than filename
@@ -53,9 +49,7 @@
     -   Added more information on how to customize your goospaper in the docs, @kwillno (#54)
     -   Adds the option to provide a global config (thanks @sedennial! #48)
     -   Lots of new options to customize the upload and generation process (thanks @sedennial! #48)
-
 -   Housekeeping
-
     -   Fixes a bunch of flake8 errors and warnings to keep things tidy
 
 ### **0.3.1** (April 29 2021)
