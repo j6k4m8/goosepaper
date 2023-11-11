@@ -32,7 +32,7 @@ class Style:
         .stories {{
             font-size: {font_size}pt !important;
         }}
-        article>h4.byline {{
+        article>.byline {{
             font-size: {font_size}pt !important;
         }}
         """
@@ -126,12 +126,16 @@ class Style:
                     margin-bottom: 0.15em;
                 }
 
-                article>h4.byline {
+                article>.byline {
                     font-family: "Open Sans";
                     font-size: 14pt;
                     font-weight: 400;
                     text-indent: 0;
                     border-bottom: 1px solid #dedede;
+                    margin-top: 1.33em;
+                    margin-bottom: 1.33em;
+                    margin-left: 0;
+                    margin-right: 0;
                 }
 
                 article>h3 {
