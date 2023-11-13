@@ -34,7 +34,7 @@ class Story:
         self.placement_preference = placement_preference
 
     def to_html(self) -> str:
-        byline_h4 = f"<h4 class='byline'>{self.byline}</h4>" if self.byline else ""
+        byline_p = f"<p class='byline'>{self.byline}</p>" if self.byline else ""
         priority_class = {
             StoryPriority.DEFAULT: "",
             StoryPriority.LOW: "priority-low",
@@ -48,7 +48,7 @@ class Story:
         return f"""
         <article class="story">
             {headline}
-            {byline_h4}
+            {byline_p}
             {self.body_html}
         </article>
         """

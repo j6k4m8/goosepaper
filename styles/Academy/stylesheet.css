@@ -53,11 +53,15 @@ article>h1.priority-low {
     text-indent: 0;
     margin-bottom: 0.15em;
 }
-article>h4.byline {
+article>.byline {
     font-family: "Times New Roman";
     font-size: 14pt;
     font-weight: 400;
     text-indent: 0;
+    margin-top: 1.33em;
+    margin-bottom: 1.33em;
+    margin-left: 0;
+    margin-right: 0;
 }
 article>h3 {
     font-family: "Times New Roman";
