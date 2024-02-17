@@ -6,11 +6,8 @@ name: Docker Hub
 # documentation.
 
 on:
-  schedule:
-    - cron: '8 8 * * *'
   push:
-    branches: [ master ]
-    # Publish semver tags as releases.
+    branches: ['master']
     tags: [ 'v*.*.*' ]
 
 env:
