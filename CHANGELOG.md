@@ -1,5 +1,11 @@
 # CHANGELOG
 
+### **v0.7.1** (February 17, 2024)
+
+- Improvements
+    - Moved to a much smaller, alpine-based Dockerfile. Thanks @lsmoura!
+
+
 ### **0.7.0** (August 7 2023)
 
 -   Fixes

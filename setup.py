@@ -4,7 +4,7 @@ from os import path
 from codecs import open as copen
 from setuptools import setup, find_packages
 
-__version__ = "0.7.0"
+__version__ = "0.7.1"
 
 
 here = path.abspath(path.dirname(__file__))
@@ -36,6 +36,9 @@ setup(
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
     ],
     keywords=["remarkable", "tablet", "pdf", "news"],
     packages=find_packages(exclude=["docs", "tests*"]),
@@ -49,5 +52,5 @@ setup(
     author="Jordan Matelsky",
     install_requires=install_requires,
     dependency_links=dependency_links,
-    author_email="opensource@matelsky.com",
+    author_email="goosepaper@matelsky.com",
 )
