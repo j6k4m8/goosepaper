@@ -101,7 +101,13 @@ You can customize your goosepaper by editing `config.json`. (More instructions, 
 goosepaper --config myconfig.json --output mypaper.pdf
 ```
 
-If you don't pass an output flag, one will be generated based upon the time of generation. You DO need to pass a config file for now.
+If you don't pass an output flag, one will be generated based upon the time of generation.
+
+The output can also be specified by a config file. These are in order of precedence, low to highest:
+
+1. Home directory global configs 
+2. Local directory from which goosepaper is called 
+3. Specified on the command line. 
 
 An example config file is included here: [example-config.json](example-config.json).
 
