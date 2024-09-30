@@ -36,7 +36,7 @@ class RSSFeedStoryProvider(StoryProvider):
             if self._since is not None and date < self._since:
                 continue
 
-            req = requests.get(entry["link"])
+            req = requests.get(entry["link"], headers={'User-Agent': 'goosepaper/0.7.1'})
             # Source is the URL root:
             source = urllib.parse.urlparse(entry["link"]).netloc
             if not req.ok:
