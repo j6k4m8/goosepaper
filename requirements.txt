@@ -6,7 +6,7 @@ feedparser
 
 # for wikipedia stories:
 bs4
-lxml
+lxml[html_clean]
 
 # for rendering:
 WeasyPrint
