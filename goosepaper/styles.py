@@ -174,7 +174,6 @@ class Style:
 
 def _style_roots():
     yield resources.files("goosepaper").joinpath("assets", "styles")
-    yield pathlib.Path("./styles")
 
 
 def _read_style_from_root(root, style):
