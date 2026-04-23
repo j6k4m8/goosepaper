@@ -1,0 +1,63 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "goosepaper"
+dynamic = ["version"]
+description = "Generate and deliver a daily newspaper PDF"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [
+  { name = "Jordan Matelsky", email = "goosepaper@matelsky.com" },
+]
+keywords = ["remarkable", "tablet", "pdf", "news"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+]
+dependencies = [
+  "requests",
+  "feedparser",
+  "beautifulsoup4",
+  "lxml[html_clean]",
+  "weasyprint",
+  "ebooklib",
+  "readability-lxml",
+  "rmapy @ git+https://github.com/j6k4m8/rmapy",
+]
+
+[project.scripts]
+goosepaper = "goosepaper.__main__:main"
+upload_to_remarkable = "goosepaper.upload:main"
+
+[project.urls]
+Homepage = "https://github.com/j6k4m8/goosepaper"
+Repository = "https://github.com/j6k4m8/goosepaper"
+
+[dependency-groups]
+dev = [
+  "flake8",
+  "pytest",
+  "pytest-cov",
+]
+
+[tool.setuptools.dynamic]
+version = { attr = "goosepaper.version.__version__" }
+
+[tool.setuptools.packages.find]
+include = ["goosepaper*"]
+
+[tool.setuptools.package-data]
+goosepaper = [
+  "assets/styles/*/*.css",
+  "assets/styles/*/*.txt",
+]

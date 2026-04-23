@@ -65,9 +65,11 @@ Otherwise, you can now email this PDF to your tablet, perhaps using [ReMailable]
 
 ### dependencies:
 
-this tool uses `weasyprint` to generate PDFs. You can install all of the python libraries you need with `pip3 install -r ./requirements.txt` from this repo, but you may need these prerequisites before getting started.
+this tool uses `weasyprint` to generate PDFs. After installing the system prerequisites below, sync the project environment with `uv sync`.
 
 more details [here](https://weasyprint.readthedocs.io/en/latest/install.html).
+
+Goosepaper now targets Python 3.10+.
 
 #### mac:
 
@@ -90,7 +92,13 @@ sudo apt-get install build-essential python3-dev python3-pip python3-setuptools 
 From inside the goosepaper repo,
 
 ```shell
-pip3 install -e .
+uv sync
+```
+
+Then run Goosepaper through uv:
+
+```shell
+uv run goosepaper --config myconfig.json --output mypaper.pdf
 ```
 
 ## get started
@@ -98,7 +106,7 @@ pip3 install -e .
 You can customize your goosepaper by editing a paper config file. If you do not pass `--config`, Goosepaper looks for `./goosepaper.json`.
 
 ```shell
-goosepaper --config myconfig.json --output mypaper.pdf
+uv run goosepaper --config myconfig.json --output mypaper.pdf
 ```
 
 If you don't pass an output flag, one will be generated based upon the time of generation.
@@ -138,7 +146,7 @@ Delivery still happens only when you pass `--deliver`. If you want user-level de
 CLI flags override the config for a single run:
 
 ```shell
-goosepaper --deliver --folder Inbox --replace-mode exact
+uv run goosepaper --deliver --folder Inbox --replace-mode exact
 ```
 
 An example config file is included here: [example-config.json](example-config.json).
