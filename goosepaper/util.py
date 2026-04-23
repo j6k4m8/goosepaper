@@ -1,6 +1,7 @@
 import enum
-import re
+import importlib
 import json
+import re
 from typing import List, Union
 
 
@@ -47,7 +48,7 @@ class StoryPriority(enum.Enum):
 
 def load_config_file(filepath: str) -> dict:
     try:
-        with open(filepath, "r") as fh:
+        with open(filepath, "r", encoding="utf-8") as fh:
             config_dict = json.load(fh)
     except ValueError as err:
         raise ValueError(
@@ -57,36 +58,81 @@ def load_config_file(filepath: str) -> dict:
 
 
 def construct_story_providers_from_config_dict(config: dict):
-    from goosepaper.storyprovider.rss import RSSFeedStoryProvider
-    from goosepaper.storyprovider.reddit import RedditHeadlineStoryProvider
-    from goosepaper.storyprovider.mastodon import MastodonStoryProvider
-    from goosepaper.storyprovider.storyprovider import CustomTextStoryProvider
-    from goosepaper.storyprovider.weather import OpenMeteoWeatherStoryProvider
-    from goosepaper.storyprovider.wikipedia import WikipediaCurrentEventsStoryProvider
-
-    StoryProviderConfigNames = {
-        "lorem": CustomTextStoryProvider,
-        "text": CustomTextStoryProvider,
-        "reddit": RedditHeadlineStoryProvider,
-        "weather": OpenMeteoWeatherStoryProvider,
-        "mastodon": MastodonStoryProvider,
-        "openmeteo_weather": OpenMeteoWeatherStoryProvider,
-        "wikipedia_current_events": WikipediaCurrentEventsStoryProvider,
-        "rss": RSSFeedStoryProvider,
-    }
-
-    if "stories" not in config:
+    if "sources" not in config:
         return []
+    return construct_story_providers_from_source_configs(config["sources"])
+
+
+def construct_story_providers_from_source_configs(source_configs):
+    provider_specs = {
+        "text": (
+            "goosepaper.storyprovider.storyprovider",
+            "CustomTextStoryProvider",
+            lambda options: dict(options),
+        ),
+        "reddit": (
+            "goosepaper.storyprovider.reddit",
+            "RedditHeadlineStoryProvider",
+            lambda options: dict(options),
+        ),
+        "rss": (
+            "goosepaper.storyprovider.rss",
+            "RSSFeedStoryProvider",
+            lambda options: {
+                "rss_path": options["url"],
+                **{
+                    key: value
+                    for key, value in options.items()
+                    if key in {"limit", "since_days_ago"}
+                },
+            },
+        ),
+        "mastodon": (
+            "goosepaper.storyprovider.mastodon",
+            "MastodonStoryProvider",
+            lambda options: dict(options),
+        ),
+        "weather": (
+            "goosepaper.storyprovider.weather",
+            "OpenMeteoWeatherStoryProvider",
+            lambda options: {
+                "lat": options["lat"],
+                "lon": options["lon"],
+                "F": options.get("unit", "F") == "F",
+                **(
+                    {"timezone": options["timezone"]}
+                    if "timezone" in options
+                    else {}
+                ),
+            },
+        ),
+        "wikipedia": (
+            "goosepaper.storyprovider.wikipedia",
+            "WikipediaCurrentEventsStoryProvider",
+            lambda options: {},
+        ),
+    }
 
     stories = []
 
-    for provider_config in config["stories"]:
-        provider_name = provider_config["provider"]
-        if provider_name not in StoryProviderConfigNames:
-            raise ValueError(f"Provider {provider_name} does not exist.")
-        arguments = provider_config["config"] if "config" in provider_config else {}
-        if arguments.get("skip"):
-            continue
-        else:
-            stories.append(StoryProviderConfigNames[provider_name](**arguments))
+    for source_config in source_configs:
+        source_type, options = _source_config_parts(source_config)
+        if source_type not in provider_specs:
+            raise ValueError(f"Source type {source_type} does not exist.")
+        module_name, class_name, normalize = provider_specs[source_type]
+        module = importlib.import_module(module_name)
+        provider_class = getattr(module, class_name)
+        stories.append(provider_class(**normalize(options)))
     return stories
+
+
+def _source_config_parts(source_config):
+    if hasattr(source_config, "type") and hasattr(source_config, "options"):
+        return source_config.type, dict(source_config.options)
+    if not isinstance(source_config, dict):
+        raise ValueError("Each source must be a dict-like object.")
+    if "type" not in source_config:
+        raise ValueError("Each source must include a type.")
+    return source_config["type"], {
+        key: value for key, value in source_config.items() if key != "type"
+    }

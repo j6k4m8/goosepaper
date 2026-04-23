@@ -1,8 +1,9 @@
 from .util import (
-    htmlize,
-    clean_html,
     clean_text,
+    clean_html,
+    construct_story_providers_from_source_configs,
     construct_story_providers_from_config_dict,
+    htmlize,
 )
 
 
@@ -22,33 +23,27 @@ def test_construct_story_providers_from_config_dict():
     assert construct_story_providers_from_config_dict({}) == []
     stories = construct_story_providers_from_config_dict(
         {
-            "stories": [
+            "sources": [
                 {
-                    "provider": "mastodon",
-                    "config": {
-                        "server": "https://neuromatch.social",
-                        "username": "j6m8",
-                        "limit": 1,
-                    },
+                    "type": "text",
+                    "headline": "hello",
+                    "text": "world",
                 }
             ]
         }
     )
     assert len(stories) == 1
 
-    stories = construct_story_providers_from_config_dict(
-        {
-            "stories": [
-                {
-                    "provider": "mastodon",
-                    "config": {
-                        "server": "https://neuromatch.social",
-                        "username": "j6m8",
-                        "limit": 1,
-                    },
-                },
-                {"provider": "reddit", "config": {"subreddit": "worldnews"}},
-            ]
-        }
+    stories = construct_story_providers_from_source_configs(
+        [
+            {
+                "type": "text",
+                "headline": "One",
+            },
+            {
+                "type": "text",
+                "headline": "Two",
+            },
+        ]
     )
     assert len(stories) == 2

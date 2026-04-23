@@ -1,55 +1,50 @@
 import sys
-import datetime
 
 from goosepaper.goosepaper import Goosepaper
-from goosepaper.util import construct_story_providers_from_config_dict
+from goosepaper.config import ConfigError, dump_resolved_config, resolve_runtime_config
 from goosepaper.upload import upload
-from goosepaper.multiparser import MultiParser
+from goosepaper.util import construct_story_providers_from_source_configs
 
 
-def main():
-    multiparser = MultiParser()
-    config = multiparser.config
+def main(args=None):
+    try:
+        config = resolve_runtime_config(args)
+    except ConfigError as err:
+        print(f"Honk! {err}")
+        return 1
 
-    nostory = multiparser.argumentOrConfig("nostory")
+    if config.showconfig:
+        print(dump_resolved_config(config))
 
-    filename = multiparser.argumentOrConfig(
-        "output",
-        default=f"Goosepaper-{datetime.datetime.now().strftime('%Y-%B-%d-%H-%M')}.pdf",
-    )
-
-    if not nostory:  # global nostory flag
-        story_providers = construct_story_providers_from_config_dict(config)
-        font_size = multiparser.argumentOrConfig("font_size", 14)
-        style = multiparser.argumentOrConfig("style", "FifthAvenue")
-
-        title = config["title"] if "title" in config else None
-        subtitle = config["subtitle"] if "subtitle" in config else None
-
+    if not config.nostory:
+        story_providers = construct_story_providers_from_source_configs(config.sources)
         paper = Goosepaper(
-            story_providers=story_providers, title=title, subtitle=subtitle
+            story_providers=story_providers,
+            title=config.paper.title,
+            subtitle=config.paper.subtitle,
         )
 
-        if filename.endswith(".html"):
-            with open(filename, "w") as fh:
+        if config.output.endswith(".html"):
+            with open(config.output, "w", encoding="utf-8") as fh:
                 fh.write(paper.to_html())
-        elif filename.endswith(".pdf"):
-            paper.to_pdf(filename, font_size=font_size, style=style)
-        elif filename.endswith(".epub"):
-            paper.to_epub(filename, font_size=font_size, style=style)
-        else:
-            print(f"Unknown file extension '{filename.split('.')[-1]}'.")
-            exit(1)
-
-    if multiparser.argumentOrConfig("upload"):
-        if multiparser.argumentOrConfig("noupload"):
-            print(
-                "Honk! The 'upload' directive was found, but '--noupload' was also specified on the command line. Your goosepaper {0} was generated but I'm not uploading it.".format(
-                    filename
-                )
+        elif config.output.endswith(".pdf"):
+            paper.to_pdf(
+                config.output,
+                font_size=config.paper.font_size,
+                style=config.paper.style,
+            )
+        elif config.output.endswith(".epub"):
+            paper.to_epub(
+                config.output,
+                font_size=config.paper.font_size,
+                style=config.paper.style,
             )
         else:
-            upload(filepath=filename, multiparser=multiparser)
+            print(f"Unknown file extension '{config.output.split('.')[-1]}'.")
+            return 1
+
+    if config.deliver:
+        upload(filepath=config.output, delivery_settings=config.delivery)
 
     return 0
 

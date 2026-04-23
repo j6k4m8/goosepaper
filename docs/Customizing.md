@@ -1,230 +1,212 @@
 # Customizing Your Feed
 
-## Example config
+Goosepaper now uses a strict v2 config model:
 
-You can choose what content is added to your daily goosepaper by writing your own config-file.
-As an example we give the config delivered as an example `example-config.json`:
+- One paper config file for the paper itself.
+- One optional user config file for delivery defaults.
+- CLI flags decide whether delivery happens at all.
+
+## Paper Config
+
+Paper configs are JSON files with `"version": 2`.
+If you do not pass `--config`, Goosepaper looks for `./goosepaper.json`.
+
+Example:
 
 ```json
 {
-    "font_size": 12,
-    "stories": [
+    "version": 2,
+    "paper": {
+        "title": "Jordan's Daily Goosepaper",
+        "subtitle": "",
+        "style": "FifthAvenue",
+        "font_size": 14
+    },
+    "sources": [
         {
-            "provider": "weather",
-            "config": {
-                "lat": 59.3293,
-                "lon": 18.0686,
-                "F": true
-            }
+            "type": "weather",
+            "lat": 59.3293,
+            "lon": 18.0686,
+            "unit": "F"
         },
         {
-            "provider": "wikipedia_current_events",
-            "config": {}
+            "type": "wikipedia"
         },
         {
-            "provider": "rss",
-            "config": {
-                "rss_path": "https://feeds.npr.org/1001/rss.xml",
-                "limit": 5
-            }
+            "type": "rss",
+            "url": "https://feeds.npr.org/1001/rss.xml",
+            "limit": 5
         },
         {
-            "provider": "reddit",
-            "config": { "subreddit": "news" }
-        },
-        {
-            "provider": "reddit",
-            "config": { "subreddit": "todayilearned" }
+            "type": "reddit",
+            "subreddit": "news"
         }
-    ]
-}
-```
-
-## Look & Feel
-
-### Titles and font size
-
-In the first part of the config you can set global parameters for your goosepaper. These do not need to be set as they have default parameters.
-
-### Goosepaper Title
-
-The title is at the top of the first page if your paper. The default value is "Daily Goosepaper" but you can change it like this:
-
-```json
-"title" : "Jordan's Daily Goosepaper"
-```
-
-### Subtitle
-
-The subtitle is at the second line at the top of the first page after yout title.
-
-```json
-"subtitle" : ""
-```
-
-### Font Size
-
-The fontsize determines the fontsize for all text in the goosepaper. Other text will be scaled accordingly, so a large body font will generally correspond (ideally, if the style is well-built) with larger headliner font sizes as well. The default is 12.
-
-```json
-"font_size" : 14
-```
-
-(This only matters if your output is set as a `.pdf`)
-
-### Styles
-
-There are a few prepackaged stylesheets that can be applied to your goosepaper. The default is `"FifthAvenue"`. You can change this to any of the following:
-
-    -   Academy
-    -   FifthAvenue
-    -   Autumn
-
-For more information on the styles and to see a gallery of the different stylesheets on the same goosepaper content, see the [Style Gallery](StyleGallery.md) page.
-
-## Stories and StoryProviders
-
-Stories in a Goosepaper are created by a StoryProvider. You can think of a StoryProvider as a "source." So you might have wikipedia stories (`WikipediaCurrentEventsStoryProvider`), some blog posts (`RSSFeedStoryProvider`), etc.
-
-This section aims to be a comprehensive list of all storyproviders and how to configure them.
-(This was the case at time of writing.)
-
-In addition to the storyproviders listed here, there is also a separate repository, [auxilliary-goose](https://github.com/j6k4m8/auxiliary-goose/), where you can find additional storyproviders. For info on how to customize these check out the documentation in said repository.
-
-Stories and storyproviders are given in the config-file using the `"stories"`-key in the following way:
-(remember correct comma-separation in this file).
-
-```json
-"stories" : [
-	{
-		"provider" 	: "Storyprovider1",
-		"config" 	: {
-			"PARAMETER"	: "VALUE",
-			"PARAMETER"	: "VALUE"
-		}
-	},
-	{
-		"provider" 	: "Storyprovider2",
-		"config" 	: {
-			"PARAMETER"	: "VALUE",
-			"PARAMETER"	: "VALUE"
-		}
-	},
-]
-```
-
-Right now, these are the storyproviders built into this repository:
-
--   [CustomText](#CustomText)
--   [Reddit](#Reddit)
--   [RSS](#RSS)
--   [Weather](#Weather)
--   [Wikipedia Current Events](#Wikipedia)
-
-### <a name="CustomText">CustomTextStoryProvider</a>
-
-```json
-"provider": "text"
-```
-
-This storyprovider fills paragraphs with your own custom text, or with Lorem Ipsum text if you don't provide anything.
-
-#### Paramaeters:
-
-| Parameter  | Type | Default | Description                                                    |
-| ---------- | ---- | ------- | -------------------------------------------------------------- |
-| `headline` | str  | None    | The text to use. If not provided, the default is Lorem Ipsum.  |
-| `text`     | str  | None    | The text to use. If not provided, the default is Lorem Ipsum.  |
-| `limit`    | int  | 5       | The number of paragraphs to generate, if text is not provided. |
-
-#### Example:
-
-```json
-{
-    "provider": "text",
-    "config": {
-        "headline": "This is a headline",
-        "text": "This is some text"
+    ],
+    "delivery": {
+        "folder": "Morning Brief"
     }
 }
 ```
 
-### <a name="Reddit">Reddit</a>
+## User Config
+
+User-level delivery defaults live in `~/.config/goosepaper/config.json`.
+These defaults are optional and only affect delivery.
+
+Example:
 
 ```json
-"provider"	: "reddit"
+{
+    "version": 2,
+    "delivery_defaults": {
+        "folder": "News",
+        "replace_mode": "nocase",
+        "cleanup": false
+    }
+}
 ```
 
-This storyprovider gives headlines from a selected subreddit given in config file. The story gives the title, the username of the poster, and some text.
+Supported `delivery_defaults` fields:
 
-#### Parameters:
+| Field | Type | Default | Description |
+| ----- | ---- | ------- | ----------- |
+| `folder` | str or null | `null` | Default destination folder on your reMarkable. |
+| `replace_mode` | str | `"never"` | Collision behavior. One of `"never"`, `"exact"`, or `"nocase"`. |
+| `cleanup` | bool | `false` | Delete the output file after a successful delivery. |
 
-| Parameter        | Type | Default | Description                             |
-| ---------------- | ---- | ------- | --------------------------------------- |
-| `subreddit`      | str  | None    | The subreddit to use.                   |
-| `limit`          | int  | 20      | The number of stories to get.           |
-| `since_days_ago` | int  | None    | If provided, filter stories by recency. |
+The paper config's `delivery` section only supports `folder`.
+Delivery still happens only when you run Goosepaper with `--deliver`.
 
-### <a name="RSS">RSS</a>
+## CLI Overrides
+
+These flags apply to a single run:
+
+```shell
+goosepaper --deliver --folder Inbox --replace-mode exact --cleanup
+```
+
+Available delivery flags:
+
+- `--deliver`
+- `--folder`
+- `--replace-mode`
+- `--cleanup`
+- `--no-cleanup`
+
+Run-specific options like `--output` and `--nostory` are CLI-only and do not belong in config files.
+
+## Paper Settings
+
+The `paper` object supports:
+
+| Field | Type | Default | Description |
+| ----- | ---- | ------- | ----------- |
+| `title` | str or null | `null` | The paper title. If omitted, Goosepaper uses its built-in default title. |
+| `subtitle` | str or null | `null` | Optional subtitle shown under the title. |
+| `style` | str | `"FifthAvenue"` | One of the built-in styles. |
+| `font_size` | int | `14` | Base font size for the rendered paper. |
+
+Built-in styles:
+
+- `Academy`
+- `FifthAvenue`
+- `Autumn`
+
+## Sources
+
+The `sources` array describes which providers to include.
+Each source entry has a `"type"` plus provider-specific fields.
+
+### Text
 
 ```json
-"provider"	: "rss"
+{
+    "type": "text",
+    "headline": "This is a headline",
+    "text": "This is some text"
+}
 ```
 
-Returns results from a given RSS feed. Feed URL must be specified in the config file.
+| Field | Type | Default | Description |
+| ----- | ---- | ------- | ----------- |
+| `headline` | str | `null` | Headline to use. |
+| `text` | str | `null` | Body text to use. |
+| `limit` | int | `5` | Number of paragraphs to generate when `text` is omitted. |
 
-The parameter `rss_path` has to be given a value in configfile.
-Default limiting value is `5`.
-
-#### Parameters:
-
-| Parameter        | Type | Default | Description                             |
-| ---------------- | ---- | ------- | --------------------------------------- |
-| `rss_path`       | str  | None    | The RSS feed to use.                    |
-| `limit`          | int  | 5       | The number of stories to get.           |
-| `since_days_ago` | int  | None    | If provided, filter stories by recency. |
-
-### <a name="Mastodon">Mastodon</a>
+### Reddit
 
 ```json
-"provider"	: "mastodon"
+{
+    "type": "reddit",
+    "subreddit": "news"
+}
 ```
 
-Returns toots from given users.
+| Field | Type | Default | Description |
+| ----- | ---- | ------- | ----------- |
+| `subreddit` | str | none | The subreddit to use. |
+| `limit` | int | `20` | Number of stories to fetch. |
+| `since_days_ago` | number | `null` | If provided, filter stories by recency. |
 
-#### Parameters:
-
-| Parameter        | Type | Default | Description                                           |
-| ---------------- | ---- | ------- | ----------------------------------------------------- |
-| `username`       | str  | None    | Mastodon username to use.                             |
-| `limit`          | int  | 8       | The number of stories to get.                         |
-| `since_days_ago` | int  | None    | If provided, filter stories by recency.               |
-| `server`         | str  | None    | The server to use (e.g., "https://neuromatch.social") |
-
-### <a name="Weather">Weather</a>
+### RSS
 
 ```json
-"provider"	: "weather"
+{
+    "type": "rss",
+    "url": "https://feeds.npr.org/1001/rss.xml",
+    "limit": 5
+}
 ```
 
-Get the weather forecast for the day. This story provider is placed in the "ear" of the Goosepaper front page, as you'd expect on a real newspaper.
+| Field | Type | Default | Description |
+| ----- | ---- | ------- | ----------- |
+| `url` | str | none | RSS feed URL. |
+| `limit` | int | `5` | Number of stories to fetch. |
+| `since_days_ago` | number | `null` | If provided, filter stories by recency. |
 
-The weatherdata for this storyprovider is collected from [www.metaweather.com](https://www.metaweather.com/).
-
-#### Parameters:
-
-| Parameter | Type  | Default | Description                                         |
-| --------- | ----- | ------- | --------------------------------------------------- |
-| `lat`     | float | None    | The latitude of the location to get weather for.    |
-| `lon`     | float | None    | The longitude of the location to get weather for.   |
-| `F`       | bool  | True    | If set to True, the forecast will be in Fahrenheit. |
-
-### <a name="Wikipedia">Wikipedia Current Events</a>
+### Mastodon
 
 ```json
-"provider"	: "wikipedia_current_events"
+{
+    "type": "mastodon",
+    "server": "https://neuromatch.social",
+    "username": "jordan",
+    "limit": 8
+}
 ```
 
-Returns current events section from Wikipedia.
+| Field | Type | Default | Description |
+| ----- | ---- | ------- | ----------- |
+| `server` | str | none | Mastodon server URL. |
+| `username` | str | none | Mastodon username to use. |
+| `limit` | int | `5` | Number of entries to fetch. |
+| `since_days_ago` | number | `null` | If provided, filter stories by recency. |
 
-There are no configurable parameters for this story provider.
+### Weather
+
+```json
+{
+    "type": "weather",
+    "lat": 42.3601,
+    "lon": -71.0589,
+    "unit": "F"
+}
+```
+
+| Field | Type | Default | Description |
+| ----- | ---- | ------- | ----------- |
+| `lat` | number | none | Latitude of the forecast location. |
+| `lon` | number | none | Longitude of the forecast location. |
+| `unit` | str | `"F"` | Temperature unit. Either `"F"` or `"C"`. |
+| `timezone` | str | `"America/New_York"` | Timezone for the forecast request. |
+
+### Wikipedia
+
+```json
+{
+    "type": "wikipedia"
+}
+```
+
+This source returns the current events section from Wikipedia.
+It does not accept any additional fields.
