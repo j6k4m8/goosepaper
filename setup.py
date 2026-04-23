@@ -46,7 +46,7 @@ setup(
     entry_points={
         "console_scripts": [
             "goosepaper=goosepaper.__main__:main",
-            "upload_to_remarkable=goosepaper.upload:upload",
+            "upload_to_remarkable=goosepaper.upload:main",
         ]
     },
     author="Jordan Matelsky",

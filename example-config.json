@@ -1,53 +1,41 @@
 {
-    "font_size": 12,
-    "stories": [
+    "version": 2,
+    "paper": {
+        "font_size": 12,
+        "style": "FifthAvenue"
+    },
+    "sources": [
         {
-            "provider": "weather",
-            "config": {
-                "lat": 36.5,
-                "lon": -75.1,
-                "F": true
-            }
+            "type": "weather",
+            "lat": 36.5,
+            "lon": -75.1,
+            "unit": "F"
         },
         {
-            "provider": "mastodon",
-            "config": {
-                "since_days_ago": 0.5,
-                "username": "jordan",
-                "server": "https://neuromatch.social",
-                "limit_per": 8
-            }
+            "type": "mastodon",
+            "since_days_ago": 0.5,
+            "username": "jordan",
+            "server": "https://neuromatch.social",
+            "limit": 8
         },
         {
-            "provider": "wikipedia_current_events",
-            "config": {}
+            "type": "wikipedia"
         },
         {
-            "provider": "rss",
-            "config": {
-                "rss_path": "https://feeds.npr.org/1001/rss.xml",
-                "limit": 5
-            }
+            "type": "rss",
+            "url": "https://feeds.npr.org/1001/rss.xml",
+            "limit": 5
         },
         {
-            "provider": "reddit",
-            "config": {
-                "subreddit": "news"
-            }
+            "type": "reddit",
+            "subreddit": "news"
         },
         {
-            "provider": "reddit",
-            "config": {
-                "subreddit": "todayilearned"
-            }
-        },
-        {
-            "provider": "rss",
-            "config": {
-                "rss_path": "https://krebsonsecurity.com/feed/",
-                "limit": 1,
-                "skip": true
-            }
+            "type": "reddit",
+            "subreddit": "todayilearned"
         }
-    ]
+    ],
+    "delivery": {
+        "folder": "Morning Brief"
+    }
 }

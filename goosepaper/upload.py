@@ -1,76 +1,32 @@
-from goosepaper.multiparser import MultiParser
-from rmapy.document import ZipDocument
-from rmapy.api import Folder
-
+import argparse
+import json
 import os
 from pathlib import Path
+from typing import Optional
+
+from rmapy.api import Folder
+from rmapy.document import ZipDocument
 
 from .auth import auth_client
+from .config import (
+    ConfigError,
+    DeliverySettings,
+    REPLACE_MODES,
+    load_user_config,
+    resolve_delivery_settings,
+)
 
 
-def sanitycheck(folder: str, client):
-
-    # First lets do a sanity check. Since RM cloud uses an object ID as a unique key
-    # it is entirely possible to have duplicate VissibleName attributes for both folders and
-    # documents, and you can have folders and documents that share the same name.
-
-    # This is insanity and we have no programmatic way to resolve it so we're going to cheat.
-    # Check for duplicate folder names as the root level and if found we simply force the
-    # user to resolve it and check for duplicate document names.
-
-    rootfolders = [
-        f
-        for f in client.get_meta_items()
-        if (f.Type == "CollectionType" and f.Parent == "")
-    ]
-
-    uniquefolders = set()
-    [
-        uniquefolders.add(folder.VissibleName.lower()) or folder
-        for folder in rootfolders
-        if folder.VissibleName.lower() not in uniquefolders
-    ]
-    foldercountdif = abs(len(uniquefolders) - len(rootfolders))
-
-    folderduperr = ""
-
-    if foldercountdif == 1:
-        folderduperr = "I found a duplicate folder name in the root of your RM.\n"
-    elif foldercountdif > 1:
-        folderduperr = (
-            "You have multiple duplicate folder names in the root of your RM.\n"
-        )
-    else:
-        pass
-
-    if foldercountdif:
-        print("{0}\n\nYou must fix this first.".format(folderduperr))
-        return False
-    else:
-        return True
-
-
-def validateFolder(folder: str):
-    if folder:
-        if folder == "":
-            print("Honk! Folder cannot be an empty string")
-            return False
-        elif "/" in folder:
-            print("Honk! Please do not include '/' in the folder name")
-            print("      Nested folders are not supported for now")
-            return False
-
-    return True
+def _name_for_matching(value: str, nocase: bool) -> str:
+    return value.lower() if nocase else value
 
 
 def getallitems(client):
-
     # So somehow I corrupted or broke my cloud during testing and any object
     # which exists is getting returned twice in the object list from
     # get_meta_items. Deleting items and re-adding them hasn't fixed it even
     # using the official RM client. So this avoids that problem. I haven't found
     # a real fix yet for my cloud though.
-
     allitems = [item for item in client.get_meta_items() if (item.Parent != "trash")]
 
     items = []
@@ -81,33 +37,17 @@ def getallitems(client):
     return items
 
 
-def upload(filepath, multiparser=None):
-
-    if not multiparser:
-        multiparser = MultiParser()
-
+def upload(filepath, delivery_settings: Optional[DeliverySettings] = None, showconfig=False):
     filepath = Path(filepath)
-    replace = (
-        False
-        if multiparser.argumentOrConfig("noreplace")
-        else multiparser.argumentOrConfig("replace")
-    )
-    folder = multiparser.argumentOrConfig("folder")
-    cleanup = multiparser.argumentOrConfig("cleanup")
-    strictlysane = multiparser.argumentOrConfig("strictlysane")
-    nocase = multiparser.argumentOrConfig("nocase")
+    delivery = _coerce_delivery_settings(delivery_settings)
 
-    if strictlysane:
-        nocase = True
+    replace = delivery.replace_mode in {"exact", "nocase"}
+    nocase = delivery.replace_mode == "nocase"
+    folder = delivery.folder
+    cleanup = delivery.cleanup
 
-    if multiparser.argumentOrConfig("showconfig"):
-        print("\nParameters passed to upload\n----------------\n")
-        print(
-            "Replace:\t{0}\nFolder:\t\t{1}\nCleanup:\t{2}"
-            "\nStrictlysane:\t{3}\nNocase:\t\t{4}\nFilepath:\t{5}\n".format(
-                replace, folder, cleanup, strictlysane, nocase, filepath
-            )
-        )
+    if showconfig:
+        print(json.dumps(delivery.to_dict(), indent=2))
 
     client = auth_client()
 
@@ -115,60 +55,49 @@ def upload(filepath, multiparser=None):
         print("Honk Honk! Couldn't auth! Is your rmapy configured?")
         return False
 
-    if not validateFolder(folder):
-        return False
-
     # Added error handling to deal with possible race condition where the file
     # is mangled or not written out before the upload actually occurs such as
     # an AV false positive. 'pdf' is a simple throwaway file handle to make
     # sure that we retain control of the file while it's being imported.
-
     fpr = filepath.resolve()
 
     try:
         doc = ZipDocument(doc=str(fpr))
     except IOError as err:
         raise IOError(f"Error locating or opening {filepath} during upload.") from err
+    target_name = _name_for_matching(str(doc.metadata["VissibleName"]), nocase)
 
-    paperCandidates = []
-    paperFolder = None
+    paper_candidates = []
+    paper_folder = None
 
     for item in getallitems(client):
-
-        # is it the folder we are looking for?
         if (
             folder
-            and item.Type == "CollectionType"  # is a folder
-            and item.VissibleName.lower()
-            == folder.lower()  # has the name we're looking for
+            and item.Type == "CollectionType"
+            and _name_for_matching(item.VissibleName, nocase)
+            == _name_for_matching(folder, nocase)
             and (item.Parent is None or item.Parent == "")
-        ):  # is not in another folder
-            paperFolder = item
-
-        # is it possibly the file we are looking for?
-        elif item.Type == "DocumentType" and (
-            item.VissibleName.lower() == str(doc.metadata["VissibleName"]).lower()
         ):
-            paperCandidates.append(item)
-
-    # TODO: if the folder was found, check if a paper candidate is in it
-    # for paper in paperCandidates:
-    #     parent = client.get_doc(paper.Parent)
+            paper_folder = item
+        elif item.Type == "DocumentType" and (
+            _name_for_matching(item.VissibleName, nocase) == target_name
+        ):
+            paper_candidates.append(item)
 
     paper = None
-    if len(paperCandidates) > 0:
+    if paper_candidates:
         if folder:
-            filtered = [
-                item for item in paperCandidates if item.Parent == paperFolder.ID
-            ]
-        else:
-            filtered = list(
-                filter(
-                    lambda item: item.Parent != "trash"
-                    and client.get_doc(item.Parent) is None,
-                    paperCandidates,
-                )
+            filtered = (
+                [item for item in paper_candidates if item.Parent == paper_folder.ID]
+                if paper_folder
+                else []
             )
+        else:
+            filtered = [
+                item
+                for item in paper_candidates
+                if item.Parent != "trash" and client.get_doc(item.Parent) is None
+            ]
 
         if len(filtered) > 1 and replace:
             print(
@@ -176,39 +105,98 @@ def upload(filepath, multiparser=None):
                 f"{filtered[0].VissibleName}, don't know which to delete"
             )
             return False
-        if len(filtered) == 1:  # found the outdated paper
+        if len(filtered) == 1:
             paper = filtered[0]
 
     if paper is not None:
         if replace:
-            result = client.delete(paper)
+            client.delete(paper)
         else:
             print("Honk! The paper already exists!")
             return False
 
-    if folder and not paperFolder:
-        paperFolder = Folder(folder)
-        if not client.create_folder(paperFolder):
+    if folder and not paper_folder:
+        paper_folder = Folder(folder)
+        if not client.create_folder(paper_folder):
             print("Honk! Failed to create the folder!")
             return False
 
-    # workarround rmapy bug: client.upload(doc) would set a non-existing parent
+    # workaround rmapy bug: client.upload(doc) would set a non-existing parent
     # ID to the document
-    if not paperFolder:
-        paperFolder = Folder()
-        paperFolder.ID = ""
-    if isinstance(paperFolder, Folder):
-        result = client.upload(doc, paperFolder)
-        if result:
-            print("Honk! Upload successful!")
-            if cleanup:
-                try:
-                    os.remove(fpr)
-                except Exception as err:
-                    raise IOError(f"Failed to remove file after upload: {fpr}") from err
-        else:
-            print("Honk! Error with upload!")
-        return result
+    if not paper_folder:
+        paper_folder = Folder()
+        paper_folder.ID = ""
+
+    result = client.upload(doc, paper_folder)
+    if result:
+        print("Honk! Upload successful!")
+        if cleanup:
+            try:
+                os.remove(fpr)
+            except Exception as err:
+                raise IOError(f"Failed to remove file after upload: {fpr}") from err
     else:
-        print("Honk! Could not upload: Document already exists.")
-    return False
+        print("Honk! Error with upload!")
+    return result
+
+
+def main(args=None):
+    parser = argparse.ArgumentParser(
+        prog="upload_to_remarkable",
+        description="Upload an existing PDF or EPUB to your reMarkable.",
+    )
+    parser.add_argument("filepath", help="The existing file to upload.")
+    parser.add_argument("-f", "--folder", required=False)
+    parser.add_argument("--replace-mode", choices=REPLACE_MODES, required=False)
+    cleanup_group = parser.add_mutually_exclusive_group()
+    cleanup_group.add_argument(
+        "--cleanup",
+        dest="cleanup",
+        action="store_true",
+        default=None,
+    )
+    cleanup_group.add_argument(
+        "--no-cleanup",
+        dest="cleanup",
+        action="store_false",
+        default=None,
+    )
+    parser.add_argument(
+        "--showconfig",
+        action="store_true",
+        required=False,
+        help="Print the resolved delivery settings before uploading.",
+    )
+    parsed = parser.parse_args(args)
+
+    try:
+        delivery = resolve_delivery_settings(
+            user_defaults=load_user_config().delivery_defaults,
+            folder_override=parsed.folder,
+            replace_mode_override=parsed.replace_mode,
+            cleanup_override=parsed.cleanup,
+        )
+    except ConfigError as err:
+        print(f"Honk! {err}")
+        return 1
+
+    result = upload(
+        parsed.filepath,
+        delivery_settings=delivery,
+        showconfig=parsed.showconfig,
+    )
+    return 0 if result else 1
+
+
+def _coerce_delivery_settings(
+    delivery_settings: Optional[DeliverySettings],
+) -> DeliverySettings:
+    if delivery_settings is None:
+        return load_user_config().delivery_defaults
+    if isinstance(delivery_settings, DeliverySettings):
+        return delivery_settings
+    if isinstance(delivery_settings, dict):
+        return DeliverySettings(**delivery_settings)
+    raise TypeError(
+        "delivery_settings must be a DeliverySettings instance, a dict, or None."
+    )

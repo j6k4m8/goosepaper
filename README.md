@@ -35,7 +35,7 @@ By far the easiest way to get started with Goosepaper is to use Docker.
 
 ### step 0: write your config file
 
-Write a config file to tell Goosepaper what news you want to read. An example is provided in `example-config.json`.
+Write a paper config file to tell Goosepaper what news you want to read. An example is provided in `example-config.json`.
 
 ### step 1: generate your paper
 
@@ -49,14 +49,14 @@ docker run -it --rm -v $(pwd):/goosepaper/mount j6k4m8/goosepaper goosepaper -c 
 
 ### step 2: you are done!
 
-If you want to both generate the PDF as well as upload it to your reMarkable tablet, you can pass the `--upload` flag to the docker command above. You must additionally mount your `~/.rmapy` file:
+If you want to both generate the PDF and deliver it to your reMarkable tablet, pass `--deliver`. You must additionally mount your `~/.rmapy` file:
 
 ```shell
 docker run -it --rm \
     -v $(pwd):/goosepaper/mount \
     -v $HOME/.rmapy:/root/.rmapy \
     j6k4m8/goosepaper \
-    goosepaper -c mount/example-config.json -o mount/Goosepaper.pdf --upload
+    goosepaper -c mount/example-config.json -o mount/Goosepaper.pdf --deliver
 ```
 
 Otherwise, you can now email this PDF to your tablet, perhaps using [ReMailable](https://github.com/j6k4m8/remailable).
@@ -95,7 +95,7 @@ pip3 install -e .
 
 ## get started
 
-You can customize your goosepaper by editing `config.json`. (More instructions, and customization tools, all coming soon!)
+You can customize your goosepaper by editing a paper config file. If you do not pass `--config`, Goosepaper looks for `./goosepaper.json`.
 
 ```shell
 goosepaper --config myconfig.json --output mypaper.pdf
@@ -103,11 +103,43 @@ goosepaper --config myconfig.json --output mypaper.pdf
 
 If you don't pass an output flag, one will be generated based upon the time of generation.
 
-The output can also be specified by a config file. These are in order of precedence, low to highest:
+The paper config uses a strict v2 schema with one file per paper. A minimal example looks like this:
 
-1. Home directory global configs 
-2. Local directory from which goosepaper is called 
-3. Specified on the command line. 
+```json
+{
+  "version": 2,
+  "paper": {
+    "style": "FifthAvenue",
+    "font_size": 14
+  },
+  "sources": [
+    { "type": "rss", "url": "https://feeds.npr.org/1001/rss.xml", "limit": 5 },
+    { "type": "reddit", "subreddit": "news" }
+  ],
+  "delivery": {
+    "folder": "Morning Brief"
+  }
+}
+```
+
+Delivery still happens only when you pass `--deliver`. If you want user-level delivery defaults, create `~/.config/goosepaper/config.json`:
+
+```json
+{
+  "version": 2,
+  "delivery_defaults": {
+    "folder": "News",
+    "replace_mode": "nocase",
+    "cleanup": false
+  }
+}
+```
+
+CLI flags override the config for a single run:
+
+```shell
+goosepaper --deliver --folder Inbox --replace-mode exact
+```
 
 An example config file is included here: [example-config.json](example-config.json).
 
