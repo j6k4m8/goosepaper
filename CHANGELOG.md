@@ -1,10 +1,19 @@
 # CHANGELOG
 
+### **v0.8.0** (April 23, 2026)
+
+> This release is a big and (eek) backwards-INcompatible one. But I think this results in a much cleaner repository. Goosepaper was born six years ago, and a lot has changed in Python and in the reMarkable ecosystem since then. This release is a big step towards modernizing the codebase and making it easier to maintain and extend in the future.
+
+-   Improvements
+    -   Simplified the config system considerably (#98)
+    -   Updated the build system to use `uv` instead of old-fashioned `setup.py` and `requirements.txt` files. This should make it easier to manage dependencies and build the project in the future. (#99)
+-   Chores
+    -   Dropped support for Python 3.8 and 3.9, which are no longer supported by the Python community, and added support for Python 3.13 and 3.14. The minimum supported version is now Python 3.10. (#99)
+
 ### **v0.7.1** (February 17, 2024)
 
-- Improvements
-    - Moved to a much smaller, alpine-based Dockerfile. Thanks @lsmoura!
-
+-   Improvements
+    -   Moved to a much smaller, alpine-based Dockerfile. Thanks @lsmoura!
 
 ### **0.7.0** (August 7 2023)
 

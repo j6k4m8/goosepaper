@@ -1,0 +1,2 @@
+https://fonts.googleapis.com/css?family=Oswald
+https://fonts.googleapis.com/css?family=Playfair+Display

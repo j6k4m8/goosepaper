@@ -1,3 +1,4 @@
+import importlib.resources as resources
 import pathlib
 
 
@@ -39,14 +40,12 @@ class Style:
         return getattr(self, "_css", "")
 
     def read_style(self, style):
-        path = pathlib.Path("./styles/") / style
-        if path.is_dir():
-            if not hasattr(self, "_css"):
-                self._stylesheets = read_stylesheets(path / "stylesheets.txt")
-                self._css = read_css(next(path.glob("*.css")))
-        elif path.with_suffix(".css").is_file():
-            self._stylesheets = []
-            self._css = read_css(path.with_suffix(".css"))
+        for root in _style_roots():
+            css, stylesheets = _read_style_from_root(root, style)
+            if css is not None:
+                self._stylesheets = stylesheets
+                self._css = css
+                return
 
     def read_default_style(self):  # code copied from FifthAvenueStyle
         if not hasattr(self, "_css"):
@@ -171,3 +170,26 @@ class Style:
                 .row {
                     column-count: 2;
                 }"""
+
+
+def _style_roots():
+    yield resources.files("goosepaper").joinpath("assets", "styles")
+    yield pathlib.Path("./styles")
+
+
+def _read_style_from_root(root, style):
+    path = root.joinpath(style)
+    if path.is_dir():
+        css_file = next(
+            (entry for entry in path.iterdir() if entry.name.endswith(".css")),
+            None,
+        )
+        if css_file is None:
+            return None, []
+        return read_css(css_file), read_stylesheets(path.joinpath("stylesheets.txt"))
+
+    css_path = root.joinpath(f"{style}.css")
+    if css_path.is_file():
+        return read_css(css_path), []
+
+    return None, []

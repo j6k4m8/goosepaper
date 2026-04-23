@@ -1,0 +1,102 @@
+@page {
+    size: 702pt 936pt;
+    margin-top: 30mm;
+    margin-bottom: 20mm;
+    margin-left: 20mm;
+    margin-right: 10mm;
+}
+body {
+    font-family: "Open Sans";
+}
+.header {
+    padding: -6em;
+    height: 6em;
+}
+.header div {
+    float: left;
+    display: block;
+}
+.header .ear {
+    float: right;
+}
+ul, li, ol {
+    margin-left: 0; padding-left: 0.15em;
+}
+.stories {
+    font-size: 14pt;
+}
+.ear article {
+    border: 1px groove black;
+    padding: 1em;
+    margin: 1em;
+    font-size: 11pt;
+}
+.ear article h1 {
+    font-family: "Source Serif Pro";
+    font-size: 10pt;
+    font-weight: normal;
+}
+article {
+    text-align: justify;
+    line-height: 1.3em;
+}
+.longform {
+    page-break-after: always;
+}
+article>h1 {
+    font-family: "Source Serif Pro";
+    font-weight: 400;
+    font-size: 23pt;
+    text-indent: 0;
+    margin-bottom: 0.25em;
+    line-height: 1.2em;
+    text-align: left;
+}
+article>h1.priority-low {
+    font-family: "Open Sans";
+    font-size: 18pt;
+    font-weight: 400;
+    text-indent: 0;
+    border-bottom: 1px solid #dedede;
+    margin-bottom: 0.15em;
+}
+article>.byline {
+    font-family: "Open Sans";
+    font-size: 14pt;
+    font-weight: 400;
+    text-indent: 0;
+    border-bottom: 1px solid #dedede;
+    margin-top: 1.33em;
+    margin-bottom: 1.33em;
+    margin-left: 0;
+    margin-right: 0;
+}
+article>h3 {
+    font-family: "Open Sans";
+    font-weight: 400;
+    font-size: 18pt;
+    text-indent: 0;
+}
+section>h1,
+section>h2,
+section>h3,
+section>h4,
+section>h5 {
+    border-left: 5px solid #dedede;
+    padding-left: 1em;
+}
+figure {
+    border: 1px solid black;
+    text-indent: 0;
+    width: auto;
+}
+.stories article.story img {
+    width: 100%;
+}
+figure>span {
+    font-size: 0;
+}
+.row {
+    column-count: 2;
+    column-gap: 2rem;
+}

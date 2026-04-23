@@ -7,6 +7,7 @@ from readability import Document
 
 from .storyprovider import StoryProvider
 from ..story import Story
+from ..version import __version__
 
 
 class RSSFeedStoryProvider(StoryProvider):
@@ -36,7 +37,10 @@ class RSSFeedStoryProvider(StoryProvider):
             if self._since is not None and date < self._since:
                 continue
 
-            req = requests.get(entry["link"], headers={'User-Agent': 'goosepaper/0.7.1'})
+            req = requests.get(
+                entry["link"],
+                headers={"User-Agent": f"goosepaper/{__version__}"},
+            )
             # Source is the URL root:
             source = urllib.parse.urlparse(entry["link"]).netloc
             if not req.ok:

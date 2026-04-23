@@ -82,7 +82,7 @@ Delivery still happens only when you run Goosepaper with `--deliver`.
 These flags apply to a single run:
 
 ```shell
-goosepaper --deliver --folder Inbox --replace-mode exact --cleanup
+uv run goosepaper --deliver --folder Inbox --replace-mode exact --cleanup
 ```
 
 Available delivery flags:
