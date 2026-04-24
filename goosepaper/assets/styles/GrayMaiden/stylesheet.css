@@ -142,6 +142,12 @@ article > .byline {
     color: #333;
 }
 
+.story-body ul,
+.story-body ol {
+    margin-left: 0;
+    padding-left: 0.95rem;
+}
+
 .story-body h2,
 .story-body h3 {
     font-family: "Libre Franklin", "Helvetica Neue", sans-serif;
@@ -149,6 +155,14 @@ article > .byline {
     font-weight: 700;
     letter-spacing: 0.1em;
     text-transform: uppercase;
+}
+
+.story-body ul ul,
+.story-body ul ol,
+.story-body ol ul,
+.story-body ol ol {
+    margin-left: 0.1rem;
+    padding-left: 0.45rem;
 }
 
 .sidebar article > h1 {

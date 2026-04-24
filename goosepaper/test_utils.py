@@ -64,3 +64,16 @@ def test_construct_story_providers_passes_rss_byline_option():
 
     assert stories[0].byline_mode == "first"
     assert stories[0].body_source == "summary"
+
+
+def test_construct_story_providers_supports_bluesky():
+    stories = construct_story_providers_from_source_configs(
+        [
+            {
+                "type": "bluesky",
+                "username": "jordan.matelsky.com",
+            }
+        ]
+    )
+
+    assert stories[0].username == "jordan.matelsky.com"

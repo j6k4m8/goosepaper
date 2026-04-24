@@ -591,6 +591,10 @@ def _source_schema(source_type: str) -> Dict[str, Any]:
             "required": {"server", "username"},
             "optional": {"limit", "since_days_ago"},
         },
+        "bluesky": {
+            "required": {"username"},
+            "optional": {"limit", "since_days_ago"},
+        },
         "weather": {
             "required": {"lat", "lon"},
             "optional": {"unit", "timezone"},
