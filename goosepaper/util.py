@@ -83,7 +83,12 @@ def construct_story_providers_from_source_configs(source_configs):
                 **{
                     key: value
                     for key, value in options.items()
-                    if key in {"limit", "since_days_ago"}
+                    if key in {
+                        "limit",
+                        "since_days_ago",
+                        "byline",
+                        "body_source",
+                    }
                 },
             },
         ),

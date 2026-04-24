@@ -585,7 +585,7 @@ def _source_schema(source_type: str) -> Dict[str, Any]:
         },
         "rss": {
             "required": {"url"},
-            "optional": {"limit", "since_days_ago"},
+            "optional": {"limit", "since_days_ago", "byline", "body_source"},
         },
         "mastodon": {
             "required": {"server", "username"},
@@ -625,6 +625,8 @@ def _validate_source_options(source_type: str, options: Dict[str, Any], index: i
         "since_days_ago": lambda value: _validate_number(
             value, f"source #{index} since_days_ago"
         ),
+        "byline": lambda value: _validate_rss_byline(value, index),
+        "body_source": lambda value: _validate_rss_body_source(value, index),
         "lat": lambda value: _validate_number(value, f"source #{index} lat"),
         "lon": lambda value: _validate_number(value, f"source #{index} lon"),
         "timezone": lambda value: _validate_string(
@@ -670,6 +672,21 @@ def _validate_weather_unit(value: Any, index: int):
     if value not in {"F", "C"}:
         raise ConfigError(
             f'source #{index} unit must be either "F" or "C".'
+        )
+
+
+def _validate_rss_byline(value: Any, index: int):
+    if value not in {"all", "none", "first"}:
+        raise ConfigError(
+            f'source #{index} byline must be one of "all", "none", or "first".'
+        )
+
+
+def _validate_rss_body_source(value: Any, index: int):
+    if value not in {"auto", "content", "summary", "article"}:
+        raise ConfigError(
+            f'source #{index} body_source must be one of "auto", '
+            '"content", "summary", or "article".'
         )
 
 

@@ -124,7 +124,13 @@ The paper config uses a strict v2 schema with one file per paper. A minimal exam
     "page_profile": "remarkable2"
   },
   "sources": [
-    { "type": "rss", "url": "https://feeds.npr.org/1001/rss.xml", "limit": 5 },
+    {
+      "type": "rss",
+      "url": "https://feeds.npr.org/1001/rss.xml",
+      "limit": 5,
+      "byline": "first",
+      "body_source": "auto"
+    },
     { "type": "reddit", "subreddit": "news" }
   ],
   "delivery": {
@@ -133,7 +139,7 @@ The paper config uses a strict v2 schema with one file per paper. A minimal exam
 }
 ```
 
-`style` selects a visual theme. `layout` controls the overall column density: with `"auto"`, Goosepaper defaults to a single reading column on narrow device profiles like `remarkable1`, `remarkable2`, and `paper_pro_move`, and to denser multi-column pages on larger profiles like `paper_pro`, `letter`, and `a4`. If you want to force it, set `"layout": "1col"`, `"2col"`, or `"3col"`. If you want a linked contents block near the top of the issue, set `"table_of_contents": true` in the `paper` object. If you want to override the body typeface without taking over the whole design, set `"body_font": "Literata"`. If you want to target a specific device or paper shape, set `"page_profile"` to one of `remarkable1`, `remarkable2`, `paper_pro`, `paper_pro_move`, `letter`, or `a4`. (`"rm1"` also works as a short alias.)
+`style` selects a visual theme. `layout` controls the overall column density: with `"auto"`, Goosepaper defaults to a single reading column on narrow device profiles like `remarkable1`, `remarkable2`, and `paper_pro_move`, and to denser multi-column pages on larger profiles like `paper_pro`, `letter`, and `a4`. If you want to force it, set `"layout": "1col"`, `"2col"`, or `"3col"`. If you want a linked contents block near the top of the issue, set `"table_of_contents": true` in the `paper` object. If you want to override the body typeface without taking over the whole design, set `"body_font": "Literata"`. If you want to target a specific device or paper shape, set `"page_profile"` to one of `remarkable1`, `remarkable2`, `paper_pro`, `paper_pro_move`, `letter`, or `a4`. (`"rm1"` also works as a short alias.) RSS sources can also set `"byline": "all"`, `"none"`, or `"first"`, plus `"body_source": "auto" | "content" | "summary" | "article"`.
 
 Delivery still happens only when you pass `--deliver`. If you want user-level delivery defaults, create `~/.config/goosepaper/config.json`:
 
