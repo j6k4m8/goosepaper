@@ -67,6 +67,8 @@ def test_load_paper_config_uses_v2_schema():
                         "type": "rss",
                         "url": "https://example.com/feed.xml",
                         "limit": 3,
+                        "byline": "first",
+                        "body_source": "summary",
                     }
                 ],
                 "delivery": {"folder": "Morning Brief"},
@@ -84,6 +86,8 @@ def test_load_paper_config_uses_v2_schema():
         assert config.paper.page_profile == "letter"
         assert config.sources[0].type == "rss"
         assert config.sources[0].options["url"] == "https://example.com/feed.xml"
+        assert config.sources[0].options["byline"] == "first"
+        assert config.sources[0].options["body_source"] == "summary"
         assert config.delivery.folder == "Morning Brief"
 
 
@@ -222,3 +226,52 @@ def test_resolve_runtime_config_requires_output_for_nostory():
         lambda: resolve_runtime_config(["--deliver", "--nostory"]),
         "--output",
     )
+
+
+def test_load_paper_config_rejects_invalid_rss_byline_mode():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {
+                        "type": "rss",
+                        "url": "https://example.com/feed.xml",
+                        "byline": "sometimes",
+                    }
+                ],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            'byline must be one of "all", "none", or "first"',
+        )
+
+
+def test_load_paper_config_rejects_invalid_rss_body_source():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {
+                        "type": "rss",
+                        "url": "https://example.com/feed.xml",
+                        "body_source": "feed",
+                    }
+                ],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            'body_source must be one of "auto", "content", '
+            '"summary", or "article"',
+        )

@@ -33,6 +33,7 @@ def test_construct_story_providers_from_config_dict():
         }
     )
     assert len(stories) == 1
+    assert stories[0].headline == "hello"
 
     stories = construct_story_providers_from_source_configs(
         [
@@ -47,3 +48,19 @@ def test_construct_story_providers_from_config_dict():
         ]
     )
     assert len(stories) == 2
+
+
+def test_construct_story_providers_passes_rss_byline_option():
+    stories = construct_story_providers_from_source_configs(
+        [
+            {
+                "type": "rss",
+                "url": "https://example.com/feed.xml",
+                "byline": "first",
+                "body_source": "summary",
+            }
+        ]
+    )
+
+    assert stories[0].byline_mode == "first"
+    assert stories[0].body_source == "summary"

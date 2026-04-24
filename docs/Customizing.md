@@ -38,7 +38,9 @@ Example:
         {
             "type": "rss",
             "url": "https://feeds.npr.org/1001/rss.xml",
-            "limit": 5
+            "limit": 5,
+            "byline": "first",
+            "body_source": "auto"
         },
         {
             "type": "reddit",
@@ -179,7 +181,9 @@ Each source entry has a `"type"` plus provider-specific fields.
 {
     "type": "rss",
     "url": "https://feeds.npr.org/1001/rss.xml",
-    "limit": 5
+    "limit": 5,
+    "byline": "first",
+    "body_source": "auto"
 }
 ```
 
@@ -188,6 +192,15 @@ Each source entry has a `"type"` plus provider-specific fields.
 | `url` | str | none | RSS feed URL. |
 | `limit` | int | `5` | Number of stories to fetch. |
 | `since_days_ago` | number | `null` | If provided, filter stories by recency. |
+| `byline` | str | `"all"` | One of `"all"`, `"none"`, or `"first"` for RSS source attribution. |
+| `body_source` | str | `"auto"` | One of `"auto"`, `"content"`, `"summary"`, or `"article"` to choose where RSS story bodies come from. |
+
+RSS `body_source` modes:
+
+- `auto`: prefer embedded feed content; otherwise fetch the linked article and fall back to feed-provided body text
+- `content`: prefer embedded feed content and fall back to summary/description without fetching the article page
+- `summary`: prefer summary/description and fall back to embedded feed content without fetching the article page
+- `article`: force linked-article extraction first and only fall back to feed-provided body text if needed
 
 ### Mastodon
 

@@ -27,7 +27,9 @@
         {
             "type": "rss",
             "url": "https://feeds.npr.org/1001/rss.xml",
-            "limit": 5
+            "limit": 5,
+            "byline": "first",
+            "body_source": "auto"
         },
         {
             "type": "reddit",
