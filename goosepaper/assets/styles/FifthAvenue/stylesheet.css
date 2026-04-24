@@ -19,6 +19,9 @@ body {
 .table-of-contents__label,
 .sidebar-title,
 .story-section-title,
+.utility-strip article > h1,
+.weather-kicker,
+.weather-cell__label,
 article > .byline {
     font-family: "Open Sans", "Helvetica Neue", sans-serif;
     font-weight: 700;

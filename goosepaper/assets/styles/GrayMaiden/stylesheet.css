@@ -40,6 +40,9 @@ body {
 .table-of-contents__label,
 .sidebar-title,
 .story-section-title,
+.utility-strip article > h1,
+.weather-kicker,
+.weather-cell__label,
 article > .byline {
     font-family: "Libre Franklin", "Helvetica Neue", sans-serif;
     font-weight: 600;
@@ -105,7 +108,7 @@ article > .byline {
 
 article {
     line-height: 1.5;
-    text-align: justify;
+    /* text-align: justify; */
     hyphens: auto;
 }
 

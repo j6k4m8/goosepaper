@@ -58,6 +58,7 @@ class Story:
             PlacementPreference.EAR: "placement-ear",
             PlacementPreference.FOLIO: "placement-folio",
             PlacementPreference.BANNER: "placement-banner",
+            PlacementPreference.UTILITY: "placement-utility",
         }[self.placement_preference]
 
     def plain_text(self) -> str:

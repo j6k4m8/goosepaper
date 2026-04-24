@@ -1,6 +1,7 @@
 from .goosepaper import Goosepaper
 from .story import Story
 from .styles import Style
+from .util import PlacementPreference
 
 from .storyprovider.storyprovider import LoremStoryProvider
 
@@ -104,6 +105,30 @@ def test_toc_can_collapse_sections_and_skip_opted_out_stories():
     assert 'class="story-section-title">Bluesky<' in html
     assert 'class="story story-card story-short"' in html
     assert 'Hidden from contents' in html
+
+
+def test_utility_strip_renders_between_header_and_contents():
+    class UtilityProvider:
+        def get_stories(self):
+            return [
+                Story(
+                    headline="Weather",
+                    body_html="<p>Forecast strip</p>",
+                    placement_preference=PlacementPreference.UTILITY,
+                    include_in_toc=False,
+                    short_form=True,
+                ),
+                Story(headline="Lead story", body_text="Lead body"),
+            ]
+
+    g = Goosepaper([UtilityProvider()])
+
+    html = g.to_html(table_of_contents=True)
+
+    assert 'class="utility-strip"' in html
+    assert html.index('class="utility-strip"') < html.index('class="table-of-contents')
+    assert html.index('class="table-of-contents') < html.index('class="stories ')
+    assert 'class="story story-card placement-utility story-short"' in html
 
 
 def test_style_resolves_auto_columns_from_page_profile():

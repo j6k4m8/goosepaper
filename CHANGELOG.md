@@ -14,6 +14,9 @@
     -   Added a public Bluesky story provider with `bluesky` config support.
     -   Added story-level ToC/section metadata so short-form providers like Bluesky and Reddit can render as labeled sections with a single contents entry.
     -   Added `include_replies` for Bluesky sources so public author feeds can exclude replies when desired.
+    -   Expanded weather sources with `summary`, `hourly`, and `daily` modes, and added a dedicated utility-strip region for richer forecast modules.
+    -   Added a combined `hourly_daily` weather mode for a single utility module with both near-term and multi-day forecast sections.
+    -   Switched hourly weather labels from relative offsets to real clock times and added `clock_format` for `12h`/`24h` display.
 -   Chores
     -   Dropped support for Python 3.8 and 3.9, which are no longer supported by the Python community, and added support for Python 3.13 and 3.14. The minimum supported version is now Python 3.10. (#99)
     -   Improved RSS extraction behavior so embedded feed content is used when available, and added configurable RSS `byline` and `body_source` modes with test coverage.

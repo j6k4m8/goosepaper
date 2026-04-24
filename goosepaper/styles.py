@@ -381,6 +381,97 @@ def _base_print_css(
         content: leader(dotted) target-counter(attr(href), page);
     }}
 
+    .utility-strip {{
+        margin: 0 0 0.85rem;
+        padding: 0.15rem 0 0.5rem;
+        border-bottom: 0.9pt solid #d2d2d2;
+    }}
+
+    .utility-strip > article {{
+        margin: 0;
+        padding: 0.15rem 0 0.25rem;
+        border-bottom: 0;
+    }}
+
+    .utility-strip > article + article {{
+        margin-top: 0.65rem;
+        padding-top: 0.55rem;
+        border-top: 0.9pt solid #d9d9d9;
+    }}
+
+    .utility-strip article > h1 {{
+        margin-bottom: 0.3rem;
+        font-size: 1.02em;
+        line-height: 1.1;
+    }}
+
+    .weather-kicker {{
+        margin: 0 0 0.35rem;
+        font-size: 0.72em;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+    }}
+
+    .weather-module__section + .weather-module__section {{
+        margin-top: 0.55rem;
+        padding-top: 0.5rem;
+        border-top: 0.9pt solid #d9d9d9;
+    }}
+
+    .weather-table {{
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+    }}
+
+    .weather-table__cell {{
+        padding: 0 0.28rem;
+        border-left: 0.9pt solid #d9d9d9;
+        vertical-align: top;
+        text-align: center;
+    }}
+
+    .weather-table__cell:first-child {{
+        padding-left: 0;
+        border-left: 0;
+    }}
+
+    .weather-table__cell:last-child {{
+        padding-right: 0;
+    }}
+
+    .weather-cell__label,
+    .weather-cell__temp,
+    .weather-cell__condition {{
+        display: block;
+    }}
+
+    .weather-cell__label {{
+        font-size: 0.68em;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }}
+
+    .weather-cell__temp {{
+        margin-top: 0.08rem;
+        font-size: 1.12em;
+        font-weight: 700;
+        line-height: 1.05;
+    }}
+
+    .weather-cell__condition {{
+        margin-top: 0.12rem;
+        font-size: 0.72em;
+        line-height: 1.2;
+    }}
+
+    .weather-empty {{
+        margin: 0;
+        font-size: 0.8em;
+    }}
+
     .stories {{
         width: 100%;
     }}

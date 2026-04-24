@@ -247,7 +247,11 @@ Bluesky sources use Bluesky's unauthenticated public AppView endpoints.
     "type": "weather",
     "lat": 42.3601,
     "lon": -71.0589,
-    "unit": "F"
+    "unit": "F",
+    "mode": "hourly",
+    "hours": 12,
+    "step_hours": 4,
+    "clock_format": "12h"
 }
 ```
 
@@ -257,6 +261,18 @@ Bluesky sources use Bluesky's unauthenticated public AppView endpoints.
 | `lon` | number | none | Longitude of the forecast location. |
 | `unit` | str | `"F"` | Temperature unit. Either `"F"` or `"C"`. |
 | `timezone` | str | `"America/New_York"` | Timezone for the forecast request. |
+| `mode` | str | `"summary"` | One of `"summary"`, `"hourly"`, `"daily"`, or `"hourly_daily"`. |
+| `hours` | int | `12` | For hourly mode, how many hours ahead to include. |
+| `step_hours` | int | `4` | For hourly mode, how many hours to skip between forecast points. |
+| `days` | int | `4` | For daily mode, how many days to include. |
+| `clock_format` | str | `"12h"` | For hourly labels, either `"12h"` or `"24h"`. |
+
+Weather rendering modes:
+
+- `summary`: compact current behavior, rendered in the paper ear.
+- `hourly`: a breakdown like `12pm`, `4pm`, `8pm`, rendered as a full-width utility strip when the request is richer than a compact summary.
+- `daily`: a multi-day high/low forecast, also promoted to the utility strip when it would be too large for the ear.
+- `hourly_daily`: a combined utility-strip module with both the hourly and daily forecast sections.
 
 ### Wikipedia
 
