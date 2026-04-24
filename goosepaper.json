@@ -1,0 +1,41 @@
+{
+    "version": 2,
+    "paper": {
+        "font_size": 12,
+        "style": "FifthAvenue"
+    },
+    "sources": [
+        {
+            "type": "weather",
+            "lat": 36.5,
+            "lon": -75.1,
+            "unit": "F"
+        },
+        {
+            "type": "mastodon",
+            "since_days_ago": 0.5,
+            "username": "jordan",
+            "server": "https://neuromatch.social",
+            "limit": 8
+        },
+        {
+            "type": "wikipedia"
+        },
+        {
+            "type": "rss",
+            "url": "https://feeds.npr.org/1001/rss.xml",
+            "limit": 5
+        },
+        {
+            "type": "reddit",
+            "subreddit": "news"
+        },
+        {
+            "type": "reddit",
+            "subreddit": "todayilearned"
+        }
+    ],
+    "delivery": {
+        "folder": "Morning Brief"
+    }
+}
