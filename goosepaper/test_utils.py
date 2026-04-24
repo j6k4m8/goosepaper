@@ -80,3 +80,45 @@ def test_construct_story_providers_supports_bluesky():
     assert stories[0].username == "jordan.matelsky.com"
     assert stories[0].include_replies is False
     assert stories[0].feed_filter == "posts_no_replies"
+
+
+def test_construct_story_providers_passes_weather_breakdown_options():
+    stories = construct_story_providers_from_source_configs(
+        [
+            {
+                "type": "weather",
+                "lat": 36.5,
+                "lon": -75.1,
+                "mode": "hourly",
+                "hours": 12,
+                "step_hours": 4,
+                "clock_format": "24h",
+                "timezone": "America/New_York",
+            }
+        ]
+    )
+
+    assert stories[0].mode == "hourly"
+    assert stories[0].hours == 12
+    assert stories[0].step_hours == 4
+    assert stories[0].clock_format == "24h"
+    assert stories[0].timezone == "America/New_York"
+
+
+def test_construct_story_providers_passes_combined_weather_mode():
+    stories = construct_story_providers_from_source_configs(
+        [
+            {
+                "type": "weather",
+                "lat": 36.5,
+                "lon": -75.1,
+                "mode": "hourly_daily",
+                "hours": 12,
+                "step_hours": 4,
+                "days": 4,
+            }
+        ]
+    )
+
+    assert stories[0].mode == "hourly_daily"
+    assert stories[0].days == 4

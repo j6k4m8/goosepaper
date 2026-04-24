@@ -117,7 +117,17 @@ class Goosepaper:
             story
             for story in stories
             if story.placement_preference
-            not in [PlacementPreference.EAR, PlacementPreference.SIDEBAR]
+            not in [
+                PlacementPreference.EAR,
+                PlacementPreference.SIDEBAR,
+                PlacementPreference.UTILITY,
+            ]
+        ]
+
+        utility_story_objects = [
+            story
+            for story in stories
+            if story.placement_preference == PlacementPreference.UTILITY
         ]
 
         sidebar_story_objects = [
@@ -125,13 +135,21 @@ class Goosepaper:
             for story in stories
             if story.placement_preference == PlacementPreference.SIDEBAR
         ]
-        ordered_story_objects = main_story_objects + sidebar_story_objects
+        ordered_story_objects = (
+            utility_story_objects + main_story_objects + sidebar_story_objects
+        )
         story_anchor_ids = self._story_anchor_ids(ordered_story_objects)
         story_numbers = {
             id(story): index
             for index, story in enumerate(ordered_story_objects, start=1)
         }
         used_anchors = set(story_anchor_ids.values())
+        utility_stories, utility_toc_entries = self._render_story_region(
+            utility_story_objects,
+            story_anchor_ids,
+            story_numbers,
+            used_anchors=used_anchors,
+        )
         main_stories, main_toc_entries = self._render_story_region(
             main_story_objects,
             story_anchor_ids,
@@ -145,7 +163,7 @@ class Goosepaper:
             used_anchors=used_anchors,
         )
         toc_html = self._render_table_of_contents(
-            main_toc_entries + sidebar_toc_entries,
+            utility_toc_entries + main_toc_entries + sidebar_toc_entries,
             enabled=table_of_contents,
             effective_columns=effective_columns,
         )
@@ -166,6 +184,13 @@ class Goosepaper:
                     <div class="sidebar">
                         <h2 class="sidebar-title">Briefs & notes</h2>
                         {''.join(sidebar_stories)}
+                    </div>
+            """
+        utility_html = ""
+        if utility_stories:
+            utility_html = f"""
+                    <div class="utility-strip">
+                        {''.join(utility_stories)}
                     </div>
             """
 
@@ -213,6 +238,7 @@ class Goosepaper:
                     </div>
                     <div class="right-ear ear">{right_ear}</div>
                 </div>
+                {utility_html}
                 {toc_html}
                 <div class="{' '.join(stories_classes)}">
                     <div class="main-stories">

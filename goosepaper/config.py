@@ -597,7 +597,15 @@ def _source_schema(source_type: str) -> Dict[str, Any]:
         },
         "weather": {
             "required": {"lat", "lon"},
-            "optional": {"unit", "timezone"},
+            "optional": {
+                "unit",
+                "timezone",
+                "mode",
+                "hours",
+                "step_hours",
+                "days",
+                "clock_format",
+            },
         },
         "wikipedia": {
             "required": set(),
@@ -640,6 +648,13 @@ def _validate_source_options(source_type: str, options: Dict[str, Any], index: i
             value, f"source #{index} timezone"
         ),
         "unit": lambda value: _validate_weather_unit(value, index),
+        "mode": lambda value: _validate_weather_mode(value, index),
+        "hours": lambda value: _validate_positive_int(value, f"source #{index} hours"),
+        "step_hours": lambda value: _validate_positive_int(
+            value, f"source #{index} step_hours"
+        ),
+        "days": lambda value: _validate_positive_int(value, f"source #{index} days"),
+        "clock_format": lambda value: _validate_weather_clock_format(value, index),
     }
 
     for key, value in options.items():
@@ -684,6 +699,20 @@ def _validate_weather_unit(value: Any, index: int):
     if value not in {"F", "C"}:
         raise ConfigError(
             f'source #{index} unit must be either "F" or "C".'
+        )
+
+
+def _validate_weather_mode(value: Any, index: int):
+    if value not in {"summary", "hourly", "daily", "hourly_daily"}:
+        raise ConfigError(
+            f'source #{index} mode must be one of "summary", "hourly", "daily", or "hourly_daily".'
+        )
+
+
+def _validate_weather_clock_format(value: Any, index: int):
+    if value not in {"12h", "24h"}:
+        raise ConfigError(
+            f'source #{index} clock_format must be either "12h" or "24h".'
         )
 
 

@@ -37,6 +37,7 @@ class PlacementPreference(enum.Enum):
     EAR = 3
     FOLIO = 4
     BANNER = 5
+    UTILITY = 6
 
 
 class StoryPriority(enum.Enum):
@@ -109,6 +110,19 @@ def construct_story_providers_from_source_configs(source_configs):
                 "lat": options["lat"],
                 "lon": options["lon"],
                 "F": options.get("unit", "F") == "F",
+                **({"mode": options["mode"]} if "mode" in options else {}),
+                **({"hours": options["hours"]} if "hours" in options else {}),
+                **(
+                    {"step_hours": options["step_hours"]}
+                    if "step_hours" in options
+                    else {}
+                ),
+                **({"days": options["days"]} if "days" in options else {}),
+                **(
+                    {"clock_format": options["clock_format"]}
+                    if "clock_format" in options
+                    else {}
+                ),
                 **(
                     {"timezone": options["timezone"]}
                     if "timezone" in options

@@ -2,6 +2,7 @@
     "version": 2,
     "paper": {
         "font_size": 10,
+        "title": "Daily Goose",
         "style": "GrayMaiden",
         "table_of_contents": true,
         "layout": "auto",
@@ -12,7 +13,8 @@
             "type": "weather",
             "lat": 36.5,
             "lon": -75.1,
-            "unit": "F"
+            "unit": "F",
+            "mode": "hourly_daily"
         },
         {
             "type": "wikipedia"
@@ -26,11 +28,13 @@
         },
         {
             "type": "reddit",
-            "subreddit": "news"
+            "subreddit": "news",
+            "limit": 6
         },
         {
             "type": "reddit",
-            "subreddit": "todayilearned"
+            "subreddit": "todayilearned",
+            "limit": 6
         },
         {
             "type": "mastodon",

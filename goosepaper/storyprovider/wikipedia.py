@@ -2,7 +2,6 @@ import feedparser
 import bs4
 from typing import List
 
-from ..util import PlacementPreference
 from .storyprovider import StoryProvider
 from ..story import Story
 
@@ -37,6 +36,5 @@ class WikipediaCurrentEventsStoryProvider(StoryProvider):
                 headline=title,
                 body_html=str(content),
                 byline="Wikipedia Current Events",
-                placement_preference=PlacementPreference.BANNER,
             )
         ]

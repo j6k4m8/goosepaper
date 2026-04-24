@@ -311,6 +311,67 @@ def test_load_paper_config_accepts_bluesky_source():
         assert config.sources[0].options["include_replies"] is True
 
 
+def test_load_paper_config_accepts_weather_breakdown_fields():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {
+                        "type": "weather",
+                        "lat": 36.5,
+                        "lon": -75.1,
+                        "mode": "hourly",
+                        "hours": 12,
+                        "step_hours": 4,
+                        "days": 3,
+                        "clock_format": "24h",
+                        "timezone": "America/New_York",
+                    }
+                ],
+            },
+        )
+
+        config = load_paper_config(config_path)
+
+        assert config.sources[0].type == "weather"
+        assert config.sources[0].options["mode"] == "hourly"
+        assert config.sources[0].options["hours"] == 12
+        assert config.sources[0].options["step_hours"] == 4
+        assert config.sources[0].options["days"] == 3
+        assert config.sources[0].options["clock_format"] == "24h"
+
+
+def test_load_paper_config_accepts_combined_weather_mode():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {
+                        "type": "weather",
+                        "lat": 36.5,
+                        "lon": -75.1,
+                        "mode": "hourly_daily",
+                        "hours": 12,
+                        "step_hours": 4,
+                        "days": 4,
+                    }
+                ],
+            },
+        )
+
+        config = load_paper_config(config_path)
+
+        assert config.sources[0].options["mode"] == "hourly_daily"
+
+
 def test_load_paper_config_rejects_invalid_bluesky_include_replies():
     with _TempWorkspace() as tmp_path:
         config_path = tmp_path / "paper.json"
@@ -332,4 +393,54 @@ def test_load_paper_config_rejects_invalid_bluesky_include_replies():
         _assert_config_error(
             lambda: load_paper_config(config_path),
             "include_replies must be true or false",
+        )
+
+
+def test_load_paper_config_rejects_invalid_weather_mode():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {
+                        "type": "weather",
+                        "lat": 36.5,
+                        "lon": -75.1,
+                        "mode": "weekly",
+                    }
+                ],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            'mode must be one of "summary", "hourly", "daily", or "hourly_daily"',
+        )
+
+
+def test_load_paper_config_rejects_invalid_weather_clock_format():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {
+                        "type": "weather",
+                        "lat": 36.5,
+                        "lon": -75.1,
+                        "clock_format": "ampm",
+                    }
+                ],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            'clock_format must be either "12h" or "24h"',
         )
