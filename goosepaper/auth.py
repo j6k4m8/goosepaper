@@ -1,26 +1,13 @@
-from rmapy.api import Client
-from rmapy.exceptions import AuthError
-
-CODE_URL = "https://my.remarkable.com/connect/remarkable"
+from remarkapy import Client, resolve_config_path
+from remarkapy.exceptions import RemarkableAPIError
 
 
 def auth_client():
-    client = Client()
-
     try:
-        client.renew_token()
-    except AuthError:
-        print(
-            "Looks like this is the first time you've uploaded. You need to "
-            f"register the device. Input a code from {CODE_URL}"
-        )
-        code = input()
-        print("registering")
-        client.register_device(code)
-        if not client.renew_token():
-            print("Honk! Registration renewal failed.")
-            return False
-        else:
-            print("registration successful")
-
-    return client
+        client = Client(refresh_on_init=False)
+        client.refresh_user_token()
+        return client
+    except RemarkableAPIError as err:
+        print(f"Honk! Authentication failed: {err}")
+        print(f"remarkapy is using {resolve_config_path()} as its config path.")
+        return False

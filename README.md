@@ -49,12 +49,12 @@ docker run -it --rm -v $(pwd):/goosepaper/mount j6k4m8/goosepaper goosepaper -c 
 
 ### step 2: you are done!
 
-If you want to both generate the PDF and deliver it to your reMarkable tablet, pass `--deliver`. You must additionally mount your `~/.rmapy` file:
+If you want to both generate the PDF and deliver it to your reMarkable tablet, pass `--deliver`. You must additionally mount your `~/.rmapi` file:
 
 ```shell
 docker run -it --rm \
     -v $(pwd):/goosepaper/mount \
-    -v $HOME/.rmapy:/root/.rmapy \
+    -v $HOME/.rmapi:/root/.rmapi \
     j6k4m8/goosepaper \
     goosepaper -c mount/example-config.json -o mount/Goosepaper.pdf --deliver
 ```
@@ -69,7 +69,7 @@ this tool uses `weasyprint` to generate PDFs. After installing the system prereq
 
 more details [here](https://weasyprint.readthedocs.io/en/latest/install.html).
 
-Goosepaper now targets Python 3.10+.
+Goosepaper now targets Python 3.12+.
 
 #### mac:
 
@@ -115,18 +115,18 @@ The paper config uses a strict v2 schema with one file per paper. A minimal exam
 
 ```json
 {
-  "version": 2,
-  "paper": {
-    "style": "FifthAvenue",
-    "font_size": 14
-  },
-  "sources": [
-    { "type": "rss", "url": "https://feeds.npr.org/1001/rss.xml", "limit": 5 },
-    { "type": "reddit", "subreddit": "news" }
-  ],
-  "delivery": {
-    "folder": "Morning Brief"
-  }
+    "version": 2,
+    "paper": {
+        "style": "FifthAvenue",
+        "font_size": 14
+    },
+    "sources": [
+        { "type": "rss", "url": "https://feeds.npr.org/1001/rss.xml", "limit": 5 },
+        { "type": "reddit", "subreddit": "news" }
+    ],
+    "delivery": {
+        "folder": "Morning Brief"
+    }
 }
 ```
 
@@ -134,12 +134,12 @@ Delivery still happens only when you pass `--deliver`. If you want user-level de
 
 ```json
 {
-  "version": 2,
-  "delivery_defaults": {
-    "folder": "News",
-    "replace_mode": "nocase",
-    "cleanup": false
-  }
+    "version": 2,
+    "delivery_defaults": {
+        "folder": "News",
+        "replace_mode": "nocase",
+        "cleanup": false
+    }
 }
 ```
 
@@ -188,4 +188,4 @@ no! twitter has changed and now no one can play nicely with them. sorry! it is s
 # You May Also Like...
 
 -   [remailable](https://github.com/j6k4m8/remailable): Email PDF documents to your reMarkable tablet
--   [rmapy fork](https://github.com/j6k4m8/rmapy): My fork of rmapy, with added features and bugfixes
+-   [remarkapy](https://github.com/j6k4m8/remarkapy): My Python client for the reMarkable cloud API, which powers the upload functionality of Goosepaper

@@ -4,9 +4,6 @@ import os
 from pathlib import Path
 from typing import Optional
 
-from rmapy.api import Folder
-from rmapy.document import ZipDocument
-
 from .auth import auth_client
 from .config import (
     ConfigError,
@@ -22,18 +19,13 @@ def _name_for_matching(value: str, nocase: bool) -> str:
 
 
 def getallitems(client):
-    # So somehow I corrupted or broke my cloud during testing and any object
-    # which exists is getting returned twice in the object list from
-    # get_meta_items. Deleting items and re-adding them hasn't fixed it even
-    # using the official RM client. So this avoids that problem. I haven't found
-    # a real fix yet for my cloud though.
-    allitems = [item for item in client.get_meta_items() if (item.Parent != "trash")]
-
+    allitems = [item for item in client.list_items() if item.parent != "trash"]
     items = []
+    seen = set()
     for tempitem in allitems:
-        if not any(item.ID == tempitem.ID for item in items):
+        if tempitem.id not in seen:
             items.append(tempitem)
-
+            seen.add(tempitem.id)
     return items
 
 
@@ -52,83 +44,75 @@ def upload(filepath, delivery_settings: Optional[DeliverySettings] = None, showc
     client = auth_client()
 
     if not client:
-        print("Honk Honk! Couldn't auth! Is your rmapy configured?")
+        print("Honk Honk! Couldn't auth! Is your remarkapy config set up (~/.rmapi)?")
         return False
 
-    # Added error handling to deal with possible race condition where the file
-    # is mangled or not written out before the upload actually occurs such as
-    # an AV false positive. 'pdf' is a simple throwaway file handle to make
-    # sure that we retain control of the file while it's being imported.
     fpr = filepath.resolve()
+    if not fpr.exists():
+        raise IOError(f"Error locating or opening {filepath} during upload.")
 
-    try:
-        doc = ZipDocument(doc=str(fpr))
-    except IOError as err:
-        raise IOError(f"Error locating or opening {filepath} during upload.") from err
-    target_name = _name_for_matching(str(doc.metadata["VissibleName"]), nocase)
+    target_name = _name_for_matching(filepath.stem, nocase)
 
     paper_candidates = []
-    paper_folder = None
+    folder_candidates = []
 
     for item in getallitems(client):
         if (
             folder
-            and item.Type == "CollectionType"
-            and _name_for_matching(item.VissibleName, nocase)
+            and item.type == "CollectionType"
+            and _name_for_matching(item.visibleName, nocase)
             == _name_for_matching(folder, nocase)
-            and (item.Parent is None or item.Parent == "")
+            and item.parent == ""
         ):
-            paper_folder = item
-        elif item.Type == "DocumentType" and (
-            _name_for_matching(item.VissibleName, nocase) == target_name
+            folder_candidates.append(item)
+        elif item.type == "DocumentType" and (
+            _name_for_matching(item.visibleName, nocase) == target_name
         ):
             paper_candidates.append(item)
 
-    paper = None
-    if paper_candidates:
-        if folder:
-            filtered = (
-                [item for item in paper_candidates if item.Parent == paper_folder.ID]
-                if paper_folder
-                else []
-            )
-        else:
-            filtered = [
-                item
-                for item in paper_candidates
-                if item.Parent != "trash" and client.get_doc(item.Parent) is None
-            ]
+    if len(folder_candidates) > 1:
+        print(f"multiple candidate folders with the same name {folder}")
+        return False
+    paper_folder = folder_candidates[0] if folder_candidates else None
 
-        if len(filtered) > 1 and replace:
-            print(
-                "multiple candidate papers with the same name "
-                f"{filtered[0].VissibleName}, don't know which to delete"
-            )
-            return False
-        if len(filtered) == 1:
-            paper = filtered[0]
+    if folder:
+        filtered = [
+            item
+            for item in paper_candidates
+            if paper_folder is not None and item.parent == paper_folder.id
+        ]
+    else:
+        filtered = [item for item in paper_candidates if item.parent == ""]
 
-    if paper is not None:
-        if replace:
-            client.delete(paper)
-        else:
+    if filtered:
+        if not replace:
             print("Honk! The paper already exists!")
             return False
-
-    if folder and not paper_folder:
-        paper_folder = Folder(folder)
-        if not client.create_folder(paper_folder):
-            print("Honk! Failed to create the folder!")
+        if len(filtered) > 1:
+            print(
+                "multiple candidate papers with the same name "
+                f"{filtered[0].visibleName}, don't know which to delete"
+            )
             return False
+        client.delete(filtered[0].id, refresh=True)
 
-    # workaround rmapy bug: client.upload(doc) would set a non-existing parent
-    # ID to the document
-    if not paper_folder:
-        paper_folder = Folder()
-        paper_folder.ID = ""
+    parent_id = ""
+    if folder and not paper_folder:
+        paper_folder = client.put_folder(folder, parent="", refresh=True)
+        parent_id = paper_folder.id
+    elif paper_folder:
+        parent_id = paper_folder.id
 
-    result = client.upload(doc, paper_folder)
-    if result:
+    payload = fpr.read_bytes()
+    suffix = fpr.suffix.lower()
+    if suffix == ".pdf":
+        result = client.put_pdf(filepath.stem, payload, parent=parent_id, refresh=True)
+    elif suffix == ".epub":
+        result = client.put_epub(filepath.stem, payload, parent=parent_id, refresh=True)
+    else:
+        raise ValueError("Only PDF and EPUB uploads are supported.")
+
+    if result is not None:
         print("Honk! Upload successful!")
         if cleanup:
             try:
