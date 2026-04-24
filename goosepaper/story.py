@@ -17,6 +17,9 @@ class Story:
         date: datetime.datetime = None,
         priority: StoryPriority = StoryPriority.DEFAULT,
         placement_preference: PlacementPreference = PlacementPreference.NONE,
+        include_in_toc: bool = True,
+        section_title: Optional[str] = None,
+        short_form: bool = False,
     ) -> None:
         """
         Create a new Story with headline and body text.
@@ -25,6 +28,9 @@ class Story:
         self.priority = priority
         self.byline = byline
         self.date = date
+        self.include_in_toc = include_in_toc
+        self.section_title = section_title
+        self.short_form = short_form
         if body_html is not None:
             self.body_html = body_html
         elif body_text is not None:
@@ -74,6 +80,8 @@ class Story:
             classes.append(priority_class)
         if placement_class:
             classes.append(placement_class)
+        if self.short_form:
+            classes.append("story-short")
         if extra_classes:
             classes.extend(extra_classes)
         headline = (

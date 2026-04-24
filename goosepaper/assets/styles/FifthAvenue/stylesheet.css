@@ -18,6 +18,7 @@ body {
 .edition-line,
 .table-of-contents__label,
 .sidebar-title,
+.story-section-title,
 article > .byline {
     font-family: "Open Sans", "Helvetica Neue", sans-serif;
     font-weight: 700;
@@ -27,7 +28,8 @@ article > .byline {
 .edition-line,
 article > .byline,
 .table-of-contents__label,
-.sidebar-title {
+.sidebar-title,
+.story-section-title {
     letter-spacing: 0.15em;
 }
 

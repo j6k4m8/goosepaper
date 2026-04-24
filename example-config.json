@@ -37,13 +37,14 @@
             "since_days_ago": 1,
             "username": "jordan",
             "server": "https://neuromatch.social",
-            "limit": 8
+            "limit": 4
         },
         {
             "type": "bluesky",
             "since_days_ago": 1,
             "username": "jordan.matelsky.com",
-            "limit": 8
+            "limit": 4,
+            "include_replies": false
         }
     ],
     "delivery": {

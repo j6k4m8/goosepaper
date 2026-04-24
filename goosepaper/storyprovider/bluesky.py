@@ -19,9 +19,14 @@ class BlueskyStoryProvider(StoryProvider):
         username: str,
         limit: int = 5,
         since_days_ago: int = None,
+        include_replies: bool = True,
     ) -> None:
         self.limit = limit
         self.username = username.lstrip("@")
+        self.include_replies = include_replies
+        self.feed_filter = (
+            "posts_with_replies" if include_replies else "posts_no_replies"
+        )
         self.feed_url = _PUBLIC_APPVIEW_URL + _AUTHOR_FEED_PATH
         self._since = (
             datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
@@ -35,7 +40,7 @@ class BlueskyStoryProvider(StoryProvider):
             self.feed_url,
             params={
                 "actor": self.username,
-                "filter": "posts_with_replies",
+                "filter": self.feed_filter,
                 "limit": min(self.limit, limit),
             },
             headers={"User-Agent": f"goosepaper/{__version__}"},
@@ -83,6 +88,8 @@ def _story_from_feed_item(
         body_html=_text_to_html(post_text),
         byline="@" + handle,
         date=date,
+        section_title="Bluesky",
+        short_form=True,
     )
 
 

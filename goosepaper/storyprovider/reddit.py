@@ -48,6 +48,8 @@ class RedditHeadlineStoryProvider(StoryProvider):
                     byline=f"{author} in r/{self.subreddit}",
                     date=date,
                     placement_preference=PlacementPreference.SIDEBAR,
+                    section_title="Reddit",
+                    short_form=True,
                 )
             )
             if len(stories) >= limit:

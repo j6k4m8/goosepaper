@@ -63,6 +63,8 @@ def test_reddit_provider_fetches_feed_with_requests_and_user_agent(monkeypatch):
     assert stories[0].plain_text() == "Top story"
     assert stories[0].byline == "poster in r/news"
     assert stories[0].placement_preference == PlacementPreference.SIDEBAR
+    assert stories[0].section_title == "Reddit"
+    assert stories[0].short_form is True
 
 
 def test_reddit_provider_filters_old_entries(monkeypatch):
@@ -97,3 +99,4 @@ def test_reddit_provider_filters_old_entries(monkeypatch):
 
     assert len(stories) == 1
     assert stories[0].plain_text() == "Recent story"
+    assert stories[0].section_title == "Reddit"

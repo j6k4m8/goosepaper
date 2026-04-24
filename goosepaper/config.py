@@ -593,7 +593,7 @@ def _source_schema(source_type: str) -> Dict[str, Any]:
         },
         "bluesky": {
             "required": {"username"},
-            "optional": {"limit", "since_days_ago"},
+            "optional": {"limit", "since_days_ago", "include_replies"},
         },
         "weather": {
             "required": {"lat", "lon"},
@@ -631,6 +631,9 @@ def _validate_source_options(source_type: str, options: Dict[str, Any], index: i
         ),
         "byline": lambda value: _validate_rss_byline(value, index),
         "body_source": lambda value: _validate_rss_body_source(value, index),
+        "include_replies": lambda value: _validate_bool(
+            value, f"source #{index} include_replies"
+        ),
         "lat": lambda value: _validate_number(value, f"source #{index} lat"),
         "lon": lambda value: _validate_number(value, f"source #{index} lon"),
         "timezone": lambda value: _validate_string(
@@ -670,6 +673,11 @@ def _validate_positive_int(value: Any, context: str):
 def _validate_number(value: Any, context: str):
     if not isinstance(value, (int, float)) or isinstance(value, bool):
         raise ConfigError(f"{context} must be a number.")
+
+
+def _validate_bool(value: Any, context: str):
+    if not isinstance(value, bool):
+        raise ConfigError(f"{context} must be true or false.")
 
 
 def _validate_weather_unit(value: Any, index: int):
