@@ -6,6 +6,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
 
+from goosepaper.layout import LAYOUT_CHOICES
+from goosepaper.styles import PAGE_PROFILE_CHOICES
 from goosepaper.util import load_config_file
 
 
@@ -24,6 +26,10 @@ class PaperSettings:
     subtitle: Optional[str] = None
     style: str = "FifthAvenue"
     font_size: int = 14
+    body_font: Optional[str] = None
+    table_of_contents: bool = False
+    layout: str = "auto"
+    page_profile: str = "remarkable2"
 
     def __post_init__(self):
         if self.title is not None and not isinstance(self.title, str):
@@ -38,6 +44,24 @@ class PaperSettings:
             or self.font_size <= 0
         ):
             raise ValueError("Paper font_size must be a positive integer.")
+        if self.body_font is not None and (
+            not isinstance(self.body_font, str) or not self.body_font.strip()
+        ):
+            raise ValueError("Paper body_font must be a non-empty string or null.")
+        if not isinstance(self.table_of_contents, bool):
+            raise ValueError("Paper table_of_contents must be a boolean.")
+        if self.layout not in LAYOUT_CHOICES:
+            raise ValueError(
+                "Paper layout must be one of: "
+                + ", ".join(f'"{layout}"' for layout in LAYOUT_CHOICES)
+                + "."
+            )
+        if self.page_profile not in PAGE_PROFILE_CHOICES:
+            raise ValueError(
+                "Paper page_profile must be one of: "
+                + ", ".join(f'"{profile}"' for profile in PAGE_PROFILE_CHOICES)
+                + "."
+            )
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -45,6 +69,10 @@ class PaperSettings:
             "subtitle": self.subtitle,
             "style": self.style,
             "font_size": self.font_size,
+            "body_font": self.body_font,
+            "table_of_contents": self.table_of_contents,
+            "layout": self.layout,
+            "page_profile": self.page_profile,
         }
 
 
@@ -401,6 +429,9 @@ def _maybe_raise_legacy_paper_config_error(raw: Dict[str, Any]):
     legacy_keys = {
         "stories",
         "font_size",
+        "body_font",
+        "layout",
+        "page_profile",
         "style",
         "title",
         "subtitle",
@@ -445,19 +476,40 @@ def _require_config_version(raw: Dict[str, Any], config_kind: str):
 def _parse_paper_settings(raw: Any) -> PaperSettings:
     section = _require_object(raw, "paper")
     _reject_unknown_keys(
-        section, {"title", "subtitle", "style", "font_size"}, "paper"
+        section,
+        {
+            "title",
+            "subtitle",
+            "style",
+            "font_size",
+            "body_font",
+            "table_of_contents",
+            "layout",
+            "page_profile",
+        },
+        "paper",
     )
 
     title = section.get("title")
     subtitle = section.get("subtitle")
     style = section.get("style", PaperSettings.style)
     font_size = section.get("font_size", PaperSettings.font_size)
+    body_font = section.get("body_font", PaperSettings.body_font)
+    table_of_contents = section.get(
+        "table_of_contents", PaperSettings.table_of_contents
+    )
+    layout = section.get("layout", PaperSettings.layout)
+    page_profile = section.get("page_profile", PaperSettings.page_profile)
 
     return PaperSettings(
         title=title,
         subtitle=subtitle,
         style=style,
         font_size=font_size,
+        body_font=body_font,
+        table_of_contents=table_of_contents,
+        layout=layout,
+        page_profile=page_profile,
     )
 
 

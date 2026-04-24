@@ -2,7 +2,10 @@
     "version": 2,
     "paper": {
         "font_size": 12,
-        "style": "FifthAvenue"
+        "style": "FifthAvenue",
+        "table_of_contents": true,
+        "layout": "auto",
+        "page_profile": "remarkable2"
     },
     "sources": [
         {

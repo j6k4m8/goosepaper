@@ -118,7 +118,10 @@ The paper config uses a strict v2 schema with one file per paper. A minimal exam
   "version": 2,
   "paper": {
     "style": "FifthAvenue",
-    "font_size": 14
+    "font_size": 14,
+    "table_of_contents": true,
+    "layout": "auto",
+    "page_profile": "remarkable2"
   },
   "sources": [
     { "type": "rss", "url": "https://feeds.npr.org/1001/rss.xml", "limit": 5 },
@@ -129,6 +132,8 @@ The paper config uses a strict v2 schema with one file per paper. A minimal exam
   }
 }
 ```
+
+`style` selects a visual theme. `layout` controls the overall column density: with `"auto"`, Goosepaper defaults to a single reading column on narrow device profiles like `remarkable1`, `remarkable2`, and `paper_pro_move`, and to denser multi-column pages on larger profiles like `paper_pro`, `letter`, and `a4`. If you want to force it, set `"layout": "1col"`, `"2col"`, or `"3col"`. If you want a linked contents block near the top of the issue, set `"table_of_contents": true` in the `paper` object. If you want to override the body typeface without taking over the whole design, set `"body_font": "Literata"`. If you want to target a specific device or paper shape, set `"page_profile"` to one of `remarkable1`, `remarkable2`, `paper_pro`, `paper_pro_move`, `letter`, or `a4`. (`"rm1"` also works as a short alias.)
 
 Delivery still happens only when you pass `--deliver`. If you want user-level delivery defaults, create `~/.config/goosepaper/config.json`:
 
@@ -173,7 +178,7 @@ Do you have another kind of tablet? You may generate a print-ready PDF which you
 
 yes! you may do anything that you find to be fun and welcoming :)
 
-Check out the `styles.Styles` enum in the goosepaper library. You will find there what you seek.
+If you want a real override, set `paper.body_font` in your paper config and let the rest of the layout and typography engine keep doing its job.
 
 ### do all dogs' names start with the letter "B"?
 

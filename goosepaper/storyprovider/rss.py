@@ -52,13 +52,21 @@ class RSSFeedStoryProvider(StoryProvider):
                     date=date,
                 )
             else:
-                doc = Document(req.content)
-                story = Story(
-                    doc.title(),
-                    body_html=doc.summary(),
-                    byline=source,
-                    date=date,
-                )
+                try:
+                    doc = Document(req.text)
+                    story = Story(
+                        doc.title(),
+                        body_html=doc.summary(),
+                        byline=source,
+                        date=date,
+                    )
+                except Exception:
+                    story = Story(
+                        entry["title"],
+                        body_html=entry["summary"],
+                        byline=source,
+                        date=date,
+                    )
 
             stories.append(story)
             if len(stories) >= limit:

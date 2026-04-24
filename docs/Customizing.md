@@ -20,7 +20,10 @@ Example:
         "title": "Jordan's Daily Goosepaper",
         "subtitle": "",
         "style": "FifthAvenue",
-        "font_size": 14
+        "font_size": 14,
+        "table_of_contents": true,
+        "layout": "auto",
+        "page_profile": "remarkable2"
     },
     "sources": [
         {
@@ -103,14 +106,35 @@ The `paper` object supports:
 | ----- | ---- | ------- | ----------- |
 | `title` | str or null | `null` | The paper title. If omitted, Goosepaper uses its built-in default title. |
 | `subtitle` | str or null | `null` | Optional subtitle shown under the title. |
-| `style` | str | `"FifthAvenue"` | One of the built-in styles. |
-| `font_size` | int | `14` | Base font size for the rendered paper. |
+| `style` | str | `"FifthAvenue"` | One of the built-in themes. Themes control typography, rules, spacing, and the general voice of the page. |
+| `font_size` | int | `14` | Base reading size for the page. Headings, ears, and utility text scale from this value. |
+| `body_font` | str or null | `null` | Optional override for the body font family while keeping the rest of the theme intact. |
+| `table_of_contents` | bool | `false` | Optional linked contents block near the top of the issue. In PDF output the links are internal document links. |
+| `layout` | str | `"auto"` | Layout override. One of `"auto"`, `"1col"`, `"2col"`, or `"3col"`. |
+| `page_profile` | str | `"remarkable2"` | Target page shape. One of `remarkable1`, `remarkable2`, `paper_pro`, `paper_pro_move`, `letter`, or `a4`. (`rm1` also works.) |
 
-Built-in styles:
+Built-in themes:
 
 - `Academy`
 - `FifthAvenue`
 - `Autumn`
+
+With `"layout": "auto"`, Goosepaper chooses a sensible default from the page profile:
+
+- `remarkable1`, `remarkable2`, and `paper_pro_move` default to a single reading column
+- `paper_pro`, `letter`, and `a4` default to denser multi-column layouts
+- Explicit `"1col"`, `"2col"`, and `"3col"` still override that default
+
+Ears only render when the story mix actually includes `EAR` content, such as weather. The table of contents is independent and only appears when `paper.table_of_contents` is `true`.
+
+`page_profile` is independent of `style` and `layout`. It controls the target page geometry and density envelope so Goosepaper can produce surfaces tuned for:
+
+- `remarkable1`
+- `remarkable2`
+- `paper_pro`
+- `paper_pro_move`
+- `letter`
+- `a4`
 
 ## Sources
 

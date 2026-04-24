@@ -1,102 +1,89 @@
-@page {
-    size: 702pt 936pt;
-    margin-top: 30mm;
-    margin-bottom: 20mm;
-    margin-left: 20mm;
-    margin-right: 10mm;
-}
 body {
-    font-family: "Open Sans";
+    font-family: "Open Sans", "Helvetica Neue", sans-serif;
 }
-.header {
-    padding: -6em;
-    height: 6em;
+
+.masthead {
+    padding-top: 0.2rem;
+    border-top: 4pt solid #111;
 }
-.header div {
-    float: left;
-    display: block;
+
+.masthead h1 {
+    font-family: "Source Serif Pro", Georgia, serif;
+    font-size: 3.3em;
+    font-weight: 700;
+    letter-spacing: -0.05em;
 }
-.header .ear {
-    float: right;
+
+.edition-flag,
+.edition-line,
+.table-of-contents__label,
+.sidebar-title,
+article > .byline {
+    font-family: "Open Sans", "Helvetica Neue", sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
 }
-ul, li, ol {
-    margin-left: 0; padding-left: 0.15em;
+
+.edition-line,
+article > .byline,
+.table-of-contents__label,
+.sidebar-title {
+    letter-spacing: 0.15em;
 }
-.stories {
-    font-size: 14pt;
+
+.table-of-contents li {
+    font-size: 0.88em;
 }
+
 .ear article {
-    border: 1px groove black;
-    padding: 1em;
-    margin: 1em;
-    font-size: 11pt;
+    border: 3pt double #111;
 }
+
 .ear article h1 {
-    font-family: "Source Serif Pro";
-    font-size: 10pt;
-    font-weight: normal;
+    font-family: "Open Sans", "Helvetica Neue", sans-serif;
+    font-size: 0.82em;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
 }
+
 article {
-    text-align: justify;
-    line-height: 1.3em;
+    line-height: 1.42;
 }
-.longform {
-    page-break-after: always;
+
+article > h1 {
+    font-family: "Source Serif Pro", Georgia, serif;
+    font-size: 2.25em;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.02;
 }
-article>h1 {
-    font-family: "Source Serif Pro";
-    font-weight: 400;
-    font-size: 23pt;
-    text-indent: 0;
-    margin-bottom: 0.25em;
-    line-height: 1.2em;
-    text-align: left;
+
+article > h1.priority-low {
+    font-family: "Open Sans", "Helvetica Neue", sans-serif;
+    font-size: 1.28em;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
 }
-article>h1.priority-low {
-    font-family: "Open Sans";
-    font-size: 18pt;
-    font-weight: 400;
-    text-indent: 0;
-    border-bottom: 1px solid #dedede;
-    margin-bottom: 0.15em;
+
+article > .byline {
+    padding-top: 0.35rem;
+    border-top: 0.9pt solid #d9d9d9;
 }
-article>.byline {
-    font-family: "Open Sans";
-    font-size: 14pt;
-    font-weight: 400;
-    text-indent: 0;
-    border-bottom: 1px solid #dedede;
-    margin-top: 1.33em;
-    margin-bottom: 1.33em;
-    margin-left: 0;
-    margin-right: 0;
+
+.story-body h2,
+.story-body h3 {
+    font-family: "Open Sans", "Helvetica Neue", sans-serif;
+    font-size: 0.95em;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
 }
-article>h3 {
-    font-family: "Open Sans";
-    font-weight: 400;
-    font-size: 18pt;
-    text-indent: 0;
-}
-section>h1,
-section>h2,
-section>h3,
-section>h4,
-section>h5 {
-    border-left: 5px solid #dedede;
-    padding-left: 1em;
-}
-figure {
-    border: 1px solid black;
-    text-indent: 0;
-    width: auto;
-}
-.stories article.story img {
-    width: 100%;
-}
-figure>span {
-    font-size: 0;
-}
-.row {
-    column-count: 2;
-    column-gap: 2rem;
+
+.sidebar article > h1 {
+    font-family: "Open Sans", "Helvetica Neue", sans-serif;
+    font-size: 1.1em;
+    font-weight: 700;
+    letter-spacing: 0.02em;
 }
