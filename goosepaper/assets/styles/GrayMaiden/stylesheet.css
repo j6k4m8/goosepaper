@@ -1,0 +1,160 @@
+body {
+    font-family: "Source Serif 4", Georgia, serif;
+}
+
+.header {
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.65rem;
+}
+
+.header .ear {
+    width: 18%;
+}
+
+.header.has-left-ear .masthead {
+    margin-left: 19%;
+}
+
+.header.has-right-ear .masthead {
+    margin-right: 19%;
+}
+
+.header.has-left-ear.has-right-ear .masthead {
+    margin-left: 17%;
+    margin-right: 17%;
+}
+
+.masthead {
+    text-align: center;
+}
+
+.masthead h1 {
+    font-family: "UnifrakturMaguntia", "Times New Roman", serif;
+    font-size: 3.1em;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    line-height: 0.88;
+}
+
+.edition-line,
+.table-of-contents__label,
+.sidebar-title,
+article > .byline {
+    font-family: "Libre Franklin", "Helvetica Neue", sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+.edition-line {
+    font-size: 0.72em;
+}
+
+.table-of-contents {
+    margin-bottom: 0.95rem;
+}
+
+.table-of-contents__link {
+    font-family: "Newsreader", Georgia, serif;
+    font-size: 1.03em;
+    text-decoration: none;
+}
+
+.table-of-contents__title {
+    letter-spacing: 0.01em;
+}
+
+.ear article {
+    border-top: 2pt solid #111;
+    border-bottom: 0.9pt solid #111;
+    border-left: 0;
+    border-right: 0;
+    padding: 0.35rem 0 0.28rem;
+    text-align: center;
+}
+
+.ear article::before {
+    content: "Weather";
+    display: block;
+    margin-bottom: 0.16rem;
+    font-family: "Libre Franklin", "Helvetica Neue", sans-serif;
+    font-size: 0.6em;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+}
+
+.ear article h1 {
+    font-family: "Newsreader", Georgia, serif;
+    font-size: 1.45em;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.ear .story-body p:first-child {
+    font-family: "Libre Franklin", "Helvetica Neue", sans-serif;
+    font-size: 0.68em;
+    line-height: 1.15;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+article {
+    line-height: 1.5;
+    text-align: justify;
+    hyphens: auto;
+}
+
+.main-stories > article:first-child {
+    margin-bottom: 1.2rem;
+}
+
+.main-stories > article:first-child > h1 {
+    font-size: 2.75em;
+    padding-bottom: 0.16rem;
+    border-bottom: 1.2pt solid #111;
+}
+
+.main-stories > article:first-child .story-body > p:first-child {
+    font-size: 1.08em;
+}
+
+article > h1 {
+    font-family: "Newsreader", Georgia, serif;
+    font-size: 2.12em;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 0.98;
+}
+
+article > h1.priority-low {
+    font-family: "Libre Franklin", "Helvetica Neue", sans-serif;
+    font-size: 1.08em;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+article > .byline {
+    color: #333;
+}
+
+.story-body h2,
+.story-body h3 {
+    font-family: "Libre Franklin", "Helvetica Neue", sans-serif;
+    font-size: 0.9em;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.sidebar article > h1 {
+    font-family: "Libre Franklin", "Helvetica Neue", sans-serif;
+    font-size: 1.02em;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}

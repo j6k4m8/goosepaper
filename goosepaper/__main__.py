@@ -26,18 +26,32 @@ def main(args=None):
 
         if config.output.endswith(".html"):
             with open(config.output, "w", encoding="utf-8") as fh:
-                fh.write(paper.to_html())
+                fh.write(
+                    paper.to_html(
+                        font_size=config.paper.font_size,
+                        style=config.paper.style,
+                        body_font=config.paper.body_font,
+                        table_of_contents=config.paper.table_of_contents,
+                        layout=config.paper.layout,
+                        page_profile=config.paper.page_profile,
+                    )
+                )
         elif config.output.endswith(".pdf"):
             paper.to_pdf(
                 config.output,
                 font_size=config.paper.font_size,
                 style=config.paper.style,
+                body_font=config.paper.body_font,
+                table_of_contents=config.paper.table_of_contents,
+                layout=config.paper.layout,
+                page_profile=config.paper.page_profile,
             )
         elif config.output.endswith(".epub"):
             paper.to_epub(
                 config.output,
                 font_size=config.paper.font_size,
                 style=config.paper.style,
+                body_font=config.paper.body_font,
             )
         else:
             print(f"Unknown file extension '{config.output.split('.')[-1]}'.")

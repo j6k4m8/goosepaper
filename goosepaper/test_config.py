@@ -57,6 +57,10 @@ def test_load_paper_config_uses_v2_schema():
                     "title": "Daily Goosepaper",
                     "style": "Autumn",
                     "font_size": 16,
+                    "body_font": "Literata",
+                    "table_of_contents": True,
+                    "layout": "1col",
+                    "page_profile": "letter",
                 },
                 "sources": [
                     {
@@ -74,6 +78,10 @@ def test_load_paper_config_uses_v2_schema():
         assert config.paper.title == "Daily Goosepaper"
         assert config.paper.style == "Autumn"
         assert config.paper.font_size == 16
+        assert config.paper.body_font == "Literata"
+        assert config.paper.table_of_contents is True
+        assert config.paper.layout == "1col"
+        assert config.paper.page_profile == "letter"
         assert config.sources[0].type == "rss"
         assert config.sources[0].options["url"] == "https://example.com/feed.xml"
         assert config.delivery.folder == "Morning Brief"
@@ -145,6 +153,52 @@ def test_resolve_runtime_config_merges_user_defaults_and_cli():
         assert config.delivery.replace_mode == "exact"
         assert config.delivery.cleanup is False
         assert config.deliver is True
+
+
+def test_load_paper_config_accepts_auto_layout_and_null_body_font():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {
+                    "style": "FifthAvenue",
+                    "layout": "auto",
+                    "body_font": None,
+                    "table_of_contents": False,
+                    "page_profile": "remarkable2",
+                },
+                "sources": [],
+            },
+        )
+
+        config = load_paper_config(config_path)
+
+        assert config.paper.layout == "auto"
+        assert config.paper.body_font is None
+        assert config.paper.table_of_contents is False
+        assert config.paper.page_profile == "remarkable2"
+
+
+def test_load_paper_config_accepts_rm1_page_profile_alias():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {
+                    "style": "FifthAvenue",
+                    "page_profile": "rm1",
+                },
+                "sources": [],
+            },
+        )
+
+        config = load_paper_config(config_path)
+
+        assert config.paper.page_profile == "rm1"
 
 
 def test_resolve_runtime_config_rejects_legacy_config():

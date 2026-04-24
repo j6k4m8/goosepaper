@@ -1,90 +1,73 @@
-@page {
-    size: 702pt 936pt;
-    margin-top: 30mm;
-    margin-bottom: 20mm;
-    margin-left: 20mm;
-    margin-right: 10mm;
-}
 body {
-    font-family: "Times New Roman";
+    font-family: Georgia, "Times New Roman", serif;
 }
-.header {
-    padding: 1em;
-    height: 10em;
+
+.masthead h1 {
+    font-family: "Times New Roman", Georgia, serif;
+    font-size: 3.2em;
+    font-weight: 700;
+    letter-spacing: -0.04em;
 }
-.header div {
-    float: left;
-    display: block;
+
+.edition-flag,
+.table-of-contents__label,
+.sidebar-title,
+article > .byline {
+    font-family: "Times New Roman", Georgia, serif;
+    font-weight: 700;
 }
-.header .ear {
-    float: right;
+
+.edition-line {
+    font-family: "Times New Roman", Georgia, serif;
+    font-size: 0.78em;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
 }
-.stories {
-    font-size: 14pt;
+
+.table-of-contents li {
+    font-size: 0.92em;
 }
+
 .ear article {
-    border: 3px groove black;
-    padding: 1em;
-    margin: 1em;
-    font-size: 11pt;
+    border: 1.4pt solid #111;
 }
+
 .ear article h1 {
-    font-family: "Times New Roman";
-    font-size: 10pt;
-    font-weight: normal;
+    font-family: "Times New Roman", Georgia, serif;
+    font-size: 0.95em;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
 }
+
 article {
-    text-align: left;
-    line-height: 1.4em;
+    line-height: 1.48;
 }
-article>h1 {
-    font-family: "Times New Roman";
-    font-weight: 400;
-    font-size: 23pt;
-    text-indent: 0;
-    margin-bottom: 0.25em;
-    line-height: 1.2em;
-    text-align: left;
+
+article > h1 {
+    font-family: "Times New Roman", Georgia, serif;
+    font-size: 2.2em;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.02;
 }
-article>h1.priority-low {
-    font-family: "Times New Roman";
-    font-size: 18pt;
-    font-weight: 400;
-    text-indent: 0;
-    margin-bottom: 0.15em;
+
+article > h1.priority-low {
+    font-size: 1.42em;
+    letter-spacing: 0;
 }
-article>.byline {
-    font-family: "Times New Roman";
-    font-size: 14pt;
-    font-weight: 400;
-    text-indent: 0;
-    margin-top: 1.33em;
-    margin-bottom: 1.33em;
-    margin-left: 0;
-    margin-right: 0;
+
+article > .byline {
+    font-variant: small-caps;
+    letter-spacing: 0.08em;
 }
-article>h3 {
-    font-family: "Times New Roman";
-    font-weight: 400;
-    font-size: 18pt;
-    text-indent: 0;
-}
-section>h1,
-section>h2,
-section>h3,
-section>h4,
-section>h5 {
-    border-left: 5px solid #dedede;
-    padding-left: 1em;
-}
-figure {
-    border: 1px solid black;
-    text-indent: 0;
-    width: auto;
-}
-.stories article.story img {
-    width: 100%;
-}
-figure>span {
-    font-size: 0;
+
+.story-body h2,
+.story-body h3 {
+    font-family: "Times New Roman", Georgia, serif;
+    font-size: 1.08em;
+    font-weight: 700;
+    margin-bottom: 0.2rem;
+    padding-bottom: 0.12rem;
+    border-bottom: 0.9pt solid #d9d9d9;
 }

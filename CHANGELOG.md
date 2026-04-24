@@ -7,10 +7,13 @@
 -   Improvements
     -   Simplified the config system considerably (#98)
     -   Updated the build system to use `uv` instead of old-fashioned `setup.py` and `requirements.txt` files. This should make it easier to manage dependencies and build the project in the future. (#100)
-    -   Switched reMarkable uploads to the real `remarkapy` package from PyPI, which uses rmapi-compatible credentials by default.
-    -   Require `remarkapy` 0.2.1+ so upload status handling matches the live API.
--   Housekeeping
-    -   Dropped support for Python 3.8 through 3.11. The minimum supported version is now Python 3.12, in line with the current `remarkapy` package. (#100)
+    -   Rebuilt the paper renderer around a real layout planner with adaptive 1, 2, and 3 column front pages, conditional ears and rails, and stronger theme-specific typography.
+    -   Added `paper.layout` and `paper.body_font` so users can steer layout density and body typography without taking over the whole design.
+    -   Added `paper.page_profile` so Goosepaper can target reMarkable 2, reMarkable Paper Pro, reMarkable Paper Pro Move, Letter, and A4 page geometries.
+    -   Added `paper.table_of_contents`, internal PDF links, and a new `GrayMaiden` theme.
+-   Chores
+    -   Dropped support for Python 3.8 and 3.9, which are no longer supported by the Python community, and added support for Python 3.13 and 3.14. The minimum supported version is now Python 3.10. (#99)
+    -   Improved RSS extraction fallback behavior and test coverage.
 
 ### **v0.7.1** (February 17, 2024)
 

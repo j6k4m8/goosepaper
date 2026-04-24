@@ -1,88 +1,91 @@
-import time
+import datetime
+from types import SimpleNamespace
 
-from .rss import RSSFeedStoryProvider
-
-
-class _Entry(dict):
-    __getattr__ = dict.__getitem__
+from . import rss
 
 
-class _Response:
-    def __init__(self, *, ok=True, text="", content=b"", encoding=None):
+def _feed_entry():
+    return rss.feedparser.FeedParserDict(
+        {
+            "title": "Feed title",
+            "summary": "<p>Feed summary</p>",
+            "link": "https://example.com/story",
+            "updated_parsed": datetime.datetime(
+                2026,
+                4,
+                23,
+                9,
+                0,
+                0,
+            ).timetuple(),
+        }
+    )
+
+
+class _FakeResponse:
+    def __init__(self, *, ok=True, text="<html></html>", content=b"<html></html>"):
         self.ok = ok
         self.text = text
         self.content = content
-        self.encoding = encoding
 
 
-def test_rss_provider_uses_decoded_response_text(monkeypatch):
-    entry = _Entry(
-        title="Feed Title",
-        summary="<p>Feed summary</p>",
-        link="https://example.com/story",
-        updated_parsed=time.gmtime(),
+def test_rss_provider_passes_text_to_readability(monkeypatch):
+    seen = {}
+
+    class FakeDocument:
+        def __init__(self, html):
+            seen["html"] = html
+
+        def title(self):
+            return "Readable title"
+
+        def summary(self):
+            return "<p>Readable summary</p>"
+
+    monkeypatch.setattr(
+        rss.feedparser,
+        "parse",
+        lambda _: SimpleNamespace(entries=[_feed_entry()]),
     )
     monkeypatch.setattr(
-        "goosepaper.storyprovider.rss.feedparser.parse",
-        lambda _: type(
-            "Feed",
-            (),
-            {
-                "entries": [entry]
-            },
-        )(),
-    )
-    monkeypatch.setattr(
-        "goosepaper.storyprovider.rss.requests.get",
-        lambda *args, **kwargs: _Response(
+        rss.requests,
+        "get",
+        lambda *args, **kwargs: _FakeResponse(
             ok=True,
-            text=(
-                "<html><head><title>Decoded Title</title></head>"
-                "<body><article><p>Decoded body</p></article></body></html>"
-            ),
-            content=b"<html></html>",
+            text="<html><body>decoded</body></html>",
+            content=b"<html><body>bytes</body></html>",
         ),
     )
+    monkeypatch.setattr(rss, "Document", FakeDocument)
 
-    stories = RSSFeedStoryProvider("https://example.com/feed.xml").get_stories()
+    provider = rss.RSSFeedStoryProvider("https://example.com/feed.xml")
+    stories = provider.get_stories(limit=1)
 
-    assert len(stories) == 1
-    assert stories[0].headline == "Decoded Title"
+    assert isinstance(seen["html"], str)
+    assert stories[0].headline == "Readable title"
+    assert stories[0].body_html == "<p>Readable summary</p>"
 
 
-def test_rss_provider_falls_back_when_readability_fails(monkeypatch):
-    entry = _Entry(
-        title="Feed Title",
-        summary="<p>Feed summary</p>",
-        link="https://example.com/story",
-        updated_parsed=time.gmtime(),
+def test_rss_provider_falls_back_to_feed_content_when_readability_fails(monkeypatch):
+    class BrokenDocument:
+        def __init__(self, html):
+            raise TypeError("boom")
+
+    monkeypatch.setattr(
+        rss.feedparser,
+        "parse",
+        lambda _: SimpleNamespace(entries=[_feed_entry()]),
     )
     monkeypatch.setattr(
-        "goosepaper.storyprovider.rss.feedparser.parse",
-        lambda _: type(
-            "Feed",
-            (),
-            {
-                "entries": [entry]
-            },
-        )(),
+        rss.requests,
+        "get",
+        lambda *args, **kwargs: _FakeResponse(ok=True, text="<html></html>"),
     )
-    monkeypatch.setattr(
-        "goosepaper.storyprovider.rss.requests.get",
-        lambda *args, **kwargs: _Response(
-            ok=True,
-            text="<html><body>broken</body></html>",
-            content=b"<html><body>broken</body></html>",
-        ),
-    )
+    monkeypatch.setattr(rss, "Document", BrokenDocument)
 
-    def _raise(_value):
-        raise TypeError("boom")
+    provider = rss.RSSFeedStoryProvider("https://example.com/feed.xml")
+    stories = provider.get_stories(limit=1)
 
-    monkeypatch.setattr("goosepaper.storyprovider.rss.Document", _raise)
-
-    stories = RSSFeedStoryProvider("https://example.com/feed.xml").get_stories()
-
-    assert len(stories) == 1
-    assert stories[0].headline == "Feed Title"
+    assert stories[0].headline == "Feed title"
     assert stories[0].body_html == "<p>Feed summary</p>"
+    assert stories[0].byline == "example.com"
