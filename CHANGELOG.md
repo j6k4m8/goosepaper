@@ -6,9 +6,11 @@
 
 -   Improvements
     -   Simplified the config system considerably (#98)
-    -   Updated the build system to use `uv` instead of old-fashioned `setup.py` and `requirements.txt` files. This should make it easier to manage dependencies and build the project in the future. (#99)
--   Chores
-    -   Dropped support for Python 3.8 and 3.9, which are no longer supported by the Python community, and added support for Python 3.13 and 3.14. The minimum supported version is now Python 3.10. (#99)
+    -   Updated the build system to use `uv` instead of old-fashioned `setup.py` and `requirements.txt` files. This should make it easier to manage dependencies and build the project in the future. (#100)
+    -   Switched reMarkable uploads to the real `remarkapy` package from PyPI, which uses rmapi-compatible credentials by default.
+    -   Require `remarkapy` 0.2.1+ so upload status handling matches the live API.
+-   Housekeeping
+    -   Dropped support for Python 3.8 through 3.11. The minimum supported version is now Python 3.12, in line with the current `remarkapy` package. (#100)
 
 ### **v0.7.1** (February 17, 2024)
 
