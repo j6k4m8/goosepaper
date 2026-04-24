@@ -18,15 +18,8 @@ def _name_for_matching(value: str, nocase: bool) -> str:
     return value.lower() if nocase else value
 
 
-def getallitems(client):
-    allitems = [item for item in client.list_items() if item.parent != "trash"]
-    items = []
-    seen = set()
-    for tempitem in allitems:
-        if tempitem.id not in seen:
-            items.append(tempitem)
-            seen.add(tempitem.id)
-    return items
+def _list_active_items(client):
+    return [item for item in client.list_items() if item.parent != "trash"]
 
 
 def upload(filepath, delivery_settings: Optional[DeliverySettings] = None, showconfig=False):
@@ -52,23 +45,27 @@ def upload(filepath, delivery_settings: Optional[DeliverySettings] = None, showc
         raise IOError(f"Error locating or opening {filepath} during upload.")
 
     target_name = _name_for_matching(filepath.stem, nocase)
+    payload = fpr.read_bytes()
+    suffix = fpr.suffix.lower()
 
     paper_candidates = []
     folder_candidates = []
+    needs_library_scan = bool(folder) or replace
 
-    for item in getallitems(client):
-        if (
-            folder
-            and item.type == "CollectionType"
-            and _name_for_matching(item.visibleName, nocase)
-            == _name_for_matching(folder, nocase)
-            and item.parent == ""
-        ):
-            folder_candidates.append(item)
-        elif item.type == "DocumentType" and (
-            _name_for_matching(item.visibleName, nocase) == target_name
-        ):
-            paper_candidates.append(item)
+    if needs_library_scan:
+        for item in _list_active_items(client):
+            if (
+                folder
+                and item.type == "CollectionType"
+                and _name_for_matching(item.visibleName, nocase)
+                == _name_for_matching(folder, nocase)
+                and item.parent == ""
+            ):
+                folder_candidates.append(item)
+            elif replace and item.type == "DocumentType" and (
+                _name_for_matching(item.visibleName, nocase) == target_name
+            ):
+                paper_candidates.append(item)
 
     if len(folder_candidates) > 1:
         print(f"multiple candidate folders with the same name {folder}")
@@ -98,19 +95,21 @@ def upload(filepath, delivery_settings: Optional[DeliverySettings] = None, showc
 
     parent_id = ""
     if folder and not paper_folder:
-        paper_folder = client.put_folder(folder, parent="", refresh=True)
+        paper_folder = client.put_folder(folder, refresh=True)
         parent_id = paper_folder.id
     elif paper_folder:
         parent_id = paper_folder.id
 
-    payload = fpr.read_bytes()
-    suffix = fpr.suffix.lower()
-    if suffix == ".pdf":
-        result = client.put_pdf(filepath.stem, payload, parent=parent_id, refresh=True)
-    elif suffix == ".epub":
-        result = client.put_epub(filepath.stem, payload, parent=parent_id, refresh=True)
-    else:
+    if suffix not in {".pdf", ".epub"}:
         raise ValueError("Only PDF and EPUB uploads are supported.")
+
+    result = _upload_document(
+        client,
+        visible_name=filepath.stem,
+        payload=payload,
+        suffix=suffix,
+        parent_id=parent_id,
+    )
 
     if result is not None:
         print("Honk! Upload successful!")
@@ -184,3 +183,18 @@ def _coerce_delivery_settings(
     raise TypeError(
         "delivery_settings must be a DeliverySettings instance, a dict, or None."
     )
+
+
+def _upload_document(client, visible_name: str, payload: bytes, suffix: str, parent_id: str):
+    if parent_id == "":
+        if suffix == ".pdf":
+            return client.upload_pdf(visible_name, payload)
+        if suffix == ".epub":
+            return client.upload_epub(visible_name, payload)
+        raise ValueError("Only PDF and EPUB uploads are supported.")
+
+    if suffix == ".pdf":
+        return client.put_pdf(visible_name, payload, parent=parent_id, refresh=True)
+    if suffix == ".epub":
+        return client.put_epub(visible_name, payload, parent=parent_id, refresh=True)
+    raise ValueError("Only PDF and EPUB uploads are supported.")

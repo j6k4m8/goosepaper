@@ -1,8 +1,9 @@
 import datetime
-import requests
-import feedparser
 import urllib.parse
 from typing import List
+
+import feedparser
+import requests
 from readability import Document
 
 from .storyprovider import StoryProvider
@@ -47,21 +48,39 @@ class RSSFeedStoryProvider(StoryProvider):
                 # Just return the headline content:
                 story = Story(
                     entry["title"],
-                    body_html=entry["summary"],
+                    body_html=entry.get("summary", ""),
                     byline=source,
                     date=date,
                 )
             else:
-                doc = Document(req.content)
-                story = Story(
-                    doc.title(),
-                    body_html=doc.summary(),
-                    byline=source,
-                    date=date,
-                )
+                story = _story_from_response(entry, req, source, date)
 
             stories.append(story)
             if len(stories) >= limit:
                 break
 
         return list(filter(None, stories))
+
+
+def _story_from_response(entry, response, source: str, date: datetime.datetime) -> Story:
+    page_text = response.text
+    if not page_text:
+        page_text = response.content.decode(
+            response.encoding or "utf-8",
+            errors="replace",
+        )
+
+    try:
+        doc = Document(page_text)
+        headline = doc.title() or entry["title"]
+        body_html = doc.summary() or entry.get("summary", "")
+    except Exception:
+        headline = entry["title"]
+        body_html = entry.get("summary", "")
+
+    return Story(
+        headline,
+        body_html=body_html,
+        byline=source,
+        date=date,
+    )

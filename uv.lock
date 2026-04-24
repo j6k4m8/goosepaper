@@ -553,7 +553,7 @@ requires-dist = [
     { name = "feedparser" },
     { name = "lxml", extras = ["html-clean"] },
     { name = "readability-lxml" },
-    { name = "remarkapy" },
+    { name = "remarkapy", specifier = ">=0.2.1,<0.3" },
     { name = "requests" },
     { name = "weasyprint" },
 ]
@@ -1026,7 +1026,7 @@ wheels = [
 
 [[package]]
 name = "remarkapy"
-version = "0.1.1"
+version = "0.2.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "crc32c" },
@@ -1034,9 +1034,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "pydantic-settings" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/44/08/e76a01990f812ff99e1e0e0445334dd4f20ff58b5d7a05c6436db9dc5cc9/remarkapy-0.1.1.tar.gz", hash = "sha256:a56883a04ca8e0e2a6e8f60eec73c0818a9a697bf2dc9bd78eab03a744112f34", size = 37288, upload-time = "2026-04-23T22:49:22.689Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/35/ee/e4ebf3dd14f1c6e3ec0c02c717e814777077813c367bbf1aceb816bcd532/remarkapy-0.2.1.tar.gz", hash = "sha256:676d393216f650690922b544cdee331c66615dc46cc8c3e670550703dafabd50", size = 37999, upload-time = "2026-04-24T01:27:45.776Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b3/3b/2fd7b738896aa131088943666c4cd233fe2fc37fae8eb806ebba71ba0bd8/remarkapy-0.1.1-py3-none-any.whl", hash = "sha256:ffa45a71296fee8e7314479f02830a1e3af10dfec7c78cb96a9605b0c09c16c7", size = 30306, upload-time = "2026-04-23T22:49:21.519Z" },
+    { url = "https://files.pythonhosted.org/packages/9a/d2/4d51472593a13d8124d4d18cb1e25e67abe31b87fa78c80c76fa1252048d/remarkapy-0.2.1-py3-none-any.whl", hash = "sha256:421adde0b6a0817f6fc6ff1b04b7c1c6d67cd2cc02ccb192cfd2faa24865373d", size = 30622, upload-time = "2026-04-24T01:27:44.55Z" },
 ]
 
 [[package]]
