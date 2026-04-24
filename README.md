@@ -138,7 +138,7 @@ Delivery still happens only when you pass `--deliver`. If you want user-level de
     "delivery_defaults": {
         "folder": "News",
         "replace_mode": "nocase",
-        "cleanup": false
+        "cleanup": true
     }
 }
 ```
