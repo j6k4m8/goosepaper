@@ -69,6 +69,11 @@ def test_load_paper_config_uses_v2_schema():
                         "limit": 3,
                         "byline": "first",
                         "body_source": "summary",
+                    },
+                    {
+                        "type": "bluesky",
+                        "username": "jordan.matelsky.com",
+                        "limit": 2,
                     }
                 ],
                 "delivery": {"folder": "Morning Brief"},
@@ -88,6 +93,8 @@ def test_load_paper_config_uses_v2_schema():
         assert config.sources[0].options["url"] == "https://example.com/feed.xml"
         assert config.sources[0].options["byline"] == "first"
         assert config.sources[0].options["body_source"] == "summary"
+        assert config.sources[1].type == "bluesky"
+        assert config.sources[1].options["username"] == "jordan.matelsky.com"
         assert config.delivery.folder == "Morning Brief"
 
 
@@ -275,3 +282,26 @@ def test_load_paper_config_rejects_invalid_rss_body_source():
             'body_source must be one of "auto", "content", '
             '"summary", or "article"',
         )
+
+
+def test_load_paper_config_accepts_bluesky_source():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {
+                        "type": "bluesky",
+                        "username": "infinitescream.bsky.social",
+                    }
+                ],
+            },
+        )
+
+        config = load_paper_config(config_path)
+
+        assert config.sources[0].type == "bluesky"
+        assert config.sources[0].options["username"] == "infinitescream.bsky.social"

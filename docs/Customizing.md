@@ -220,6 +220,24 @@ RSS `body_source` modes:
 | `limit` | int | `5` | Number of entries to fetch. |
 | `since_days_ago` | number | `null` | If provided, filter stories by recency. |
 
+### Bluesky
+
+```json
+{
+    "type": "bluesky",
+    "username": "jordan.matelsky.com",
+    "limit": 8
+}
+```
+
+| Field | Type | Default | Description |
+| ----- | ---- | ------- | ----------- |
+| `username` | str | none | Bluesky handle to fetch, with or without a leading `@`. |
+| `limit` | int | `5` | Number of posts to fetch. |
+| `since_days_ago` | number | `null` | If provided, filter posts by recency. |
+
+Bluesky sources use Bluesky's unauthenticated public AppView endpoints.
+
 ### Weather
 
 ```json

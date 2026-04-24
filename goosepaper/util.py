@@ -97,6 +97,11 @@ def construct_story_providers_from_source_configs(source_configs):
             "MastodonStoryProvider",
             lambda options: dict(options),
         ),
+        "bluesky": (
+            "goosepaper.storyprovider.bluesky",
+            "BlueskyStoryProvider",
+            lambda options: dict(options),
+        ),
         "weather": (
             "goosepaper.storyprovider.weather",
             "OpenMeteoWeatherStoryProvider",

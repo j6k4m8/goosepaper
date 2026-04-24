@@ -15,13 +15,6 @@
             "unit": "F"
         },
         {
-            "type": "mastodon",
-            "since_days_ago": 0.5,
-            "username": "jordan",
-            "server": "https://neuromatch.social",
-            "limit": 8
-        },
-        {
             "type": "wikipedia"
         },
         {
@@ -38,6 +31,19 @@
         {
             "type": "reddit",
             "subreddit": "todayilearned"
+        },
+        {
+            "type": "mastodon",
+            "since_days_ago": 1,
+            "username": "jordan",
+            "server": "https://neuromatch.social",
+            "limit": 8
+        },
+        {
+            "type": "bluesky",
+            "since_days_ago": 1,
+            "username": "jordan.matelsky.com",
+            "limit": 8
         }
     ],
     "delivery": {
