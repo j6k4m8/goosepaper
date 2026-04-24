@@ -64,6 +64,27 @@ def test_bluesky_provider_uses_public_author_feed(monkeypatch):
     assert stories[0].headline == "Jordan Matelsky at 2026-04-24 15:30"
     assert stories[0].byline == "@jordan.matelsky.com"
     assert stories[0].body_html == "<p>Hello<br />world</p>"
+    assert stories[0].section_title == "Bluesky"
+    assert stories[0].short_form is True
+
+
+def test_bluesky_provider_can_exclude_replies(monkeypatch):
+    seen = {}
+
+    def fake_get(url, *, params, headers, timeout):
+        seen["params"] = params
+        return _FakeResponse({"feed": [_feed_item(text="Hello")]})
+
+    monkeypatch.setattr(bluesky.requests, "get", fake_get)
+
+    provider = bluesky.BlueskyStoryProvider(
+        "jordan.matelsky.com",
+        include_replies=False,
+    )
+    stories = provider.get_stories(limit=2)
+
+    assert seen["params"]["filter"] == "posts_no_replies"
+    assert len(stories) == 1
 
 
 def test_bluesky_provider_skips_reposts(monkeypatch):
@@ -88,6 +109,7 @@ def test_bluesky_provider_skips_reposts(monkeypatch):
 
     assert len(stories) == 1
     assert stories[0].body_html == "<p>An original post</p>"
+    assert stories[0].section_title == "Bluesky"
 
 
 def test_bluesky_provider_honors_since_days_ago(monkeypatch):
@@ -118,3 +140,4 @@ def test_bluesky_provider_honors_since_days_ago(monkeypatch):
 
     assert len(stories) == 1
     assert stories[0].body_html == "<p>Recent post</p>"
+    assert stories[0].section_title == "Bluesky"

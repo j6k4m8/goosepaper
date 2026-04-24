@@ -1,4 +1,5 @@
 from .goosepaper import Goosepaper
+from .story import Story
 from .styles import Style
 
 from .storyprovider.storyprovider import LoremStoryProvider
@@ -64,6 +65,45 @@ def test_toc_is_omitted_by_default():
     html = g.to_html()
 
     assert '<nav class="table-of-contents' not in html
+
+
+def test_toc_can_collapse_sections_and_skip_opted_out_stories():
+    class MixedProvider:
+        def get_stories(self):
+            return [
+                Story(headline="Lead story", body_text="Lead body"),
+                Story(
+                    headline="Jordan at 2026-04-24 15:30",
+                    body_text="Sky body one",
+                    section_title="Bluesky",
+                    short_form=True,
+                ),
+                Story(
+                    headline="Jordan at 2026-04-24 16:00",
+                    body_text="Sky body two",
+                    section_title="Bluesky",
+                    short_form=True,
+                ),
+                Story(
+                    headline="Hidden from contents",
+                    body_text="Hidden body",
+                    include_in_toc=False,
+                ),
+            ]
+
+    g = Goosepaper([MixedProvider()])
+
+    html = g.to_html(table_of_contents=True)
+
+    assert html.count('class="table-of-contents__entry"') == 2
+    assert 'href="#story-1-lead-story"' in html
+    assert 'href="#section-bluesky"' in html
+    assert 'href="#story-2-jordan-at-2026-04-24-15-30"' not in html
+    assert 'href="#story-4-hidden-from-contents"' not in html
+    assert 'id="section-bluesky"' in html
+    assert 'class="story-section-title">Bluesky<' in html
+    assert 'class="story story-card story-short"' in html
+    assert 'Hidden from contents' in html
 
 
 def test_style_resolves_auto_columns_from_page_profile():

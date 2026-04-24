@@ -74,6 +74,7 @@ def test_load_paper_config_uses_v2_schema():
                         "type": "bluesky",
                         "username": "jordan.matelsky.com",
                         "limit": 2,
+                        "include_replies": False,
                     }
                 ],
                 "delivery": {"folder": "Morning Brief"},
@@ -95,6 +96,7 @@ def test_load_paper_config_uses_v2_schema():
         assert config.sources[0].options["body_source"] == "summary"
         assert config.sources[1].type == "bluesky"
         assert config.sources[1].options["username"] == "jordan.matelsky.com"
+        assert config.sources[1].options["include_replies"] is False
         assert config.delivery.folder == "Morning Brief"
 
 
@@ -296,6 +298,7 @@ def test_load_paper_config_accepts_bluesky_source():
                     {
                         "type": "bluesky",
                         "username": "infinitescream.bsky.social",
+                        "include_replies": True,
                     }
                 ],
             },
@@ -305,3 +308,28 @@ def test_load_paper_config_accepts_bluesky_source():
 
         assert config.sources[0].type == "bluesky"
         assert config.sources[0].options["username"] == "infinitescream.bsky.social"
+        assert config.sources[0].options["include_replies"] is True
+
+
+def test_load_paper_config_rejects_invalid_bluesky_include_replies():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {
+                        "type": "bluesky",
+                        "username": "infinitescream.bsky.social",
+                        "include_replies": "sometimes",
+                    }
+                ],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            "include_replies must be true or false",
+        )

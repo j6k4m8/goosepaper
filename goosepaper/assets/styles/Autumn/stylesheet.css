@@ -13,6 +13,7 @@ body {
 .edition-line,
 .table-of-contents__label,
 .sidebar-title,
+.story-section-title,
 article > .byline {
     font-family: "Oswald", "Helvetica Neue", sans-serif;
     font-weight: 500;

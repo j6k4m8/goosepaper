@@ -452,6 +452,20 @@ def _base_print_css(
         text-transform: uppercase;
     }}
 
+    .story-section-heading {{
+        break-after: avoid;
+        margin: 0 0 0.55rem;
+        padding-top: 0.08rem;
+    }}
+
+    .story-section-title {{
+        margin: 0;
+        font-size: 0.72em;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+    }}
+
     article {{
         margin: 0;
         text-align: left;
@@ -481,6 +495,16 @@ def _base_print_css(
     article > .byline {{
         margin: 0 0 0.55rem;
         font-size: 0.75em;
+    }}
+
+    article.story-short > .story-headline {{
+        font-size: 1.16em;
+        line-height: 1.12;
+        margin-bottom: 0.28rem;
+    }}
+
+    .sidebar article.story-short > .story-headline {{
+        font-size: 0.96em;
     }}
 
     .story-body > :first-child {{

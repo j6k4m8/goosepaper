@@ -72,8 +72,11 @@ def test_construct_story_providers_supports_bluesky():
             {
                 "type": "bluesky",
                 "username": "jordan.matelsky.com",
+                "include_replies": False,
             }
         ]
     )
 
     assert stories[0].username == "jordan.matelsky.com"
+    assert stories[0].include_replies is False
+    assert stories[0].feed_filter == "posts_no_replies"

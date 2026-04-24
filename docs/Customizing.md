@@ -226,7 +226,8 @@ RSS `body_source` modes:
 {
     "type": "bluesky",
     "username": "jordan.matelsky.com",
-    "limit": 8
+    "limit": 8,
+    "include_replies": false
 }
 ```
 
@@ -235,6 +236,7 @@ RSS `body_source` modes:
 | `username` | str | none | Bluesky handle to fetch, with or without a leading `@`. |
 | `limit` | int | `5` | Number of posts to fetch. |
 | `since_days_ago` | number | `null` | If provided, filter posts by recency. |
+| `include_replies` | bool | `true` | Whether to include replies in the fetched author feed. |
 
 Bluesky sources use Bluesky's unauthenticated public AppView endpoints.
 

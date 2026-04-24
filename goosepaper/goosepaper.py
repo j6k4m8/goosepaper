@@ -125,20 +125,27 @@ class Goosepaper:
             for story in stories
             if story.placement_preference == PlacementPreference.SIDEBAR
         ]
-        story_anchor_ids = self._story_anchor_ids(
-            main_story_objects + sidebar_story_objects
-        )
-        main_stories = [
-            story.to_html(anchor_id=story_anchor_ids[id(story)])
-            for story in main_story_objects
-        ]
-        sidebar_stories = [
-            story.to_html(anchor_id=story_anchor_ids[id(story)])
-            for story in sidebar_story_objects
-        ]
-        toc_html = self._render_table_of_contents(
-            main_story_objects + sidebar_story_objects,
+        ordered_story_objects = main_story_objects + sidebar_story_objects
+        story_anchor_ids = self._story_anchor_ids(ordered_story_objects)
+        story_numbers = {
+            id(story): index
+            for index, story in enumerate(ordered_story_objects, start=1)
+        }
+        used_anchors = set(story_anchor_ids.values())
+        main_stories, main_toc_entries = self._render_story_region(
+            main_story_objects,
             story_anchor_ids,
+            story_numbers,
+            used_anchors=used_anchors,
+        )
+        sidebar_stories, sidebar_toc_entries = self._render_story_region(
+            sidebar_story_objects,
+            story_anchor_ids,
+            story_numbers,
+            used_anchors=used_anchors,
+        )
+        toc_html = self._render_table_of_contents(
+            main_toc_entries + sidebar_toc_entries,
             enabled=table_of_contents,
             effective_columns=effective_columns,
         )
@@ -312,6 +319,66 @@ class Goosepaper:
             return None
         raise ValueError(f"Invalid filename {filename}")
 
+    def _render_story_region(
+        self,
+        stories: List[Story],
+        story_anchor_ids: dict[int, str],
+        story_numbers: dict[int, int],
+        *,
+        used_anchors: set[str],
+    ) -> tuple[list[str], list[tuple[str, str]]]:
+        rendered: list[str] = []
+        toc_entries: list[tuple[str, str]] = []
+
+        for section_title, run_stories in self._story_runs(stories):
+            if section_title:
+                section_anchor = self._unique_anchor(
+                    f"section-{self._slugify(section_title)}",
+                    used_anchors,
+                )
+                rendered.append(
+                    f"""
+                    <div id="{escape(section_anchor)}" class="story-section-heading">
+                        <h2 class="story-section-title">{escape(section_title)}</h2>
+                    </div>
+                    """
+                )
+                if any(story.include_in_toc for story in run_stories):
+                    toc_entries.append((section_title, section_anchor))
+
+            for story in run_stories:
+                rendered.append(
+                    story.to_html(anchor_id=story_anchor_ids[id(story)])
+                )
+                if section_title or not story.include_in_toc:
+                    continue
+                headline = story.headline or f"Untitled story {story_numbers[id(story)]}"
+                toc_entries.append((headline, story_anchor_ids[id(story)]))
+
+        return rendered, toc_entries
+
+    def _story_runs(
+        self, stories: List[Story]
+    ) -> list[tuple[Optional[str], List[Story]]]:
+        runs: list[tuple[Optional[str], List[Story]]] = []
+        current_title: Optional[str] = None
+        current_stories: list[Story] = []
+
+        for story in stories:
+            section_title = (story.section_title or "").strip() or None
+            if current_stories and section_title and section_title == current_title:
+                current_stories.append(story)
+                continue
+            if current_stories:
+                runs.append((current_title, current_stories))
+            current_title = section_title
+            current_stories = [story]
+
+        if current_stories:
+            runs.append((current_title, current_stories))
+
+        return runs
+
     def _story_anchor_ids(self, stories: List[Story]) -> dict[int, str]:
         anchors: dict[int, str] = {}
         used = set()
@@ -326,19 +393,16 @@ class Goosepaper:
 
     def _render_table_of_contents(
         self,
-        stories: List[Story],
-        story_anchor_ids: dict[int, str],
+        toc_entries: List[tuple[str, str]],
         *,
         enabled: bool,
         effective_columns: int,
     ) -> str:
-        if not enabled or not stories:
+        if not enabled or not toc_entries:
             return ""
 
         items = []
-        for index, story in enumerate(stories, start=1):
-            headline = story.headline or f"Untitled story {index}"
-            anchor_id = story_anchor_ids[id(story)]
+        for headline, anchor_id in toc_entries:
             items.append(
                 '<div class="table-of-contents__entry">'
                 f'<a class="table-of-contents__link" href="#{escape(anchor_id)}">'
@@ -360,6 +424,16 @@ class Goosepaper:
     def _slugify(text: str) -> str:
         slug = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
         return slug or "story"
+
+    @staticmethod
+    def _unique_anchor(base: str, used: set[str]) -> str:
+        anchor = base
+        suffix = 2
+        while anchor in used:
+            anchor = f"{base}-{suffix}"
+            suffix += 1
+        used.add(anchor)
+        return anchor
 
     def to_epub(
         self,

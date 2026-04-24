@@ -39,6 +39,7 @@ body {
 .edition-line,
 .table-of-contents__label,
 .sidebar-title,
+.story-section-title,
 article > .byline {
     font-family: "Libre Franklin", "Helvetica Neue", sans-serif;
     font-weight: 600;
