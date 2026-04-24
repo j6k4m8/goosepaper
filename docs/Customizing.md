@@ -118,6 +118,7 @@ Built-in themes:
 - `Academy`
 - `FifthAvenue`
 - `Autumn`
+- `GrayMaiden`
 
 With `"layout": "auto"`, Goosepaper chooses a sensible default from the page profile:
 

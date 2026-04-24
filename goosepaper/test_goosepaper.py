@@ -50,6 +50,7 @@ def test_html_render_includes_theme_css_and_layout():
 
     assert 'class="header"' in html
     assert 'class="table-of-contents table-of-contents--1col"' in html
+    assert '<li>' not in html
     assert 'href="#story-1-lorem-ipsum-dolor-sit-amet"' in html
     assert 'id="story-1-lorem-ipsum-dolor-sit-amet"' in html
     assert '"Literata", serif' in html
@@ -68,8 +69,24 @@ def test_toc_is_omitted_by_default():
 def test_style_resolves_auto_columns_from_page_profile():
     academy = Style("Academy")
     avenue = Style("FifthAvenue")
+    maiden = Style("GrayMaiden")
 
     assert academy.resolve_column_count(layout="auto", page_profile="remarkable2") == 1
     assert avenue.resolve_column_count(layout="auto", page_profile="remarkable2") == 2
     assert avenue.resolve_column_count(layout="auto", page_profile="a4") == 2
+    assert maiden.resolve_column_count(layout="auto", page_profile="remarkable2") == 2
     assert avenue.resolve_column_count(layout="3col", page_profile="a4") == 3
+
+
+def test_graymaiden_style_loads_editorial_masthead_assets():
+    style = Style("GrayMaiden")
+
+    css = style.get_css(layout="auto", page_profile="rm1")
+
+    assert "UnifrakturMaguntia" in css
+    assert "Newsreader" in css
+    assert "Source Serif 4" in css
+    assert "leader(dotted)" in css
+    assert "target-counter(attr(href), page)" in css
+    assert "UnifrakturCook" not in css
+    assert style.get_stylesheets()

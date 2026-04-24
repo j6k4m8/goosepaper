@@ -100,12 +100,18 @@ _THEME_FONTS = {
         "display": '"Source Serif Pro", Georgia, serif',
         "sans": '"Open Sans", "Helvetica Neue", sans-serif',
     },
+    "GrayMaiden": {
+        "body": '"Source Serif 4", Georgia, serif',
+        "display": '"Newsreader", Georgia, serif',
+        "sans": '"Libre Franklin", "Helvetica Neue", sans-serif',
+    },
 }
 
 _THEME_AUTO_COLUMNS = {
     "Academy": 1,
     "FifthAvenue": 2,
     "Autumn": 2,
+    "GrayMaiden": 2,
 }
 
 
@@ -355,20 +361,24 @@ def _base_print_css(
         text-transform: uppercase;
     }}
 
-    .table-of-contents ol {{
+    .table-of-contents__entries {{
         margin: 0;
-        padding-left: 1.2rem;
         column-count: {toc_columns};
         column-gap: 1.4rem;
     }}
 
-    .table-of-contents li {{
+    .table-of-contents__entry {{
         break-inside: avoid;
         margin-bottom: 0.3rem;
     }}
 
-    .table-of-contents a {{
+    .table-of-contents__link {{
+        display: block;
         text-decoration: none;
+    }}
+
+    .table-of-contents__link::after {{
+        content: leader(dotted) target-counter(attr(href), page);
     }}
 
     .stories {{

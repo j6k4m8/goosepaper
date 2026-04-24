@@ -340,17 +340,19 @@ class Goosepaper:
             headline = story.headline or f"Untitled story {index}"
             anchor_id = story_anchor_ids[id(story)]
             items.append(
-                "<li>"
-                f'<a href="#{escape(anchor_id)}">{escape(headline)}</a>'
-                "</li>"
+                '<div class="table-of-contents__entry">'
+                f'<a class="table-of-contents__link" href="#{escape(anchor_id)}">'
+                f'<span class="table-of-contents__title">{escape(headline)}</span>'
+                "</a>"
+                "</div>"
             )
         toc_columns = 1 if effective_columns == 1 else 2
         return f"""
             <nav class="table-of-contents table-of-contents--{toc_columns}col" aria-label="Contents">
                 <div class="table-of-contents__label">Contents</div>
-                <ol>
+                <div class="table-of-contents__entries">
                     {''.join(items)}
-                </ol>
+                </div>
             </nav>
         """
 
