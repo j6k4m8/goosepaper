@@ -15,6 +15,7 @@
 -   Chores
     -   Dropped support for Python 3.8 and 3.9, which are no longer supported by the Python community, and added support for Python 3.13 and 3.14. The minimum supported version is now Python 3.10. (#99)
     -   Improved RSS extraction behavior so embedded feed content is used when available, and added configurable RSS `byline` and `body_source` modes with test coverage.
+    -   Fixed Reddit feed fetching by requesting the RSS endpoint with a Goosepaper user-agent and normalizing `/r/...` subreddit inputs correctly.
 
 ### **v0.7.1** (February 17, 2024)
 
