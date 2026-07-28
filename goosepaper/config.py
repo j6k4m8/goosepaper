@@ -585,7 +585,14 @@ def _source_schema(source_type: str) -> Dict[str, Any]:
         },
         "rss": {
             "required": {"url"},
-            "optional": {"limit", "since_days_ago", "byline", "body_source"},
+            "optional": {
+                "limit",
+                "since_days_ago",
+                "byline",
+                "body_source",
+                "content_filters",
+                "skip_title_patterns",
+            },
         },
         "mastodon": {
             "required": {"server", "username"},
@@ -679,6 +686,10 @@ def _validate_source_options(source_type: str, options: Dict[str, Any], index: i
         ),
         "days": lambda value: _validate_positive_int(value, f"source #{index} days"),
         "clock_format": lambda value: _validate_weather_clock_format(value, index),
+        "content_filters": lambda value: _validate_content_filters(value, index),
+        "skip_title_patterns": lambda value: _validate_string_list(
+            value, f"source #{index} skip_title_patterns"
+        ),
     }
 
     for key, value in options.items():
@@ -754,6 +765,35 @@ def _validate_rss_byline(value: Any, index: int):
         raise ConfigError(
             f'source #{index} byline must be one of "all", "none", or "first".'
         )
+
+
+def _validate_content_filters(value: Any, index: int):
+    if not isinstance(value, list):
+        raise ConfigError(f"source #{index} content_filters must be an array.")
+    allowed_keys = {"type", "selector", "pattern", "flags"}
+    for i, item in enumerate(value):
+        if not isinstance(item, dict):
+            raise ConfigError(f"source #{index} content_filters[{i}] must be an object.")
+        extra_keys = set(item) - allowed_keys
+        if extra_keys:
+            raise ConfigError(
+                f"source #{index} content_filters[{i}] has unknown field(s): "
+                + ", ".join(sorted(extra_keys))
+                + "."
+            )
+        filter_type = item.get("type")
+        if filter_type not in {"css", "regex"}:
+            raise ConfigError(
+                f'source #{index} content_filters[{i}] type must be "css" or "regex".'
+            )
+        if filter_type == "css" and not item.get("selector"):
+            raise ConfigError(
+                f"source #{index} content_filters[{i}] of type css requires a non-empty selector."
+            )
+        if filter_type == "regex" and not item.get("pattern"):
+            raise ConfigError(
+                f"source #{index} content_filters[{i}] of type regex requires a non-empty pattern."
+            )
 
 
 def _validate_body_source(source_type: str, value: Any, index: int):
