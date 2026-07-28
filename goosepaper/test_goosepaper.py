@@ -157,6 +157,46 @@ def test_appendix_stories_render_after_stories_in_their_own_block():
     assert "Puzzle solution" not in main_stories_html
 
 
+def test_appendix_stories_with_identical_headline_are_deduplicated():
+    """A shared appendix explanation (e.g. "how does Sudoku work?") requested by several
+    puzzle sources of the same type should only appear once, not once per source. No new
+    dedup mechanism needed for this - Goosepaper.get_stories(deduplicate=True) already
+    collapses same-headline/same-date stories, and Story's `date` defaults to None, so two
+    independently-constructed explanation Story objects with the same headline and no
+    explicit date are equal for dedup purposes as long as their headline matches exactly."""
+
+    class RepeatedAppendixProvider:
+        def get_stories(self):
+            return [
+                Story(headline=f"Sudoku puzzle {i}", body_text=f"Puzzle {i}")
+                for i in range(2)
+            ] + [
+                Story(
+                    headline="How does Sudoku work?",
+                    body_html="<p>Fill the grid so every row, column and box has 1-9.</p>",
+                    placement_preference=PlacementPreference.APPENDIX,
+                    include_in_toc=False,
+                    short_form=True,
+                )
+                for _ in range(2)
+            ]
+
+    g = Goosepaper([RepeatedAppendixProvider()])
+
+    stories = g.get_stories(deduplicate=True)
+    appendix_stories = [
+        s for s in stories if s.placement_preference == PlacementPreference.APPENDIX
+    ]
+    assert len(appendix_stories) == 1
+    assert len(stories) == 3  # 2 puzzles + 1 deduplicated appendix explanation
+
+    # to_html()/to_pdf() only dedupe if a caller explicitly requests it - Goosepaper's
+    # get_stories() itself defaults to deduplicate=False, and _render_html_document() doesn't
+    # pass a value, so it inherits that default. Callers relying on de-duplicated rendering
+    # (e.g. via a subclass or a patched default) get it automatically; this fork's rendering
+    # path does not dedupe unless get_stories(deduplicate=True) is called directly.
+
+
 def test_style_resolves_auto_columns_from_page_profile():
     academy = Style("Academy")
     avenue = Style("FifthAvenue")
