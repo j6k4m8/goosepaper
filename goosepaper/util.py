@@ -179,6 +179,15 @@ def construct_story_providers_from_source_configs(source_configs):
             "WikipediaCurrentEventsStoryProvider",
             lambda options: {},
         ),
+        "puzzle": (
+            "goosepaper.storyprovider.puzzle",
+            "PuzzleStoryProvider",
+            lambda options: {
+                key: value
+                for key, value in options.items()
+                if key in {"puzzle_type", "box_size", "size", "difficulty", "count", "seed"}
+            },
+        ),
     }
 
     stories = []
