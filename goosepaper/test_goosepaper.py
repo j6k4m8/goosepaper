@@ -131,6 +131,32 @@ def test_utility_strip_renders_between_header_and_contents():
     assert 'class="story story-card placement-utility story-short"' in html
 
 
+def test_appendix_stories_render_after_stories_in_their_own_block():
+    class AppendixProvider:
+        def get_stories(self):
+            return [
+                Story(headline="Lead story", body_text="Lead body"),
+                Story(
+                    headline="Puzzle solution",
+                    body_html="<p>42</p>",
+                    placement_preference=PlacementPreference.APPENDIX,
+                    include_in_toc=False,
+                    short_form=True,
+                ),
+            ]
+
+    g = Goosepaper([AppendixProvider()])
+
+    html = g.to_html()
+
+    assert 'class="appendix"' in html
+    assert html.index('class="stories ') < html.index('class="appendix"')
+    assert 'class="story story-card placement-appendix story-short"' in html
+    # Not duplicated into the main column flow.
+    main_stories_html = html.split('class="main-stories"')[1].split("</div>")[0]
+    assert "Puzzle solution" not in main_stories_html
+
+
 def test_style_resolves_auto_columns_from_page_profile():
     academy = Style("Academy")
     avenue = Style("FifthAvenue")

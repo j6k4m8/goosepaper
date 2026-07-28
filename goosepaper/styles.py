@@ -562,6 +562,13 @@ def _base_print_css(
         text-align: left;
     }}
 
+    /* Appendix stories (PlacementPreference.APPENDIX) render in their own block after
+    everything else, outside any column-count container - so, unlike FULLPAGE inside
+    .main-stories/.sidebar, break-before: page here reliably starts a fresh page per story. */
+    .appendix > article {{
+        break-before: page;
+    }}
+
     .main-stories > article,
     .sidebar > article {{
         margin-bottom: 1rem;
