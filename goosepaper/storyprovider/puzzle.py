@@ -350,9 +350,15 @@ class PuzzleStoryProvider(StoryProvider):
         puzzles: List[Story] = []
         solutions: List[Story] = []
         explanation_text = _EXPLANATIONS[self.puzzle_type]
-        for _ in range(self.count):
+        for i in range(self.count):
             puzzle = self._generate_one(rng)
-            label = f"{puzzle.difficulty.title()} {self.puzzle_type.title()}"
+            base_label = f"{puzzle.difficulty.title()} {self.puzzle_type.title()}"
+            # Disambiguate same type+difficulty instances (count > 1) so their headlines don't
+            # collide - Goosepaper's cross-provider deduplicate=True mechanism (see
+            # PlacementPreference.APPENDIX's own dedup guarantee) matches on headline+date, and
+            # two undated stories with the identical headline "Medium Sudoku" would otherwise
+            # silently collapse to one, dropping a whole puzzle (and its solution).
+            label = base_label if self.count == 1 else f"{base_label} ({i + 1})"
             givens_html, solution_html = render(puzzle)
 
             puzzle_html = _PUZZLE_CSS + givens_html
