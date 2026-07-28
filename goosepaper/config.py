@@ -625,7 +625,15 @@ def _source_schema(source_type: str) -> Dict[str, Any]:
         },
         "puzzle": {
             "required": set(),
-            "optional": {"puzzle_type", "box_size", "size", "difficulty", "count", "seed"},
+            "optional": {
+                "puzzle_type",
+                "box_size",
+                "size",
+                "difficulty",
+                "count",
+                "seed",
+                "explanation",
+            },
         },
     }
     if source_type in schemas:
@@ -689,6 +697,7 @@ def _validate_source_options(source_type: str, options: Dict[str, Any], index: i
         "difficulty": lambda value: _validate_puzzle_difficulty(value, index),
         "count": lambda value: _validate_positive_int(value, f"source #{index} count"),
         "seed": lambda value: _validate_int(value, f"source #{index} seed"),
+        "explanation": lambda value: _validate_puzzle_explanation(value, index),
     }
 
     for key, value in options.items():
@@ -792,6 +801,18 @@ def _validate_puzzle_difficulty(value: Any, index: int):
     if value not in {"easy", "medium", "hard"}:
         raise ConfigError(
             f'source #{index} difficulty must be one of "easy", "medium", or "hard".'
+        )
+
+
+_PUZZLE_EXPLANATION_MODES = {"none", "inline", "footer", "appendix"}
+
+
+def _validate_puzzle_explanation(value: Any, index: int):
+    if value not in _PUZZLE_EXPLANATION_MODES:
+        raise ConfigError(
+            f"source #{index} explanation must be one of "
+            + ", ".join(f'"{mode}"' for mode in sorted(_PUZZLE_EXPLANATION_MODES))
+            + "."
         )
 
 

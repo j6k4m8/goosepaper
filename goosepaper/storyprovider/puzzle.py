@@ -19,13 +19,6 @@ from .storyprovider import StoryProvider
 
 _PUZZLE_CSS = """
 <style>
-/* Forces the whole solution story (headline + grid together, via goosepaper's own
-   PlacementPreference.FULLPAGE -> this class) onto a fresh page. The legacy
-   `page-break-before: always` on an inner marker div does NOT reliably force a page break
-   inside goosepaper's multi-column layout (WeasyPrint may resolve it as a column break
-   instead) - `break-before: page` on the story's own <article> does. */
-article.placement-fullpage { break-before: page; }
-
 table.puzzle-grid, table.futoshiki-grid, table.kakuro-grid, table.shikaku-grid {
   border-collapse: collapse; margin: 0 auto 1em auto; page-break-inside: avoid;
 }
@@ -62,8 +55,45 @@ table.shikaku-grid td.shikaku-left { border-left: 2px solid #000; }
 table.shikaku-grid td.shikaku-right { border-right: 2px solid #000; }
 table.shikaku-grid td.shikaku-top { border-top: 2px solid #000; }
 table.shikaku-grid td.shikaku-bottom { border-bottom: 2px solid #000; }
+
+.puzzle-explanation-inline {
+  font-size: 0.92em; color: #444; margin-top: 0.6em;
+}
+.puzzle-explanation-footer {
+  font-size: 0.85em; color: #555; margin-top: 1em; padding-top: 0.5em;
+  border-top: 0.75pt solid #ccc;
+}
 </style>
 """
+
+# Short German rules blurb per puzzle type - used by the `explanation` option (see
+# PuzzleStoryProvider). Kept intentionally brief: this is a reminder, not a rulebook.
+_EXPLANATIONS: Dict[str, str] = {
+    "sudoku": (
+        "Fülle das Raster so, dass in jeder Zeile, jeder Spalte und jedem markierten Block "
+        "die Zahlen 1 bis 9 jeweils genau einmal vorkommen."
+    ),
+    "binoxxo": (
+        "Fülle das Raster mit den Symbolen X und O. Nie mehr als zwei gleiche Symbole "
+        "direkt nebeneinander oder untereinander, jede Zeile und Spalte enthält gleich "
+        "viele X wie O, und keine Zeile bzw. Spalte wiederholt sich."
+    ),
+    "futoshiki": (
+        "Fülle das Raster so, dass in jeder Zeile und jeder Spalte jede Zahl genau einmal "
+        "vorkommt. Die Ungleichheitszeichen zwischen benachbarten Feldern müssen erfüllt sein."
+    ),
+    "kakuro": (
+        "Fülle die weißen Felder mit Ziffern von 1 bis 9, sodass jeder zusammenhängende "
+        "Zahlenblock in Summe die angegebene Zahl ergibt. Innerhalb eines Blocks darf keine "
+        "Ziffer mehrfach vorkommen."
+    ),
+    "shikaku": (
+        "Zerlege das Raster in rechteckige Bereiche, sodass jedes Rechteck genau eine Zahl "
+        "enthält und seine Fläche - die Anzahl seiner Felder - dieser Zahl entspricht."
+    ),
+}
+
+_EXPLANATION_MODES = {"none", "inline", "footer", "appendix"}
 
 
 # --- Sudoku / Binoxxo: a plain n x n grid, optionally with box divisions -----------------------
@@ -249,8 +279,10 @@ _DEFAULT_SIZE = {
 
 
 class PuzzleStoryProvider(StoryProvider):
-    """Generates one or more logic puzzles and renders each as an HTML story, immediately
-    followed by its solution as a separate story on the next page."""
+    """Generates one or more logic puzzles and renders each as an HTML story. Solutions are
+    collected separately and placed in the paper's appendix (PlacementPreference.APPENDIX),
+    grouped with every other puzzle solution at the very end of the document rather than
+    immediately following their own puzzle."""
 
     def __init__(
         self,
@@ -260,11 +292,17 @@ class PuzzleStoryProvider(StoryProvider):
         difficulty: str = sudoku.DEFAULT_DIFFICULTY,
         count: int = 1,
         seed: Optional[int] = None,
+        explanation: str = "none",
     ) -> None:
         if puzzle_type not in _GENERATORS:
             raise ValueError(
                 f'Unknown puzzle_type "{puzzle_type}". Supported: '
                 f'{", ".join(sorted(_GENERATORS))}.'
+            )
+        if explanation not in _EXPLANATION_MODES:
+            raise ValueError(
+                f'Unknown explanation mode "{explanation}". Supported: '
+                f'{", ".join(sorted(_EXPLANATION_MODES))}.'
             )
         self.puzzle_type = puzzle_type
         self.box_size = box_size
@@ -272,6 +310,7 @@ class PuzzleStoryProvider(StoryProvider):
         self.difficulty = difficulty
         self.count = count
         self.seed = seed
+        self.explanation = explanation
 
     def _generate_one(self, rng: random.Random):
         generate = _GENERATORS[self.puzzle_type]
@@ -281,30 +320,47 @@ class PuzzleStoryProvider(StoryProvider):
         return generate(size=size, difficulty=self.difficulty, rng=rng)
 
     def get_stories(self) -> List[Story]:
-        """Puzzles first, then every solution grouped at the end (not interleaved
-        puzzle-then-its-own-solution).
+        """Puzzles first, then every solution, then (depending on `explanation`) a rules blurb.
 
-        `break-before: page` (and every other CSS break property tried) does not force a page
-        break for one fragment inside a multi-column layout in this WeasyPrint version - verified
-        in isolation, not a goosepaper quirk - so a solution can't be reliably pushed onto its own
-        page when it directly follows its puzzle in a 2-/3-column newspaper. Batching all
-        solutions at the end (same convention as a print puzzle book's answer section at the
-        back) sidesteps that limitation: with `count` at least 2-3, several puzzle pages worth of
-        content separate a puzzle from its own answer even without a hard page break.
-        `PlacementPreference.FULLPAGE` is still set on each solution - a harmless no-op under
-        multi-column layouts, but a real page break for anyone using `layout: "1col"`.
+        Solutions carry `PlacementPreference.APPENDIX`, so goosepaper collects them - together
+        with every other appendix-placed story in the paper, puzzle or not - into one block at
+        the very end of the document, each on its own page. That's a deliberate improvement over
+        an earlier approach (batching solutions at the end of *this provider's own* story list,
+        with `PlacementPreference.FULLPAGE`): FULLPAGE's `break-before: page` does not reliably
+        start a new page for a story rendered in place inside a multi-column layout in this
+        WeasyPrint version (verified in isolation), so that only really worked under
+        `layout: "1col"`. APPENDIX stories render outside any column-count container, so the page
+        break is reliable regardless of column layout - see PlacementPreference.APPENDIX.
+
+        `explanation` controls whether/where a short rules blurb for this puzzle_type appears:
+          - "none" (default): no blurb.
+          - "inline": appended to the end of *every* puzzle instance's own body - expected to
+            repeat once per puzzle, the same way a print puzzle book often restates short rules
+            next to each puzzle.
+          - "footer"/"appendix": one extra Story, in the normal reading-order flow ("footer") or
+            grouped into the appendix ("appendix"), *not* one per puzzle instance. Its headline is
+            stable per puzzle_type (not per instance/date), so if several sources - even across
+            different `count`s or difficulties - all request an explanation for the same
+            puzzle_type, Goosepaper's own get_stories(deduplicate=True) collapses them to one
+            (same mechanism used for any other cross-provider duplicate; see
+            test_goosepaper.py::test_appendix_stories_with_identical_headline_are_deduplicated).
         """
         rng = random.Random(self.seed)
         render = _RENDERERS[self.puzzle_type]
         puzzles: List[Story] = []
         solutions: List[Story] = []
+        explanation_text = _EXPLANATIONS[self.puzzle_type]
         for _ in range(self.count):
             puzzle = self._generate_one(rng)
             label = f"{puzzle.difficulty.title()} {self.puzzle_type.title()}"
             givens_html, solution_html = render(puzzle)
 
+            puzzle_html = _PUZZLE_CSS + givens_html
+            if self.explanation == "inline":
+                puzzle_html += f'<p class="puzzle-explanation-inline">{explanation_text}</p>'
+
             puzzles.append(
-                Story(headline=label, body_html=_PUZZLE_CSS + givens_html, short_form=True)
+                Story(headline=label, body_html=puzzle_html, short_form=True)
             )
             solutions.append(
                 Story(
@@ -312,7 +368,26 @@ class PuzzleStoryProvider(StoryProvider):
                     body_html=_PUZZLE_CSS + solution_html,
                     include_in_toc=False,
                     short_form=True,
-                    placement_preference=PlacementPreference.FULLPAGE,
+                    placement_preference=PlacementPreference.APPENDIX,
                 )
             )
-        return puzzles + solutions
+
+        stories = puzzles + solutions
+        if self.explanation in ("footer", "appendix"):
+            stories.append(
+                Story(
+                    headline=f"Wie funktioniert {self.puzzle_type.title()}?",
+                    body_html=(
+                        _PUZZLE_CSS
+                        + f'<p class="puzzle-explanation-footer">{explanation_text}</p>'
+                    ),
+                    include_in_toc=False,
+                    short_form=True,
+                    placement_preference=(
+                        PlacementPreference.APPENDIX
+                        if self.explanation == "appendix"
+                        else PlacementPreference.NONE
+                    ),
+                )
+            )
+        return stories
