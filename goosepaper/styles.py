@@ -562,6 +562,15 @@ def _base_print_css(
         text-align: left;
     }}
 
+    /* One guaranteed break before the appendix block as a whole starts - so it never begins
+    mid-page, tacked onto whatever the last regular/sidebar content happened to leave room for.
+    This is on .appendix itself, not .appendix > article, precisely so it fires exactly once:
+    a rule on every article would repeat the break-per-story behavior this same file already
+    removed on purpose (see the comment below) for wasting a page per entry. */
+    .appendix {{
+        break-before: page;
+    }}
+
     /* Appendix stories (PlacementPreference.APPENDIX) render in their own block after
     everything else - just placed at the end, one after another in the normal flow, same as
     .main-stories/.sidebar articles. No per-story page break: that would waste a page per story
