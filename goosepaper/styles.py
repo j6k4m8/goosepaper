@@ -282,6 +282,36 @@ def _base_print_css(
         height: auto;
     }}
 
+    /* `<pre>`'s default `white-space: pre` never wraps long lines - fine in a browser (you get a
+    scrollbar), but there's no scrolling on a printed/PDF page, so a code block wider than its
+    column just overflowed into whatever rendered next to it (visually overlapping the next
+    column's text in a multi-column layout). pre-wrap keeps line breaks/indentation but allows
+    wrapping; break-word/break-all as a second line of defense for a single unbroken token (a long
+    URL, hash, or identifier) that's still wider than the column on its own. */
+    pre, code {{
+        white-space: pre-wrap;
+        overflow-wrap: break-word;
+        word-break: break-word;
+    }}
+
+    pre {{
+        max-width: 100%;
+        overflow: hidden;
+        margin: 0.5rem 0;
+        padding: 0.5rem 0.65rem;
+        background: #f4f4f4;
+        border: 0.75pt solid #ddd;
+        border-radius: 3px;
+        font-size: 0.85em;
+        line-height: 1.35;
+    }}
+
+    :not(pre) > code {{
+        background: #f4f4f4;
+        padding: 0.05em 0.3em;
+        border-radius: 2px;
+    }}
+
     .header {{
         position: relative;
         margin: 0 0 0.65rem;
