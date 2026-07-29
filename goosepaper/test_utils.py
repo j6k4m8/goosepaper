@@ -152,7 +152,7 @@ def test_construct_story_providers_passes_combined_weather_mode():
 def test_construct_story_providers_passes_puzzle_options():
     """Every option construct_story_providers_from_source_configs is supposed to forward to
     PuzzleStoryProvider - including `name`, which is easy to forget here since it's not part of
-    the original puzzle_type/box_size/size/difficulty/count/seed set this provider started with.
+    the original puzzle_type/box_size/difficulty/count/seed set this provider started with.
     """
     stories = construct_story_providers_from_source_configs(
         [
@@ -160,7 +160,6 @@ def test_construct_story_providers_passes_puzzle_options():
                 "type": "puzzle",
                 "puzzle_type": "binoxxo",
                 "difficulty": "hard",
-                "size": 14,
                 "count": 2,
                 "seed": 7,
                 "name": "Binoxxo",
@@ -170,7 +169,6 @@ def test_construct_story_providers_passes_puzzle_options():
 
     assert stories[0].puzzle_type == "binoxxo"
     assert stories[0].difficulty == "hard"
-    assert stories[0].size == 14
     assert stories[0].count == 2
     assert stories[0].seed == 7
     assert stories[0].name == "Binoxxo"

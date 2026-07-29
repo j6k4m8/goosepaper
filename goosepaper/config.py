@@ -625,7 +625,7 @@ def _source_schema(source_type: str) -> Dict[str, Any]:
         },
         "puzzle": {
             "required": {"puzzle_type"},
-            "optional": {"box_size", "size", "difficulty", "count", "seed", "name"},
+            "optional": {"box_size", "difficulty", "count", "seed", "name"},
         },
     }
     if source_type not in schemas:
@@ -679,7 +679,6 @@ def _validate_source_options(source_type: str, options: Dict[str, Any], index: i
         "clock_format": lambda value: _validate_weather_clock_format(value, index),
         "puzzle_type": lambda value: _validate_puzzle_type(value, index),
         "box_size": lambda value: _validate_puzzle_box_size(value, index),
-        "size": lambda value: _validate_positive_int(value, f"source #{index} size"),
         "difficulty": lambda value: _validate_puzzle_difficulty(value, index),
         "count": lambda value: _validate_positive_int(value, f"source #{index} count"),
         "seed": lambda value: _validate_int(value, f"source #{index} seed"),

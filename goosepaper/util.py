@@ -147,7 +147,7 @@ def construct_story_providers_from_source_configs(source_configs):
                 key: value
                 for key, value in options.items()
                 if key
-                in {"puzzle_type", "box_size", "size", "difficulty", "count", "seed", "name"}
+                in {"puzzle_type", "box_size", "difficulty", "count", "seed", "name"}
             },
         ),
     }
