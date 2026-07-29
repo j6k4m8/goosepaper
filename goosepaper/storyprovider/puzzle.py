@@ -94,7 +94,9 @@ def _plain_grid_html(grid, box_size: Optional[int], symbol_for: Callable[[int], 
 
 
 def _render_sudoku(puzzle) -> Tuple[str, str]:
-    symbol_for = lambda v: sudoku.SYMBOL_ALPHABET[v]
+    def symbol_for(v):
+        return sudoku.SYMBOL_ALPHABET[v]
+
     return (
         _plain_grid_html(puzzle.givens, puzzle.box_size, symbol_for),
         _plain_grid_html(puzzle.solution, puzzle.box_size, symbol_for),
@@ -102,7 +104,9 @@ def _render_sudoku(puzzle) -> Tuple[str, str]:
 
 
 def _render_binoxxo(puzzle) -> Tuple[str, str]:
-    symbol_for = lambda v: binoxxo.DEFAULT_SYMBOLS[v]
+    def symbol_for(v):
+        return binoxxo.DEFAULT_SYMBOLS[v]
+
     return (
         _plain_grid_html(puzzle.givens, None, symbol_for),
         _plain_grid_html(puzzle.solution, None, symbol_for),
