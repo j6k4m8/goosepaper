@@ -10,6 +10,7 @@ renderer) already handles.
 from __future__ import annotations
 
 import random
+from html import escape
 from typing import Callable, Dict, List, Optional, Tuple
 
 from ..puzzlegen import binoxxo, futoshiki, kakuro, shikaku, sudoku
@@ -62,6 +63,14 @@ table.shikaku-grid td.shikaku-left { border-left: 2px solid #000; }
 table.shikaku-grid td.shikaku-right { border-right: 2px solid #000; }
 table.shikaku-grid td.shikaku-top { border-top: 2px solid #000; }
 table.shikaku-grid td.shikaku-bottom { border-bottom: 2px solid #000; }
+
+/* PuzzleStoryProvider no longer shows its own auto-generated "Medium Sudoku"-style label (see
+get_stories()'s docstring) - that text still exists as the Story's actual `headline`, since
+Goosepaper's own cross-provider dedup/anchor-uniqueness machinery needs a stable, distinct
+identity per story regardless of what's configured, but it's never rendered: config-driven
+`name`, if given, or nothing (relying on the enclosing section's own heading) is the point. */
+article:has(.puzzle-body) > .story-headline { display: none; }
+.puzzle-custom-label { margin: 0 0 0.4em; font-size: 1.05em; font-weight: bold; }
 </style>
 """
 
@@ -260,6 +269,7 @@ class PuzzleStoryProvider(StoryProvider):
         difficulty: str = sudoku.DEFAULT_DIFFICULTY,
         count: int = 1,
         seed: Optional[int] = None,
+        name: Optional[str] = None,
     ) -> None:
         if puzzle_type not in _GENERATORS:
             raise ValueError(
@@ -272,6 +282,7 @@ class PuzzleStoryProvider(StoryProvider):
         self.difficulty = difficulty
         self.count = count
         self.seed = seed
+        self.name = name
 
     def _generate_one(self, rng: random.Random):
         generate = _GENERATORS[self.puzzle_type]
@@ -293,6 +304,20 @@ class PuzzleStoryProvider(StoryProvider):
         content separate a puzzle from its own answer even without a hard page break.
         `PlacementPreference.FULLPAGE` is still set on each solution - a harmless no-op under
         multi-column layouts, but a real page break for anyone using `layout: "1col"`.
+
+        Visible heading: this provider does not display its own generated "Medium Sudoku"-style
+        text (that internal label still becomes the Story's `headline` - Goosepaper's own
+        cross-provider deduplicate=True and per-story anchor-uniqueness machinery both need a
+        stable, distinct identity per story regardless of what's configured, and the label
+        supplies that - it's just never rendered, see the .puzzle-body CSS rule above). What
+        *does* show, per puzzle instance, is:
+          - `name`, if given, as that instance's own heading; the same text (plus " - Lösung")
+            on its solution.
+          - nothing, if `name` isn't given - only the enclosing section's own heading identifies
+            what the reader is looking at. Fine when a section already covers exactly one
+            type+difficulty (e.g. a "Sudoku Mittel" section with only sudoku/medium sources in
+            it); with several different puzzle types sharing one section, an unset `name` means
+            no per-instance way to tell them apart.
         """
         rng = random.Random(self.seed)
         render = _RENDERERS[self.puzzle_type]
@@ -305,17 +330,38 @@ class PuzzleStoryProvider(StoryProvider):
             # collide - Goosepaper's cross-provider deduplicate=True mechanism (see
             # PlacementPreference.APPENDIX's own dedup guarantee) matches on headline+date, and
             # two undated stories with the identical headline "Medium Sudoku" would otherwise
-            # silently collapse to one, dropping a whole puzzle (and its solution).
+            # silently collapse to one, dropping a whole puzzle (and its solution). This is the
+            # Story's internal `headline` only now - see get_stories()'s docstring for why it's
+            # never the visible text.
             label = base_label if self.count == 1 else f"{base_label} ({i + 1})"
             givens_html, solution_html = render(puzzle)
 
+            visible_label = (
+                f'<h2 class="puzzle-custom-label">{escape(self.name)}</h2>' if self.name else ""
+            )
+            visible_solution_label = (
+                f'<h2 class="puzzle-custom-label">{escape(self.name)} - Lösung</h2>'
+                if self.name
+                else ""
+            )
+
             puzzles.append(
-                Story(headline=label, body_html=_PUZZLE_CSS + givens_html, short_form=True)
+                Story(
+                    headline=label,
+                    body_html=(
+                        _PUZZLE_CSS
+                        + f'<div class="puzzle-body">{visible_label}{givens_html}</div>'
+                    ),
+                    short_form=True,
+                )
             )
             solutions.append(
                 Story(
                     headline=f"{label} - Lösung",
-                    body_html=_PUZZLE_CSS + solution_html,
+                    body_html=(
+                        _PUZZLE_CSS
+                        + f'<div class="puzzle-body">{visible_solution_label}{solution_html}</div>'
+                    ),
                     include_in_toc=False,
                     short_form=True,
                     placement_preference=PlacementPreference.FULLPAGE,
