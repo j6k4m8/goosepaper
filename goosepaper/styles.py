@@ -563,21 +563,20 @@ def _base_print_css(
     }}
 
     /* Appendix stories (PlacementPreference.APPENDIX) render in their own block after
-    everything else, outside any column-count container - so, unlike FULLPAGE inside
-    .main-stories/.sidebar, break-before: page here reliably starts a fresh page per story. */
-    .appendix > article {{
-        break-before: page;
-    }}
-
+    everything else - just placed at the end, one after another in the normal flow, same as
+    .main-stories/.sidebar articles. No per-story page break: that would waste a page per story
+    for something like a puzzle's solution, where a plain divider is enough. */
     .main-stories > article,
-    .sidebar > article {{
+    .sidebar > article,
+    .appendix > article {{
         margin-bottom: 1rem;
         padding-bottom: 0.9rem;
         border-bottom: 0.9pt solid #d9d9d9;
     }}
 
     .main-stories > article:last-child,
-    .sidebar > article:last-child {{
+    .sidebar > article:last-child,
+    .appendix > article:last-child {{
         margin-bottom: 0;
         padding-bottom: 0;
         border-bottom: 0;
