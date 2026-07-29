@@ -282,6 +282,17 @@ def _base_print_css(
         height: auto;
     }}
 
+    /* Inline <svg> (decorative icons/illustrations some source sites embed directly in article
+    HTML) has no such constraint by default - unlike <img>, which browsers/WeasyPrint shrink to
+    fit an ancestor's width automatically in most contexts, an <svg> renders at its own
+    width/height (or viewBox-implied size) regardless of the column it landed in. Observed: a
+    corner-bracket icon rendering the better part of a page tall/wide in a narrow newspaper
+    column. Same fix as <img>: cap it to the column and let it scale down proportionally. */
+    svg {{
+        max-width: 100%;
+        height: auto;
+    }}
+
     .header {{
         position: relative;
         margin: 0 0 0.65rem;
