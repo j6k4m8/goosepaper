@@ -41,12 +41,16 @@ class Difficulty:
     # easier (Kakuro has no numeric givens to remove -- unlike the other
     # modules, difficulty comes entirely from the black/white pattern).
     black_ratio: float
+    # Grid size used when a caller picks this difficulty without also naming an explicit
+    # size - larger grids pair with harder difficulties. Must be one of SUPPORTED_SIZES;
+    # see the module-level comment above for why 7/hard is the practical ceiling.
+    size: int
 
 
 DIFFICULTIES: dict[str, Difficulty] = {
-    "easy": Difficulty("easy", black_ratio=0.35),
-    "medium": Difficulty("medium", black_ratio=0.25),
-    "hard": Difficulty("hard", black_ratio=0.18),
+    "easy": Difficulty("easy", black_ratio=0.35, size=5),
+    "medium": Difficulty("medium", black_ratio=0.25, size=6),
+    "hard": Difficulty("hard", black_ratio=0.18, size=7),
 }
 
 DEFAULT_DIFFICULTY = "medium"

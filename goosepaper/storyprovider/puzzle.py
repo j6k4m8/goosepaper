@@ -248,22 +248,50 @@ _RENDERERS = {
     "shikaku": _render_shikaku,
 }
 
-# sudoku takes box_size (3 -> 9x9); every other type takes a plain size.
-_DEFAULT_SIZE = {
-    "binoxxo": binoxxo.DEFAULT_SIZE,
-    "futoshiki": futoshiki.DEFAULT_SIZE,
-    "kakuro": kakuro.DEFAULT_SIZE,
-    "shikaku": shikaku.DEFAULT_SIZE,
+# sudoku takes box_size (3 -> 9x9, independent of difficulty - see PuzzleStoryProvider's
+# `box_size` docstring); every other type takes a plain size that, left unset, is derived
+# from `difficulty` instead of a single flat default (see _generate_one) - each type's own
+# DIFFICULTIES table pairs a larger grid with its harder presets (most visibly shikaku,
+# where "hard" is specifically measured/tuned for a 20x20 grid, not just a smaller
+# min_blocks/max_block_area at whatever size happens to be passed in).
+_DIFFICULTIES = {
+    "binoxxo": binoxxo.DIFFICULTIES,
+    "futoshiki": futoshiki.DIFFICULTIES,
+    "kakuro": kakuro.DIFFICULTIES,
+    "shikaku": shikaku.DIFFICULTIES,
 }
 
 
 class PuzzleStoryProvider(StoryProvider):
     """Generates one or more logic puzzles and renders each as an HTML story, immediately
-    followed by its solution as a separate story on the next page."""
+    followed by its solution as a separate story on the next page.
+
+    Constructor parameters:
+      - `puzzle_type` (required): one of "sudoku", "binoxxo", "futoshiki", "kakuro", "shikaku".
+        No default - a config that forgets it should fail loudly instead of silently always
+        generating Sudoku.
+      - `box_size` (optional, default 3): **sudoku only**, ignored for every other type. 3 is
+        the classic 9x9 (3x3 boxes); see sudoku's own config.py for supported values. Unlike
+        `size` below, this does not vary by `difficulty` - all three difficulties use the same
+        9x9 grid, so there is no per-difficulty table for it.
+      - `size` (optional, default None): grid side length for every type except sudoku (which
+        uses `box_size` instead). Left unset, the size is derived from `difficulty` instead of
+        one flat value - see each puzzlegen module's own `DIFFICULTIES` table (e.g.
+        binoxxo/config.py) for the exact per-difficulty sizes and why they escalate together
+        with difficulty rather than independently.
+      - `difficulty` (optional, default "medium"): one of "easy", "medium", "hard". Controls
+        how many cells/constraints are given (see each type's own `DIFFICULTIES` table) and,
+        for every type but sudoku, the default grid size when `size` is unset (see above).
+      - `count` (optional, default 1): how many puzzle instances of this type+difficulty to
+        generate.
+      - `seed` (optional, default None): RNG seed, for reproducible generation.
+      - `name` (optional, default None): visible per-instance heading - see get_stories()'s
+        docstring for the "no name -> no heading, just the section's own" behavior.
+    """
 
     def __init__(
         self,
-        puzzle_type: str = "sudoku",
+        puzzle_type: str,
         box_size: int = 3,
         size: Optional[int] = None,
         difficulty: str = sudoku.DEFAULT_DIFFICULTY,
@@ -288,7 +316,7 @@ class PuzzleStoryProvider(StoryProvider):
         generate = _GENERATORS[self.puzzle_type]
         if self.puzzle_type == "sudoku":
             return generate(box_size=self.box_size, difficulty=self.difficulty, rng=rng)
-        size = self.size or _DEFAULT_SIZE[self.puzzle_type]
+        size = self.size or _DIFFICULTIES[self.puzzle_type][self.difficulty].size
         return generate(size=size, difficulty=self.difficulty, rng=rng)
 
     def get_stories(self) -> List[Story]:

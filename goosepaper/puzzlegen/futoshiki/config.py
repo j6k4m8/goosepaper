@@ -23,12 +23,16 @@ class Difficulty:
     # Approximate fraction of orthogonally adjacent cell pairs that get an
     # inequality sign. Lower = harder (fewer constraints to reason with).
     constraint_ratio: float
+    # Grid size used when a caller picks this difficulty without also naming an explicit
+    # size - larger grids pair with harder difficulties so "hard" means more than just
+    # fewer givens/constraints. Must be one of SUPPORTED_SIZES.
+    size: int
 
 
 DIFFICULTIES: dict[str, Difficulty] = {
-    "easy": Difficulty("easy", fill_ratio=0.35, constraint_ratio=0.35),
-    "medium": Difficulty("medium", fill_ratio=0.20, constraint_ratio=0.25),
-    "hard": Difficulty("hard", fill_ratio=0.10, constraint_ratio=0.15),
+    "easy": Difficulty("easy", fill_ratio=0.35, constraint_ratio=0.35, size=5),
+    "medium": Difficulty("medium", fill_ratio=0.20, constraint_ratio=0.25, size=6),
+    "hard": Difficulty("hard", fill_ratio=0.10, constraint_ratio=0.15, size=7),
 }
 
 DEFAULT_DIFFICULTY = "medium"
