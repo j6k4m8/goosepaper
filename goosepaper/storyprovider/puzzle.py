@@ -10,6 +10,7 @@ renderer) already handles.
 from __future__ import annotations
 
 import random
+from html import escape
 from typing import Callable, Dict, List, Optional, Tuple
 
 from ..puzzlegen import binoxxo, futoshiki, kakuro, shikaku, sudoku
@@ -95,6 +96,14 @@ article:has(.puzzle-footnote) { margin-bottom: 0; padding-bottom: 0; border-bott
 .puzzle-footnote-3::footnote-marker { content: "3. "; }
 .puzzle-footnote-4::footnote-marker { content: "4. "; }
 .puzzle-footnote-5::footnote-marker { content: "5. "; }
+
+/* PuzzleStoryProvider no longer shows its own auto-generated "Medium Sudoku"-style label (see
+get_stories()'s docstring) - that text still exists as the Story's actual `headline`, since
+Goosepaper's own cross-provider dedup/anchor-uniqueness machinery needs a stable, distinct
+identity per story regardless of what's configured, but it's never rendered: config-driven
+`name`, if given, or nothing (relying on the enclosing section's own heading) is the point. */
+article:has(.puzzle-body) > .story-headline { display: none; }
+.puzzle-custom-label { margin: 0 0 0.4em; font-size: 1.05em; font-weight: bold; }
 </style>
 """
 
@@ -329,6 +338,7 @@ class PuzzleStoryProvider(StoryProvider):
         count: int = 1,
         seed: Optional[int] = None,
         explanation: str = "none",
+        name: Optional[str] = None,
     ) -> None:
         if puzzle_type not in _GENERATORS:
             raise ValueError(
@@ -347,6 +357,7 @@ class PuzzleStoryProvider(StoryProvider):
         self.count = count
         self.seed = seed
         self.explanation = explanation
+        self.name = name
 
     def _generate_one(self, rng: random.Random):
         generate = _GENERATORS[self.puzzle_type]
@@ -387,6 +398,20 @@ class PuzzleStoryProvider(StoryProvider):
           get_stories(deduplicate=True) collapses the extra Story down to one (same mechanism used
           for any other cross-provider duplicate; see
           test_goosepaper.py::test_appendix_stories_with_identical_headline_are_deduplicated).
+
+        Visible heading: this provider does not display its own generated "Medium Sudoku"-style
+        text (that internal label still becomes the Story's `headline` - Goosepaper's own
+        cross-provider deduplicate=True and per-story anchor-uniqueness machinery both need a
+        stable, distinct identity per story regardless of what's configured, and the label
+        supplies that - it's just never rendered, see the .puzzle-body CSS rule above). What
+        *does* show, per puzzle instance, is:
+          - `name`, if given, as that instance's own heading; the same text (plus " - Lösung")
+            on its solution.
+          - nothing, if `name` isn't given - only the enclosing section's own heading identifies
+            what the reader is looking at. Fine when a section already covers exactly one
+            type+difficulty (e.g. a "Sudoku Mittel" section with only sudoku/medium sources in
+            it); with several different puzzle types sharing one section, an unset `name` means
+            no per-instance way to tell them apart.
         """
         rng = random.Random(self.seed)
         render = _RENDERERS[self.puzzle_type]
@@ -401,29 +426,49 @@ class PuzzleStoryProvider(StoryProvider):
             # collide - Goosepaper's cross-provider deduplicate=True mechanism (see
             # PlacementPreference.APPENDIX's own dedup guarantee) matches on headline+date, and
             # two undated stories with the identical headline "Medium Sudoku" would otherwise
-            # silently collapse to one, dropping a whole puzzle (and its solution).
+            # silently collapse to one, dropping a whole puzzle (and its solution). This is the
+            # Story's internal `headline` only now - see get_stories()'s docstring for why it's
+            # never the visible text.
             label = base_label if self.count == 1 else f"{base_label} ({i + 1})"
             givens_html, solution_html = render(puzzle)
 
-            puzzle_html = _PUZZLE_CSS + givens_html
+            visible_label = (
+                f'<h2 class="puzzle-custom-label">{escape(self.name)}</h2>' if self.name else ""
+            )
+            visible_solution_label = (
+                f'<h2 class="puzzle-custom-label">{escape(self.name)} - Lösung</h2>'
+                if self.name
+                else ""
+            )
+
+            puzzle_content = visible_label + givens_html
             if self.explanation == "inline":
-                puzzle_html += f'<p class="puzzle-explanation-inline">{explanation_text}</p>'
+                puzzle_content += f'<p class="puzzle-explanation-inline">{explanation_text}</p>'
             elif self.explanation == "footer":
                 # Every instance gets the reference mark, not just whichever one happens to carry
                 # the actual footnote after dedup (see get_stories()'s docstring) - the reader
                 # sees the same small number next to every "Sudoku" puzzle, regardless of
                 # difficulty, all pointing at the one explanation that survives deduplication.
-                puzzle_html += (
+                puzzle_content += (
                     f'<sup class="puzzle-footnote-xref">{footnote_number}</sup>'
                 )
 
             puzzles.append(
-                Story(headline=label, body_html=puzzle_html, short_form=True)
+                Story(
+                    headline=label,
+                    body_html=(
+                        _PUZZLE_CSS + f'<div class="puzzle-body">{puzzle_content}</div>'
+                    ),
+                    short_form=True,
+                )
             )
             solutions.append(
                 Story(
                     headline=f"{label} - Lösung",
-                    body_html=_PUZZLE_CSS + solution_html,
+                    body_html=(
+                        _PUZZLE_CSS
+                        + f'<div class="puzzle-body">{visible_solution_label}{solution_html}</div>'
+                    ),
                     include_in_toc=False,
                     short_form=True,
                     placement_preference=PlacementPreference.APPENDIX,
