@@ -624,15 +624,15 @@ def _source_schema(source_type: str) -> Dict[str, Any]:
             "optional": set(),
         },
         "puzzle": {
-            "required": set(),
+            "required": {"puzzle_type"},
             "optional": {
-                "puzzle_type",
                 "box_size",
                 "size",
                 "difficulty",
                 "count",
                 "seed",
                 "explanation",
+                "name",
             },
         },
     }
@@ -698,6 +698,7 @@ def _validate_source_options(source_type: str, options: Dict[str, Any], index: i
         "count": lambda value: _validate_positive_int(value, f"source #{index} count"),
         "seed": lambda value: _validate_int(value, f"source #{index} seed"),
         "explanation": lambda value: _validate_puzzle_explanation(value, index),
+        "name": lambda value: _validate_string(value, f"source #{index} name"),
     }
 
     for key, value in options.items():
