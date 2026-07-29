@@ -63,6 +63,38 @@ table.shikaku-grid td.shikaku-bottom { border-bottom: 2px solid #000; }
   font-size: 0.85em; color: #555; margin-top: 1em; padding-top: 0.5em;
   border-top: 0.75pt solid #ccc;
 }
+
+/* "footer" explanations are real CSS footnotes (float: footnote), not a paragraph glued onto the
+end of a puzzle's own body - so they land at the bottom of whichever page they end up on instead
+of interrupting the reading flow. Deduplication (see get_stories()'s docstring) means only one
+puzzle_type's worth of footnote content actually exists per document; every puzzle instance that
+type appears in - including repeats across difficulties - carries its own .puzzle-footnote-xref
+marker instead, showing the same number. WeasyPrint's own auto-numbering (the `footnote` CSS
+counter) can't be reused for that: it counts every float: footnote in the whole document in
+order, so a later instance's marker would show a different, unrelated number - there's also no
+working way in this WeasyPrint version to point a plain cross-reference at "whatever number this
+other footnote got" (target-counter() was tried; it did not resolve). So the number is entirely
+our own - fixed per puzzle_type (see _EXPLANATION_NUMBER) - and both the floated footnote's own
+marker and every xref marker render that literal digit, with WeasyPrint's own footnote-call/
+footnote-marker auto-generated content suppressed. */
+.puzzle-footnote { float: footnote; }
+.puzzle-footnote::footnote-call { content: ""; }
+.puzzle-footnote-xref { vertical-align: super; font-size: 0.7em; line-height: 0; }
+/* The explanation Story's own headline ("Wie funktioniert Sudoku?") is a sibling of .story-body,
+not something float: footnote takes with it - only the .puzzle-footnote span floats away, leaving
+the heading behind as an orphaned line with nothing under it. Hide it: the Story still needs a
+real, stable headline for Goosepaper's own deduplicate=True matching (see get_stories()'s
+docstring), it just shouldn't render as a visible section of its own. Same story for the
+surrounding <article>'s own divider (margin/padding/border-bottom, from the base .main-stories >
+article rule) - with headline and body both gone/floated, an empty divider line would be all
+that's left behind in the normal flow. */
+article:has(.puzzle-footnote) > .story-headline { display: none; }
+article:has(.puzzle-footnote) { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+.puzzle-footnote-1::footnote-marker { content: "1. "; }
+.puzzle-footnote-2::footnote-marker { content: "2. "; }
+.puzzle-footnote-3::footnote-marker { content: "3. "; }
+.puzzle-footnote-4::footnote-marker { content: "4. "; }
+.puzzle-footnote-5::footnote-marker { content: "5. "; }
 </style>
 """
 
@@ -94,6 +126,10 @@ _EXPLANATIONS: Dict[str, str] = {
 }
 
 _EXPLANATION_MODES = {"none", "inline", "footer", "appendix"}
+
+# Fixed per-type footnote number for "footer" mode - see the .puzzle-footnote CSS comment above
+# for why this can't just be WeasyPrint's own auto-incrementing `footnote` counter.
+_EXPLANATION_NUMBER: Dict[str, int] = {name: i + 1 for i, name in enumerate(_EXPLANATIONS)}
 
 
 # --- Sudoku / Binoxxo: a plain n x n grid, optionally with box divisions -----------------------
@@ -337,19 +373,27 @@ class PuzzleStoryProvider(StoryProvider):
           - "inline": appended to the end of *every* puzzle instance's own body - expected to
             repeat once per puzzle, the same way a print puzzle book often restates short rules
             next to each puzzle.
-          - "footer"/"appendix": one extra Story, in the normal reading-order flow ("footer") or
-            grouped into the appendix ("appendix"), *not* one per puzzle instance. Its headline is
-            stable per puzzle_type (not per instance/date), so if several sources - even across
-            different `count`s or difficulties - all request an explanation for the same
-            puzzle_type, Goosepaper's own get_stories(deduplicate=True) collapses them to one
-            (same mechanism used for any other cross-provider duplicate; see
-            test_goosepaper.py::test_appendix_stories_with_identical_headline_are_deduplicated).
+          - "footer": a real CSS footnote (`float: footnote`, see the .puzzle-footnote CSS
+            comment) - lands at the bottom of whichever page it's on, not glued into the reading
+            flow. One extra Story carries the actual footnote content; every puzzle instance of
+            this type (including repeats across difficulties/sources) gets its own small
+            `.puzzle-footnote-xref` reference mark instead of its own copy of the explanation.
+          - "appendix": one extra Story, grouped into the paper's appendix alongside solutions -
+            not one per puzzle instance, no reference mark at each puzzle (the appendix is already
+            a distinct "endnotes" section, unlike "footer"'s inline-adjacent placement).
+          Both "footer" and "appendix" use a stable per-puzzle_type headline (not per instance/
+          date), so if several sources - even across different `count`s or difficulties - all
+          request an explanation for the same puzzle_type, Goosepaper's own
+          get_stories(deduplicate=True) collapses the extra Story down to one (same mechanism used
+          for any other cross-provider duplicate; see
+          test_goosepaper.py::test_appendix_stories_with_identical_headline_are_deduplicated).
         """
         rng = random.Random(self.seed)
         render = _RENDERERS[self.puzzle_type]
         puzzles: List[Story] = []
         solutions: List[Story] = []
         explanation_text = _EXPLANATIONS[self.puzzle_type]
+        footnote_number = _EXPLANATION_NUMBER[self.puzzle_type]
         for i in range(self.count):
             puzzle = self._generate_one(rng)
             base_label = f"{puzzle.difficulty.title()} {self.puzzle_type.title()}"
@@ -364,6 +408,14 @@ class PuzzleStoryProvider(StoryProvider):
             puzzle_html = _PUZZLE_CSS + givens_html
             if self.explanation == "inline":
                 puzzle_html += f'<p class="puzzle-explanation-inline">{explanation_text}</p>'
+            elif self.explanation == "footer":
+                # Every instance gets the reference mark, not just whichever one happens to carry
+                # the actual footnote after dedup (see get_stories()'s docstring) - the reader
+                # sees the same small number next to every "Sudoku" puzzle, regardless of
+                # difficulty, all pointing at the one explanation that survives deduplication.
+                puzzle_html += (
+                    f'<sup class="puzzle-footnote-xref">{footnote_number}</sup>'
+                )
 
             puzzles.append(
                 Story(headline=label, body_html=puzzle_html, short_form=True)
@@ -379,7 +431,21 @@ class PuzzleStoryProvider(StoryProvider):
             )
 
         stories = puzzles + solutions
-        if self.explanation in ("footer", "appendix"):
+        if self.explanation == "footer":
+            stories.append(
+                Story(
+                    headline=f"Wie funktioniert {self.puzzle_type.title()}?",
+                    body_html=(
+                        _PUZZLE_CSS
+                        + f'<span class="puzzle-footnote puzzle-footnote-{footnote_number}">'
+                        f"{explanation_text}</span>"
+                    ),
+                    include_in_toc=False,
+                    short_form=True,
+                    placement_preference=PlacementPreference.NONE,
+                )
+            )
+        elif self.explanation == "appendix":
             stories.append(
                 Story(
                     headline=f"Wie funktioniert {self.puzzle_type.title()}?",
@@ -389,11 +455,7 @@ class PuzzleStoryProvider(StoryProvider):
                     ),
                     include_in_toc=False,
                     short_form=True,
-                    placement_preference=(
-                        PlacementPreference.APPENDIX
-                        if self.explanation == "appendix"
-                        else PlacementPreference.NONE
-                    ),
+                    placement_preference=PlacementPreference.APPENDIX,
                 )
             )
         return stories

@@ -77,6 +77,63 @@ def test_explanation_footer_adds_one_story_in_normal_reading_order():
     assert len(stories) == 5
 
 
+def test_explanation_footer_uses_a_real_css_footnote():
+    """"footer" mode must render as an actual CSS footnote (float: footnote), not a paragraph
+    appended to the normal reading flow - see the .puzzle-footnote CSS comment in puzzle.py."""
+    provider = PuzzleStoryProvider(puzzle_type="sudoku", count=1, seed=1, explanation="footer")
+    stories = provider.get_stories()
+
+    explanation = next(s for s in stories if s.headline == "Wie funktioniert Sudoku?")
+    assert "puzzle-footnote" in explanation.body_html
+    assert "puzzle-footnote-1" in explanation.body_html  # sudoku is first in _EXPLANATIONS
+
+
+def test_explanation_footer_marks_every_puzzle_instance_with_a_matching_xref():
+    """Every puzzle instance (not just whichever one happens to survive deduplication as the
+    carrier of the actual footnote) needs its own visible reference mark, and all of them must
+    show the same number as the real footnote - see the .puzzle-footnote CSS comment for why
+    that number is fixed per puzzle_type rather than relying on WeasyPrint's own footnote
+    counter or target-counter() (neither works for a cross-reference to an existing footnote)."""
+    provider = PuzzleStoryProvider(puzzle_type="sudoku", count=2, seed=1, explanation="footer")
+    stories = provider.get_stories()
+
+    puzzles = [
+        s for s in stories
+        if not s.headline.endswith("- Lösung") and not s.headline.startswith("Wie funktioniert")
+    ]
+    assert len(puzzles) == 2
+    for puzzle in puzzles:
+        assert '<sup class="puzzle-footnote-xref">1</sup>' in puzzle.body_html
+
+
+def test_footer_xref_numbers_match_the_footnote_across_sources_and_difficulties():
+    """End-to-end through Goosepaper: two sources for the same puzzle_type at different
+    difficulties (the real-world shape - e.g. "Sudoku Leicht" and "Sudoku Mittel" as separate
+    sections) must both mark their puzzle with the same xref number, and that number must match
+    the one real footnote that survives deduplication."""
+    easy_sudoku = PuzzleStoryProvider(
+        puzzle_type="sudoku", difficulty="easy", seed=1, explanation="footer"
+    )
+    medium_sudoku = PuzzleStoryProvider(
+        puzzle_type="sudoku", difficulty="medium", seed=2, explanation="footer"
+    )
+
+    g = Goosepaper([easy_sudoku, medium_sudoku])
+    stories = g.get_stories(deduplicate=True)
+
+    explanations = [s for s in stories if s.headline == "Wie funktioniert Sudoku?"]
+    assert len(explanations) == 1
+    assert "puzzle-footnote-1" in explanations[0].body_html
+
+    puzzles = [
+        s for s in stories
+        if not s.headline.endswith("- Lösung") and not s.headline.startswith("Wie funktioniert")
+    ]
+    assert len(puzzles) == 2
+    for puzzle in puzzles:
+        assert '<sup class="puzzle-footnote-xref">1</sup>' in puzzle.body_html
+
+
 def test_explanation_appendix_adds_one_story_placed_in_the_appendix():
     provider = PuzzleStoryProvider(
         puzzle_type="sudoku", count=1, seed=1, explanation="appendix"
