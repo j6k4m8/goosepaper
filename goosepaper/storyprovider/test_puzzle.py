@@ -13,10 +13,12 @@ def test_puzzle_type_is_required():
         PuzzleStoryProvider(count=1, seed=1)
 
 
-def test_size_defaults_to_the_per_difficulty_table_when_unset():
-    """Without an explicit `size`, non-sudoku puzzles pick their grid size from the difficulty's
-    own table (see e.g. binoxxo/config.py's DIFFICULTIES) instead of one flat default shared by
-    every difficulty - "easy" and "hard" must not render the same grid size."""
+def test_grid_size_is_derived_from_difficulty():
+    """Non-sudoku puzzles pick their grid size from the difficulty's own table (see e.g.
+    binoxxo/config.py's DIFFICULTIES) - "easy" and "hard" must not render the same grid size.
+    There's no `size` override: grid size and difficulty aren't independent knobs (see e.g.
+    shikaku's "hard" preset, which is specifically tuned for a 20x20 grid), so letting a config
+    set them independently could ask for untested combinations."""
     easy = PuzzleStoryProvider(puzzle_type="binoxxo", difficulty="easy", count=1, seed=1)
     hard = PuzzleStoryProvider(puzzle_type="binoxxo", difficulty="hard", count=1, seed=1)
 
@@ -28,12 +30,9 @@ def test_size_defaults_to_the_per_difficulty_table_when_unset():
     assert binoxxo.DIFFICULTIES["easy"].size != binoxxo.DIFFICULTIES["hard"].size
 
 
-def test_explicit_size_overrides_the_difficulty_default():
-    provider = PuzzleStoryProvider(
-        puzzle_type="binoxxo", difficulty="hard", size=8, count=1, seed=1
-    )
-    puzzle = next(s for s in provider.get_stories() if not s.headline.endswith("- Lösung"))
-    assert puzzle.body_html.count("<tr") == 8
+def test_size_is_not_an_accepted_parameter():
+    with pytest.raises(TypeError):
+        PuzzleStoryProvider(puzzle_type="binoxxo", difficulty="hard", size=8, count=1, seed=1)
 
 
 def test_single_puzzle_headline_has_no_index_suffix():

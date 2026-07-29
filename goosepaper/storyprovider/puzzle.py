@@ -315,11 +315,11 @@ _RENDERERS = {
 }
 
 # sudoku takes box_size (3 -> 9x9, independent of difficulty - see PuzzleStoryProvider's
-# `box_size` docstring); every other type takes a plain size that, left unset, is derived
-# from `difficulty` instead of a single flat default (see _generate_one) - each type's own
-# DIFFICULTIES table pairs a larger grid with its harder presets (most visibly shikaku,
-# where "hard" is specifically measured/tuned for a 20x20 grid, not just a smaller
-# min_blocks/max_block_area at whatever size happens to be passed in).
+# `box_size` docstring); every other type's grid size is derived from `difficulty` instead
+# (see _generate_one) - each type's own DIFFICULTIES table pairs a larger grid with its
+# harder presets (most visibly shikaku, where "hard" is specifically measured/tuned for a
+# 20x20 grid), so there's no separate `size` knob to set independently of `difficulty` -
+# doing so could ask for combinations the generator was never measured against.
 _DIFFICULTIES = {
     "binoxxo": binoxxo.DIFFICULTIES,
     "futoshiki": futoshiki.DIFFICULTIES,
@@ -338,18 +338,15 @@ class PuzzleStoryProvider(StoryProvider):
       - `puzzle_type` (required): one of "sudoku", "binoxxo", "futoshiki", "kakuro", "shikaku".
         No default - a config that forgets it should fail loudly instead of silently always
         generating Sudoku.
-      - `box_size` (optional, default 3): **sudoku only**, ignored for every other type. 3 is
-        the classic 9x9 (3x3 boxes); see sudoku's own config.py for supported values. Unlike
-        `size` below, this does not vary by `difficulty` - all three difficulties use the same
-        9x9 grid, so there is no per-difficulty table for it.
-      - `size` (optional, default None): grid side length for every type except sudoku (which
-        uses `box_size` instead). Left unset, the size is derived from `difficulty` instead of
-        one flat value - see each puzzlegen module's own `DIFFICULTIES` table (e.g.
-        binoxxo/config.py) for the exact per-difficulty sizes and why they escalate together
-        with difficulty rather than independently.
+      - `box_size` (optional, default 3): **sudoku only**, ignored for every other type.
+        Supported values are `2` (4x4, a quick/easy variant) and `3` (the classic 9x9, 3x3
+        boxes). Unlike every other type's grid size, this does not vary by `difficulty` - all
+        three difficulties use the same box size, so there is no per-difficulty table for it.
       - `difficulty` (optional, default "medium"): one of "easy", "medium", "hard". Controls
         how many cells/constraints are given (see each type's own `DIFFICULTIES` table) and,
-        for every type but sudoku, the default grid size when `size` is unset (see above).
+        for every type but sudoku, the grid size itself - see e.g. `binoxxo/config.py`'s
+        `DIFFICULTIES` table for the exact per-difficulty sizes and why grid size and
+        difficulty aren't independent knobs to begin with.
       - `count` (optional, default 1): how many puzzle instances of this type+difficulty to
         generate.
       - `seed` (optional, default None): RNG seed, for reproducible generation.
@@ -364,7 +361,6 @@ class PuzzleStoryProvider(StoryProvider):
         self,
         puzzle_type: str,
         box_size: int = 3,
-        size: Optional[int] = None,
         difficulty: str = sudoku.DEFAULT_DIFFICULTY,
         count: int = 1,
         seed: Optional[int] = None,
@@ -383,7 +379,6 @@ class PuzzleStoryProvider(StoryProvider):
             )
         self.puzzle_type = puzzle_type
         self.box_size = box_size
-        self.size = size
         self.difficulty = difficulty
         self.count = count
         self.seed = seed
@@ -394,7 +389,7 @@ class PuzzleStoryProvider(StoryProvider):
         generate = _GENERATORS[self.puzzle_type]
         if self.puzzle_type == "sudoku":
             return generate(box_size=self.box_size, difficulty=self.difficulty, rng=rng)
-        size = self.size or _DIFFICULTIES[self.puzzle_type][self.difficulty].size
+        size = _DIFFICULTIES[self.puzzle_type][self.difficulty].size
         return generate(size=size, difficulty=self.difficulty, rng=rng)
 
     def get_stories(self) -> List[Story]:

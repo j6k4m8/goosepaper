@@ -188,7 +188,6 @@ def construct_story_providers_from_source_configs(source_configs):
                 if key in {
                     "puzzle_type",
                     "box_size",
-                    "size",
                     "difficulty",
                     "count",
                     "seed",
