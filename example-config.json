@@ -54,7 +54,8 @@
             "type": "puzzle",
             "puzzle_type": "sudoku",
             "difficulty": "medium",
-            "count": 1
+            "count": 1,
+            "explanation": "footer"
         }
     ],
     "delivery": {
