@@ -598,6 +598,61 @@ def test_rss_provider_can_hide_all_bylines(monkeypatch):
     assert stories[1].byline is None
 
 
+def test_rss_provider_applies_content_filters_to_the_fetched_body(monkeypatch):
+    monkeypatch.setattr(
+        rss.feedparser,
+        "parse",
+        lambda _: SimpleNamespace(
+            entries=[
+                _feed_entry(
+                    content=[
+                        rss.feedparser.FeedParserDict(
+                            {"value": '<p>Real content</p><div class="ad">Buy now</div>'}
+                        )
+                    ]
+                )
+            ]
+        ),
+    )
+
+    provider = rss.RSSFeedStoryProvider(
+        "https://example.com/feed.xml",
+        content_filters=[{"type": "css", "selector": "div.ad"}],
+    )
+    stories = provider.get_stories()
+
+    assert "Real content" in stories[0].body_html
+    assert "Buy now" not in stories[0].body_html
+
+
+def test_rss_provider_skips_entries_matching_skip_title_patterns(monkeypatch):
+    monkeypatch.setattr(
+        rss.feedparser,
+        "parse",
+        lambda _: SimpleNamespace(
+            entries=[
+                _feed_entry(
+                    title="Anzeige: Sponsored post",
+                    content=[rss.feedparser.FeedParserDict({"value": "<p>Ad</p>"})],
+                ),
+                _feed_entry(
+                    title="Real headline",
+                    content=[rss.feedparser.FeedParserDict({"value": "<p>Real</p>"})],
+                ),
+            ]
+        ),
+    )
+
+    provider = rss.RSSFeedStoryProvider(
+        "https://example.com/feed.xml",
+        skip_title_patterns=[r"^anzeige:"],
+    )
+    stories = provider.get_stories()
+
+    assert len(stories) == 1
+    assert stories[0].headline == "Real headline"
+
+
 def test_rss_provider_can_show_only_first_byline(monkeypatch):
     monkeypatch.setattr(
         rss.feedparser,

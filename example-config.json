@@ -24,7 +24,12 @@
             "url": "https://feeds.npr.org/1001/rss.xml",
             "limit": 5,
             "byline": "first",
-            "body_source": "auto"
+            "body_source": "auto",
+            "skip_title_patterns": ["^sponsored:"],
+            "content_filters": [
+                {"type": "css", "selector": "div.ad-block"},
+                {"type": "regex", "pattern": "Read more.*$", "flags": "s"}
+            ]
         },
         {
             "type": "reddit",

@@ -311,6 +311,135 @@ def test_load_paper_config_accepts_registered_source():
         assert config.sources[0].options == {"handle": "goose", "limit": 2}
 
 
+def test_load_paper_config_accepts_rss_content_filters_and_skip_title_patterns():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {
+                        "type": "rss",
+                        "url": "https://example.com/feed.xml",
+                        "content_filters": [
+                            {"type": "css", "selector": "div.ad"},
+                            {"type": "regex", "pattern": "Mehr anzeigen", "flags": "i"},
+                        ],
+                        "skip_title_patterns": ["^anzeige:"],
+                    }
+                ],
+            },
+        )
+
+        config = load_paper_config(config_path)
+
+        assert config.sources[0].options["content_filters"] == [
+            {"type": "css", "selector": "div.ad"},
+            {"type": "regex", "pattern": "Mehr anzeigen", "flags": "i"},
+        ]
+        assert config.sources[0].options["skip_title_patterns"] == ["^anzeige:"]
+
+
+def test_load_paper_config_rejects_content_filter_with_unknown_type():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {
+                        "type": "rss",
+                        "url": "https://example.com/feed.xml",
+                        "content_filters": [{"type": "xpath", "selector": "//div"}],
+                    }
+                ],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            'type must be "css" or "regex"',
+        )
+
+
+def test_load_paper_config_rejects_css_content_filter_without_selector():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {
+                        "type": "rss",
+                        "url": "https://example.com/feed.xml",
+                        "content_filters": [{"type": "css"}],
+                    }
+                ],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            "requires a non-empty selector",
+        )
+
+
+def test_load_paper_config_rejects_regex_content_filter_without_pattern():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {
+                        "type": "rss",
+                        "url": "https://example.com/feed.xml",
+                        "content_filters": [{"type": "regex"}],
+                    }
+                ],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            "requires a non-empty pattern",
+        )
+
+
+def test_load_paper_config_rejects_content_filter_with_unknown_field():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {
+                        "type": "rss",
+                        "url": "https://example.com/feed.xml",
+                        "content_filters": [
+                            {"type": "css", "selector": "div.ad", "typo_field": True}
+                        ],
+                    }
+                ],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            "unknown field(s)",
+        )
+
+
 def test_load_paper_config_accepts_bluesky_source():
     with _TempWorkspace() as tmp_path:
         config_path = tmp_path / "paper.json"
