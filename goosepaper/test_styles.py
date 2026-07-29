@@ -9,3 +9,15 @@ def test_svg_is_constrained_to_the_column_width():
 
     assert "svg {" in css
     assert "max-width: 100%" in css
+
+
+def test_unsized_svg_defaults_to_icon_size():
+    """readability strips width/height from every <svg> it cleans (verified separately against
+    the readability library itself), leaving only a viewBox. A replaced element with no intrinsic
+    size defaults to filling its container's available width - max-width: 100% alone doesn't stop
+    a small UI icon (a code block's copy/fullscreen button) from rendering as wide as the whole
+    column. It needs an actual default size, not just a ceiling."""
+    css = Style("FifthAvenue").get_css(page_profile="paper_pro", layout="2col")
+
+    assert "svg:not([width])" in css
+    assert "width: 1em" in css
