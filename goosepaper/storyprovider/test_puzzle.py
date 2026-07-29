@@ -237,3 +237,20 @@ def test_custom_name_is_html_escaped():
     puzzle = next(s for s in stories if not s.headline.endswith("- Lösung"))
     assert "<script>" not in puzzle.body_html
     assert "&lt;script&gt;" in puzzle.body_html
+
+
+def test_two_sources_sharing_type_and_difficulty_lose_one_puzzle_to_dedup():
+    """Known limitation, documented on get_stories(): the `count`-loop disambiguation only
+    protects against collisions *within* one provider instance. Two separate count=1 providers
+    for the same puzzle_type+difficulty still produce the identical internal headline (it's
+    derived from type+difficulty only, not from `seed`), so Goosepaper's deduplicate=True
+    silently drops one of the two - a real, if narrow, gap this test exists to pin down rather
+    than let regress further. If this starts failing because the collision no longer happens,
+    that's an improvement - update the docstring in puzzle.py accordingly."""
+    first = PuzzleStoryProvider(puzzle_type="sudoku", difficulty="medium", seed=1)
+    second = PuzzleStoryProvider(puzzle_type="sudoku", difficulty="medium", seed=2)
+
+    stories = Goosepaper([first, second]).get_stories(deduplicate=True)
+    puzzles = [s for s in stories if not s.headline.endswith("- Lösung")]
+
+    assert len(puzzles) == 1  # one of the two genuinely-different puzzles was lost
