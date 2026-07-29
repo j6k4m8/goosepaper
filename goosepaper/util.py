@@ -38,6 +38,7 @@ class PlacementPreference(enum.Enum):
     FOLIO = 4
     BANNER = 5
     UTILITY = 6
+    APPENDIX = 7
 
 
 class StoryPriority(enum.Enum):

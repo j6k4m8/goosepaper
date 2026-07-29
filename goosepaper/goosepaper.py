@@ -121,6 +121,7 @@ class Goosepaper:
                 PlacementPreference.EAR,
                 PlacementPreference.SIDEBAR,
                 PlacementPreference.UTILITY,
+                PlacementPreference.APPENDIX,
             ]
         ]
 
@@ -135,8 +136,17 @@ class Goosepaper:
             for story in stories
             if story.placement_preference == PlacementPreference.SIDEBAR
         ]
+
+        appendix_story_objects = [
+            story
+            for story in stories
+            if story.placement_preference == PlacementPreference.APPENDIX
+        ]
         ordered_story_objects = (
-            utility_story_objects + main_story_objects + sidebar_story_objects
+            utility_story_objects
+            + main_story_objects
+            + sidebar_story_objects
+            + appendix_story_objects
         )
         story_anchor_ids = self._story_anchor_ids(ordered_story_objects)
         story_numbers = {
@@ -162,8 +172,14 @@ class Goosepaper:
             story_numbers,
             used_anchors=used_anchors,
         )
+        appendix_stories, appendix_toc_entries = self._render_story_region(
+            appendix_story_objects,
+            story_anchor_ids,
+            story_numbers,
+            used_anchors=used_anchors,
+        )
         toc_html = self._render_table_of_contents(
-            utility_toc_entries + main_toc_entries + sidebar_toc_entries,
+            utility_toc_entries + main_toc_entries + sidebar_toc_entries + appendix_toc_entries,
             enabled=table_of_contents,
             effective_columns=effective_columns,
         )
@@ -191,6 +207,13 @@ class Goosepaper:
             utility_html = f"""
                     <div class="utility-strip">
                         {''.join(utility_stories)}
+                    </div>
+            """
+        appendix_html = ""
+        if appendix_stories:
+            appendix_html = f"""
+                    <div class="appendix">
+                        {''.join(appendix_stories)}
                     </div>
             """
 
@@ -246,6 +269,7 @@ class Goosepaper:
                     </div>
                     {sidebar_html}
                 </div>
+                {appendix_html}
             </body>
             </html>
         """
