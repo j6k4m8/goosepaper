@@ -19,6 +19,9 @@ class WikipediaCurrentEventsStoryProvider(StoryProvider):
         Get a list of current stories from Wikipedia.
         """
         feed = feedparser.parse("https://www.to-rss.xyz/wikipedia/current_events/")
+        if not feed.entries:
+            print("Sad honk :/ No entries found for the Wikipedia current events feed...")
+            return []
         # title = feed.entries[0].title
         title = "Today's Current Events"
         content = bs4.BeautifulSoup(feed.entries[0].summary, "lxml")
