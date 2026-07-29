@@ -15,12 +15,16 @@ class Difficulty:
     name: str
     # Approximate fraction of cells kept as givens (clues). Lower = harder.
     fill_ratio: float
+    # Grid size used when a caller picks this difficulty without also naming an explicit
+    # size - larger grids pair with harder difficulties so "hard" means more than just a
+    # lower fill_ratio. Must be even (see the DEFAULT_SIZE comment above).
+    size: int
 
 
 DIFFICULTIES: dict[str, Difficulty] = {
-    "easy": Difficulty("easy", 0.55),
-    "medium": Difficulty("medium", 0.45),
-    "hard": Difficulty("hard", 0.35),
+    "easy": Difficulty("easy", fill_ratio=0.55, size=8),
+    "medium": Difficulty("medium", fill_ratio=0.45, size=10),
+    "hard": Difficulty("hard", fill_ratio=0.35, size=14),
 }
 
 DEFAULT_DIFFICULTY = "medium"

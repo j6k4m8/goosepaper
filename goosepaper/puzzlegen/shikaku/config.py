@@ -33,12 +33,18 @@ class Difficulty:
     # min_blocks (see grid.py: min_blocks alone doesn't stop one region
     # from staying huge while the rest split down small).
     max_block_area: int
+    # Grid size used when a caller picks this difficulty without also naming an explicit
+    # size. Not just cosmetic here: min_blocks/max_block_area above were themselves measured
+    # against these exact sizes (the "hard (20x20)" timing note above only holds at size 20 -
+    # min_blocks=20 doesn't even fit in a small grid's cell count). Must be one of
+    # SUPPORTED_SIZES.
+    size: int
 
 
 DIFFICULTIES: dict[str, Difficulty] = {
-    "easy": Difficulty("easy", min_blocks=8, max_block_area=12),
-    "medium": Difficulty("medium", min_blocks=20, max_block_area=16),
-    "hard": Difficulty("hard", min_blocks=20, max_block_area=36),
+    "easy": Difficulty("easy", min_blocks=8, max_block_area=12, size=5),
+    "medium": Difficulty("medium", min_blocks=20, max_block_area=16, size=10),
+    "hard": Difficulty("hard", min_blocks=20, max_block_area=36, size=20),
 }
 
 DEFAULT_DIFFICULTY = "medium"

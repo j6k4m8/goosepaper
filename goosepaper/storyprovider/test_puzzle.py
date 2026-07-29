@@ -1,8 +1,39 @@
 import pytest
 
 from ..goosepaper import Goosepaper
+from ..puzzlegen import binoxxo
 from ..util import PlacementPreference
 from .puzzle import PuzzleStoryProvider
+
+
+def test_puzzle_type_is_required():
+    """No default: a config that forgets `puzzle_type` should fail loudly instead of silently
+    always generating Sudoku."""
+    with pytest.raises(TypeError):
+        PuzzleStoryProvider(count=1, seed=1)
+
+
+def test_size_defaults_to_the_per_difficulty_table_when_unset():
+    """Without an explicit `size`, non-sudoku puzzles pick their grid size from the difficulty's
+    own table (see e.g. binoxxo/config.py's DIFFICULTIES) instead of one flat default shared by
+    every difficulty - "easy" and "hard" must not render the same grid size."""
+    easy = PuzzleStoryProvider(puzzle_type="binoxxo", difficulty="easy", count=1, seed=1)
+    hard = PuzzleStoryProvider(puzzle_type="binoxxo", difficulty="hard", count=1, seed=1)
+
+    easy_puzzle = next(s for s in easy.get_stories() if not s.headline.endswith("- Lösung"))
+    hard_puzzle = next(s for s in hard.get_stories() if not s.headline.endswith("- Lösung"))
+
+    assert easy_puzzle.body_html.count("<tr") == binoxxo.DIFFICULTIES["easy"].size
+    assert hard_puzzle.body_html.count("<tr") == binoxxo.DIFFICULTIES["hard"].size
+    assert binoxxo.DIFFICULTIES["easy"].size != binoxxo.DIFFICULTIES["hard"].size
+
+
+def test_explicit_size_overrides_the_difficulty_default():
+    provider = PuzzleStoryProvider(
+        puzzle_type="binoxxo", difficulty="hard", size=8, count=1, seed=1
+    )
+    puzzle = next(s for s in provider.get_stories() if not s.headline.endswith("- Lösung"))
+    assert puzzle.body_html.count("<tr") == 8
 
 
 def test_single_puzzle_headline_has_no_index_suffix():
