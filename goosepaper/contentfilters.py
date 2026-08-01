@@ -2,7 +2,8 @@
 
 Lets a plain RSS source config strip site-specific clutter (ad blocks, cookie banners, paywall
 stubs, ...) or skip sponsored/paywalled entries by title - entirely as data
-(`content_filters` / `skip_title_patterns` on the `"rss"` source type), no custom code required.
+(`content_skip_filters` / `skip_title_patterns` on the `"rss"` source type), no custom code
+required.
 """
 
 from __future__ import annotations

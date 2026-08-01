@@ -26,7 +26,7 @@ class RSSFeedStoryProvider(StoryProvider):
         byline: str = "all",
         body_source: str = "auto",
         prefer_feed_title: bool = False,
-        content_filters: Optional[List[Dict[str, Any]]] = None,
+        content_skip_filters: Optional[List[Dict[str, Any]]] = None,
         skip_title_patterns: Optional[List[str]] = None,
     ) -> None:
         if byline not in RSS_BYLINE_MODES:
@@ -43,7 +43,7 @@ class RSSFeedStoryProvider(StoryProvider):
         self.byline_mode = byline
         self.body_source = body_source
         self.prefer_feed_title = prefer_feed_title
-        self.content_filters = content_filters or []
+        self.content_skip_filters = content_skip_filters or []
         self.skip_title_patterns = skip_title_patterns or []
         self._since = (
             datetime.datetime.now() - datetime.timedelta(days=since_days_ago)
@@ -77,8 +77,8 @@ class RSSFeedStoryProvider(StoryProvider):
 
             if story is None:
                 continue
-            if self.content_filters:
-                story.body_html = apply_content_filters(story.body_html, self.content_filters)
+            if self.content_skip_filters:
+                story.body_html = apply_content_filters(story.body_html, self.content_skip_filters)
             if self.byline_mode == "none":
                 story.byline = None
             elif self.byline_mode == "first" and stories:
