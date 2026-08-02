@@ -154,6 +154,13 @@ def _story_from_response(
     fallback_body_html: str = "",
     prefer_feed_title: bool = False,
 ) -> Story:
+    content_type = response.headers.get("content-type", "")
+    if "charset" not in content_type.lower():
+        # Per RFC 2616, requests defaults undeclared text/* charsets to
+        # ISO-8859-1, mangling UTF-8 pages that omit an explicit charset.
+        # Fall back to requests' own content-sniffed encoding instead.
+        response.encoding = response.apparent_encoding or response.encoding or "utf-8"
+
     page_text = response.text
     if not page_text:
         page_text = response.content.decode(
