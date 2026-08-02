@@ -1,4 +1,4 @@
-from .goosepaper import Goosepaper
+from .goosepaper import Goosepaper, _bookmark_css
 from .story import Story
 from .styles import Style
 from .util import PlacementPreference
@@ -231,3 +231,47 @@ def test_graymaiden_style_loads_editorial_masthead_assets():
     assert "target-counter(attr(href), page)" in css
     assert "UnifrakturCook" not in css
     assert style.get_stylesheets()
+
+
+def test_bookmark_css_uses_the_given_levels_by_default():
+    css = _bookmark_css(
+        section_bookmark_level=1,
+        headline_bookmark_level=2,
+        body_heading_bookmarks=False,
+    )
+
+    assert "h2.story-section-title { bookmark-level: 1; }" in css
+    assert "h1.story-headline { bookmark-level: 2; }" in css
+    assert ".story-body h1" in css
+    assert "bookmark-level: none" in css
+
+
+def test_bookmark_css_omits_a_rule_when_its_level_is_none():
+    css = _bookmark_css(
+        section_bookmark_level=None,
+        headline_bookmark_level=2,
+        body_heading_bookmarks=False,
+    )
+
+    assert "story-section-title" not in css
+    assert "h1.story-headline { bookmark-level: 2; }" in css
+
+
+def test_bookmark_css_keeps_body_heading_bookmarks_when_enabled():
+    css = _bookmark_css(
+        section_bookmark_level=1,
+        headline_bookmark_level=2,
+        body_heading_bookmarks=True,
+    )
+
+    assert ".story-body" not in css
+
+
+def test_bookmark_css_is_empty_when_everything_is_disabled():
+    css = _bookmark_css(
+        section_bookmark_level=None,
+        headline_bookmark_level=None,
+        body_heading_bookmarks=True,
+    )
+
+    assert css == ""
