@@ -27,6 +27,15 @@ from .storyprovider import StoryProvider
 
 _DEFAULT_TIMEOUT = 20
 
+# Some sources (gocomics.com's CDN in particular) serve a source-agnostic "print" resolution
+# far beyond anything a newspaper page needs (observed: 2800px wide). At that size, the
+# resulting base64 data: URI approaches multi-MB territory; embedded alongside the hundreds
+# of other images in a full newspaper, that was enough to make WeasyPrint silently drop the
+# story's entire content with no error. Capping the long edge here keeps every comic embed in
+# the same reasonable size range as a typical article thumbnail, regardless of what resolution
+# the source happens to serve today.
+_MAX_IMAGE_DIMENSION = 1200
+
 _COMIC_CSS = """
 <style>
 .comic-strip-body { text-align: center; }
@@ -101,14 +110,25 @@ class DailyComicStoryProvider(StoryProvider):
     self-contained - regenerating or re-delivering it later doesn't depend on the strip's image
     URL still being reachable.
 
-    Before embedding, the fetched bytes are decoded and re-encoded as a clean PNG via Pillow -
-    the same "decode, then re-encode" step remarkable_news's own Go tool does (imaging.Decode +
-    imaging.Save, see module docstring). This isn't optional: arcamax.com's Garfield JPEGs ship
-    with a large embedded Photoshop/ICC metadata block that made WeasyPrint's PDF image embedding
-    silently drop the *entire* story - no exception, no log line, just an empty gap in the
-    output - while every other story in the same document rendered fine. Re-encoding through
-    Pillow strips that metadata and normalizes color mode (e.g. CMYK -> RGB), producing a plain,
-    predictable PNG.
+    Before embedding, the fetched bytes are decoded and re-encoded as a clean, size-capped JPEG
+    via Pillow - the same "decode, then adjust, then re-encode" pipeline remarkable_news's own Go
+    tool runs (imaging.Decode + resize + imaging.Save with JPEGQuality, see module docstring).
+    This isn't optional: embedding a source image unmodified - at whatever resolution, color
+    mode/metadata, and *format* the source happened to serve that day - was reproduced to make
+    WeasyPrint's PDF image embedding silently drop the *entire* story: no exception, no log line,
+    just an empty gap where the story should have been, in an otherwise fully-rendered
+    multi-hundred-page document. Three contributing factors were identified and all three are
+    addressed by this step: (1) gocomics.com's CDN can serve a strip at print resolution
+    (2800px+ wide) with no smaller variant requested (see `_MAX_IMAGE_DIMENSION`); (2) even at a
+    source's *default* resolution, a lossless PNG re-encode of a dithered/gradient-heavy color
+    strip is itself several times larger than the same content as JPEG - re-encoding as PNG
+    alone was not enough to bring the payload down to a safe size; (3) arcamax.com's Garfield
+    JPEGs ship CMYK-mode pixel data with a large embedded Photoshop/ICC metadata block. Any of
+    these, combined with the hundreds of other images already in a full newspaper, was enough to
+    trigger the failure. Re-encoding through Pillow bounds the pixel dimensions, normalizes color
+    mode (e.g. CMYK -> RGB), and uses JPEG's lossy DCT compression - far more compact than PNG for
+    this kind of photo-like, gradient-heavy content - regardless of what the source serves on a
+    given day.
     """
 
     def __init__(self, comic_type: str, date: Optional[datetime.date] = None) -> None:
@@ -159,9 +179,11 @@ class DailyComicStoryProvider(StoryProvider):
         image = Image.open(io.BytesIO(image_response.content))
         if image.mode not in ("RGB", "L"):
             image = image.convert("RGB")
-        png_buffer = io.BytesIO()
-        image.save(png_buffer, format="PNG")
-        data_uri = f"data:image/png;base64,{base64.b64encode(png_buffer.getvalue()).decode('ascii')}"
+        if max(image.size) > _MAX_IMAGE_DIMENSION:
+            image.thumbnail((_MAX_IMAGE_DIMENSION, _MAX_IMAGE_DIMENSION), Image.LANCZOS)
+        jpeg_buffer = io.BytesIO()
+        image.save(jpeg_buffer, format="JPEG", quality=90)
+        data_uri = f"data:image/jpeg;base64,{base64.b64encode(jpeg_buffer.getvalue()).decode('ascii')}"
 
         alt_text = escape(headline or source.label)
         body_html = f'<img class="comic-strip" src="{data_uri}" alt="{alt_text}" />'

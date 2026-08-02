@@ -36,7 +36,7 @@ def _image_bytes(fmt: str, mode: str = "RGB", size=(4, 3), color=(200, 50, 10)) 
 
 
 def _decode_data_uri_image(body_html: str) -> Image.Image:
-    prefix = "data:image/png;base64,"
+    prefix = "data:image/jpeg;base64,"
     start = body_html.index(prefix) + len(prefix)
     end = body_html.index('"', start)
     payload = base64.b64decode(body_html[start:end])
@@ -147,12 +147,12 @@ def test_garfield_has_no_title_or_custom_headers(monkeypatch):
     assert embedded.size == (7, 6)
 
 
-def test_cmyk_jpeg_is_converted_to_rgb_png(monkeypatch):
+def test_cmyk_jpeg_is_converted_to_rgb_jpeg(monkeypatch):
     """Regression test: arcamax.com serves Garfield as a CMYK JPEG with a large embedded
     Photoshop/ICC metadata block. Passing those bytes through to WeasyPrint unmodified made it
     silently drop the *entire* story - no exception, no image, no text, nothing in the rendered
     PDF - while every other story in the same document rendered fine. Decoding and re-encoding
-    through Pillow (see get_stories()'s docstring) must always produce a plain RGB/L PNG,
+    through Pillow (see get_stories()'s docstring) must always produce a plain RGB/L JPEG,
     regardless of the source image's color mode."""
     fake_cmyk_jpeg = _image_bytes("JPEG", mode="CMYK", size=(8, 8))
 
@@ -166,10 +166,36 @@ def test_cmyk_jpeg_is_converted_to_rgb_png(monkeypatch):
     provider = comic.DailyComicStoryProvider(comic_type="garfield")
     stories = provider.get_stories()
 
-    assert "data:image/png;base64," in stories[0].body_html
+    assert "data:image/jpeg;base64," in stories[0].body_html
     embedded = _decode_data_uri_image(stories[0].body_html)
-    assert embedded.format == "PNG"
+    assert embedded.format == "JPEG"
     assert embedded.mode in ("RGB", "L")
+
+
+def test_oversized_source_image_is_downscaled(monkeypatch):
+    """Regression test: gocomics.com's CDN can serve a strip at print resolution (observed:
+    2800px wide) with no smaller variant requested. Combined with the hundreds of other images
+    already in a full newspaper, the resulting near-1MB base64 payload for a single story was
+    reproduced to make WeasyPrint silently drop that story's entire content. Every embedded
+    comic must be capped to comic._MAX_IMAGE_DIMENSION on its long edge, regardless of source
+    resolution."""
+    oversized = _image_bytes("PNG", size=(2800, 2000))
+
+    def fake_get(url, *, headers, timeout):
+        if url == "https://xkcd.com":
+            return _FakeResponse(_XKCD_HTML)
+        return _FakeResponse(oversized, headers={"Content-Type": "image/png"})
+
+    monkeypatch.setattr(comic.requests, "get", fake_get)
+
+    provider = comic.DailyComicStoryProvider(comic_type="xkcd")
+    stories = provider.get_stories()
+
+    embedded = _decode_data_uri_image(stories[0].body_html)
+    assert max(embedded.size) == comic._MAX_IMAGE_DIMENSION
+    # Aspect ratio preserved: 2800x2000 is 1.4:1, so the capped long edge (width) implies a
+    # short edge (height) of 1200 / 1.4.
+    assert embedded.size == (1200, int(2000 * 1200 / 2800))
 
 
 def test_missing_strip_image_raises_informative_error(monkeypatch):
