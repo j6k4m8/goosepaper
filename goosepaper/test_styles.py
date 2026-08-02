@@ -25,6 +25,21 @@ def test_unsized_svg_defaults_to_icon_size():
     assert "width: 1em" in css
 
 
+def test_interactive_buttons_are_hidden():
+    """Article HTML pulled in via RSS/readability sometimes keeps an interactive <button> from
+    the source page - most commonly an image "click to zoom" lightbox trigger (a common
+    WordPress/Gutenberg pattern). Its real position/visibility is set by JavaScript that never
+    runs here, so unpositioned it falls into normal document flow using the UA stylesheet's
+    default <button> styling (grey background, border, rounded corners) - reads as an empty
+    flat grey block, since it typically contains only an icon (often invisible against that same
+    default grey). No <button> in extracted article prose is ever meaningfully interactive in a
+    static, print/PDF context, so every one must be hidden, not just specific known button
+    classes from specific sites."""
+    css = Style("FifthAvenue").get_css(page_profile="paper_pro", layout="2col")
+
+    assert re.search(r"button\s*{\s*display:\s*none;", css)
+
+
 def test_appendix_block_gets_exactly_one_page_break_not_per_entry():
     """The appendix (PlacementPreference.APPENDIX) block must start on a fresh page - but only
     once, before the block as a whole, not once per entry inside it (a rule on every entry would
