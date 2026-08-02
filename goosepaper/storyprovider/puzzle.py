@@ -50,12 +50,12 @@ table.futoshiki-grid td.fut-spacer { width: 0.7em; height: 0.7em; }
 table.kakuro-grid td { width: 2em; height: 2em; border: 1px solid #999; padding: 0;
   text-align: center; font-family: monospace; }
 table.kakuro-grid td.kakuro-black {
-  background: linear-gradient(to top right, #000 49.5%, #999 49.5%, #999 50.5%, #000 50.5%);
+  background: linear-gradient(to top right, #999 49.5%, #000 49.5%, #000 50.5%, #999 50.5%);
   position: relative;
 }
 table.kakuro-grid .kakuro-clue { position: relative; width: 100%; height: 100%; }
-table.kakuro-grid .kakuro-h { position: absolute; top: 0; right: 2px; font-size: 0.5em; color: #fff; }
-table.kakuro-grid .kakuro-v { position: absolute; bottom: 0; left: 2px; font-size: 0.5em; color: #fff; }
+table.kakuro-grid .kakuro-h { position: absolute; top: 0; right: 2px; font-size: 0.5em; color: #000; }
+table.kakuro-grid .kakuro-v { position: absolute; bottom: 0; left: 2px; font-size: 0.5em; color: #000; }
 
 table.shikaku-grid td { width: 1.7em; height: 1.7em; text-align: center; vertical-align: middle;
   font-family: monospace; font-size: 0.9em; border: 1px solid #ccc; }
