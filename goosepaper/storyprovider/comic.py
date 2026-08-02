@@ -51,7 +51,6 @@ class _ComicSource:
     # May contain a {date} strftime-style placeholder for per-day URLs (see "cah" below).
     page_url: str
     image_xpath: str
-    headline_xpath: Optional[str] = None
     subtitle_xpath: Optional[str] = None
     headers: Dict[str, str] = field(default_factory=dict)
 
@@ -62,8 +61,9 @@ _COMIC_SOURCES: Dict[str, _ComicSource] = {
         label="XKCD",
         page_url="https://xkcd.com",
         image_xpath='//div[@id="comic"]/img/@src',
-        # XKCD's alt text is the strip's title; its title attribute is the famous mouseover joke.
-        headline_xpath='//div[@id="comic"]/img/@alt',
+        # The title attribute is the famous mouseover joke, shown as a caption under the strip.
+        # (The strip's own dynamic title, in the alt attribute, is deliberately not used - see
+        # the "headline" note in get_stories()'s docstring.)
         subtitle_xpath='//div[@id="comic"]/img/@title',
     ),
     "cah": _ComicSource(
@@ -102,6 +102,17 @@ class DailyComicStoryProvider(StoryProvider):
         `"cah"`, whose page URL is date-scoped (`gocomics.com/calvinandhobbes/YYYY/MM/DD`);
         `"xkcd"` and `"garfield"` always serve whatever their front page currently shows, so
         this is ignored for them.
+
+    Every story's headline is a fixed, source-derived name - `"XKCD"`, `"Garfield"`, or
+    `"Calvin and Hobbes"` - never the strip's own (per-day) title, and no byline is set. Two
+    comic sources commonly sit in the same section (e.g. a "Comics" section with both `"garfield"`
+    and `"cah"`); a byline or a per-day dynamic headline (XKCD's own alt text, or a
+    "<name> - <date>" fallback used in earlier versions of this provider) just repeated the same
+    source name the headline already showed, or produced a needlessly long heading - neither
+    adds anything a reader can use for a comic, unlike a byline on an RSS article (which
+    distinguishes otherwise-anonymous entries from different feeds in the same section). XKCD's
+    real per-day title is still available via its `alt` attribute on the embedded `<img>`, and
+    its mouseover joke still renders as a caption underneath.
 
     The strip image itself is downloaded and inlined as a base64 `data:` URI rather than linked
     by remote URL, for two reasons: (1) gocomics.com requires the same browser-like headers for
@@ -164,9 +175,6 @@ class DailyComicStoryProvider(StoryProvider):
                 "(the site's markup may have changed)."
             )
 
-        headline = (
-            _first(doc.xpath(source.headline_xpath)) if source.headline_xpath else None
-        )
         subtitle = (
             _first(doc.xpath(source.subtitle_xpath)) if source.subtitle_xpath else None
         )
@@ -185,18 +193,17 @@ class DailyComicStoryProvider(StoryProvider):
         image.save(jpeg_buffer, format="JPEG", quality=90)
         data_uri = f"data:image/jpeg;base64,{base64.b64encode(jpeg_buffer.getvalue()).decode('ascii')}"
 
-        alt_text = escape(headline or source.label)
+        alt_text = escape(source.label)
         body_html = f'<img class="comic-strip" src="{data_uri}" alt="{alt_text}" />'
         if subtitle:
             body_html += f'<p class="comic-subtitle">{escape(subtitle)}</p>'
 
         return [
             Story(
-                headline=headline or f"{source.label} – {strip_date:%B %d, %Y}",
+                headline=source.label,
                 body_html=(
                     _COMIC_CSS + f'<div class="comic-strip-body">{body_html}</div>'
                 ),
-                byline=source.label,
                 date=datetime.datetime.combine(strip_date, datetime.time()),
             )
         ]

@@ -57,7 +57,10 @@ def test_unknown_comic_type_is_rejected():
         comic.DailyComicStoryProvider(comic_type="dilbert")
 
 
-def test_xkcd_fetches_title_and_hover_text_and_embeds_image(monkeypatch):
+def test_xkcd_uses_fixed_headline_and_no_byline_but_keeps_hover_text(monkeypatch):
+    """XKCD's own per-day title (the <img> alt text, "Todays Strip" in the fixture) is
+    deliberately NOT used as the headline - see get_stories()'s docstring on why a fixed,
+    source-derived headline (and no byline) is used for every comic instead."""
     calls = []
     fake_png = _image_bytes("PNG", size=(5, 4))
 
@@ -75,8 +78,8 @@ def test_xkcd_fetches_title_and_hover_text_and_embeds_image(monkeypatch):
 
     assert len(stories) == 1
     story = stories[0]
-    assert story.headline == "Todays Strip"
-    assert story.byline == "XKCD"
+    assert story.headline == "XKCD"
+    assert story.byline is None
     assert "hover joke text" in story.body_html
     embedded = _decode_data_uri_image(story.body_html)
     assert embedded.size == (5, 4)
@@ -115,8 +118,8 @@ def test_calvin_and_hobbes_uses_date_scoped_url_and_browser_headers(monkeypatch)
         assert headers["Accept-Language"] == "en"
 
     story = stories[0]
-    assert story.headline == "Calvin and Hobbes – January 05, 2026"
-    assert story.byline == "Calvin and Hobbes"
+    assert story.headline == "Calvin and Hobbes"
+    assert story.byline is None
     assert story.date == datetime.datetime(2026, 1, 5)
     embedded = _decode_data_uri_image(story.body_html)
     assert embedded.size == (6, 5)
@@ -141,8 +144,8 @@ def test_garfield_has_no_title_or_custom_headers(monkeypatch):
     stories = provider.get_stories()
 
     assert seen_headers == [{}, {}]
-    assert stories[0].byline == "Garfield"
-    assert stories[0].headline.startswith("Garfield – ")
+    assert stories[0].byline is None
+    assert stories[0].headline == "Garfield"
     embedded = _decode_data_uri_image(stories[0].body_html)
     assert embedded.size == (7, 6)
 
