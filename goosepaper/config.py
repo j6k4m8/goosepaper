@@ -779,7 +779,7 @@ def _validate_content_skip_filters(value: Any, index: int):
     # Keyed by "type", since selector/pattern/flags aren't a shared pool - a "css" filter using
     # "pattern"/"flags" (or a "regex" filter using "selector") is meaningless input that used to
     # pass validation silently (both were in one combined allowed-keys set) and just get ignored
-    # by apply_content_filters(). Reject it here instead, same as any other unknown field.
+    # by apply_content_skip_filters(). Reject it here instead, same as any other unknown field.
     allowed_keys_by_type = {
         "css": {"type", "selector"},
         "regex": {"type", "pattern", "flags"},

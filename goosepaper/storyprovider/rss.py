@@ -10,7 +10,7 @@ from readability import Document
 
 from ..contentfilters import (
     apply_content_accept_filters,
-    apply_content_filters,
+    apply_content_skip_filters,
     should_accept_title,
     should_skip_title,
 )
@@ -93,7 +93,7 @@ class RSSFeedStoryProvider(StoryProvider):
                     story.body_html, self.content_accept_filters
                 )
             if self.content_skip_filters:
-                story.body_html = apply_content_filters(story.body_html, self.content_skip_filters)
+                story.body_html = apply_content_skip_filters(story.body_html, self.content_skip_filters)
             if self.byline_mode == "none":
                 story.byline = None
             elif self.byline_mode == "first" and stories:

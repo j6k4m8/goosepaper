@@ -32,7 +32,7 @@ def _parse_flags(flags: str) -> int:
     return combined
 
 
-def apply_content_filters(html: str, filters: Iterable[Dict[str, Any]]) -> str:
+def apply_content_skip_filters(html: str, filters: Iterable[Dict[str, Any]]) -> str:
     """Apply every filter in `filters` to `html`, in two passes: all `regex` filters first
     (against the raw string), then all `css` filters (against the parsed tree) - regex needs the
     raw string, css needs a parsed tree, so doing all of one before the other is simpler and just

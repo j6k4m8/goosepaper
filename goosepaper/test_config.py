@@ -444,7 +444,7 @@ def test_load_paper_config_rejects_css_content_filter_with_pattern_field():
     """selector/pattern/flags aren't a shared pool across both filter types - a "css" filter
     can't also carry "pattern"/"flags" (meant for "regex"), even though the key itself is valid
     on some content_skip_filters entry. Pins down the fix for a validation gap where this used to
-    pass silently (and the stray field was just ignored by apply_content_filters)."""
+    pass silently (and the stray field was just ignored by apply_content_skip_filters)."""
     with _TempWorkspace() as tmp_path:
         config_path = tmp_path / "paper.json"
         _write_json(
