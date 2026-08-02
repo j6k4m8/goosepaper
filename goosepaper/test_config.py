@@ -440,6 +440,62 @@ def test_load_paper_config_rejects_content_filter_with_unknown_field():
         )
 
 
+def test_load_paper_config_rejects_css_content_filter_with_pattern_field():
+    """selector/pattern/flags aren't a shared pool across both filter types - a "css" filter
+    can't also carry "pattern"/"flags" (meant for "regex"), even though the key itself is valid
+    on some content_skip_filters entry. Pins down the fix for a validation gap where this used to
+    pass silently (and the stray field was just ignored by apply_content_filters)."""
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {
+                        "type": "rss",
+                        "url": "https://example.com/feed.xml",
+                        "content_skip_filters": [
+                            {"type": "css", "selector": "div.ad", "pattern": "should not be allowed"}
+                        ],
+                    }
+                ],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            "unknown field(s)",
+        )
+
+
+def test_load_paper_config_rejects_regex_content_filter_with_selector_field():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {
+                        "type": "rss",
+                        "url": "https://example.com/feed.xml",
+                        "content_skip_filters": [
+                            {"type": "regex", "pattern": "foo", "selector": "should not be allowed"}
+                        ],
+                    }
+                ],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            "unknown field(s)",
+        )
+
+
 def test_load_paper_config_accepts_rss_content_accept_filters_and_accept_title_patterns():
     with _TempWorkspace() as tmp_path:
         config_path = tmp_path / "paper.json"
