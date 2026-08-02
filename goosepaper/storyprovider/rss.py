@@ -8,7 +8,12 @@ import feedparser
 import requests
 from readability import Document
 
-from ..contentfilters import apply_content_filters, should_skip_title
+from ..contentfilters import (
+    apply_content_accept_filters,
+    apply_content_filters,
+    should_accept_title,
+    should_skip_title,
+)
 from .storyprovider import StoryProvider
 from ..story import Story
 from ..version import __version__
@@ -28,6 +33,8 @@ class RSSFeedStoryProvider(StoryProvider):
         prefer_feed_title: bool = False,
         content_skip_filters: Optional[List[Dict[str, Any]]] = None,
         skip_title_patterns: Optional[List[str]] = None,
+        content_accept_filters: Optional[List[Dict[str, Any]]] = None,
+        accept_title_patterns: Optional[List[str]] = None,
     ) -> None:
         if byline not in RSS_BYLINE_MODES:
             raise ValueError(
@@ -45,6 +52,8 @@ class RSSFeedStoryProvider(StoryProvider):
         self.prefer_feed_title = prefer_feed_title
         self.content_skip_filters = content_skip_filters or []
         self.skip_title_patterns = skip_title_patterns or []
+        self.content_accept_filters = content_accept_filters or []
+        self.accept_title_patterns = accept_title_patterns or []
         self._since = (
             datetime.datetime.now() - datetime.timedelta(days=since_days_ago)
             if since_days_ago
@@ -60,6 +69,8 @@ class RSSFeedStoryProvider(StoryProvider):
         stories = []
         for entry in feed.entries:
             if should_skip_title(entry.get("title", ""), self.skip_title_patterns):
+                continue
+            if not should_accept_title(entry.get("title", ""), self.accept_title_patterns):
                 continue
 
             date = datetime.datetime(*entry.updated_parsed[:6])
@@ -77,6 +88,10 @@ class RSSFeedStoryProvider(StoryProvider):
 
             if story is None:
                 continue
+            if self.content_accept_filters:
+                story.body_html = apply_content_accept_filters(
+                    story.body_html, self.content_accept_filters
+                )
             if self.content_skip_filters:
                 story.body_html = apply_content_filters(story.body_html, self.content_skip_filters)
             if self.byline_mode == "none":

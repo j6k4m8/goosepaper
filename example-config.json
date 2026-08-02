@@ -32,6 +32,14 @@
             ]
         },
         {
+            "type": "rss",
+            "url": "https://www.cnbc.com/id/10001147/device/rss/rss.html",
+            "limit": 10,
+            "byline": "none",
+            "body_source": "article",
+            "accept_title_patterns": ["amazon", "amzn"]
+        },
+        {
             "type": "reddit",
             "subreddit": "news",
             "limit": 6

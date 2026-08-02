@@ -440,6 +440,83 @@ def test_load_paper_config_rejects_content_filter_with_unknown_field():
         )
 
 
+def test_load_paper_config_accepts_rss_content_accept_filters_and_accept_title_patterns():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {
+                        "type": "rss",
+                        "url": "https://example.com/feed.xml",
+                        "content_accept_filters": [{"selector": "article.body"}],
+                        "accept_title_patterns": ["amazon", "amzn"],
+                    }
+                ],
+            },
+        )
+
+        config = load_paper_config(config_path)
+
+        assert config.sources[0].options["content_accept_filters"] == [
+            {"selector": "article.body"}
+        ]
+        assert config.sources[0].options["accept_title_patterns"] == ["amazon", "amzn"]
+
+
+def test_load_paper_config_rejects_content_accept_filter_without_selector():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {
+                        "type": "rss",
+                        "url": "https://example.com/feed.xml",
+                        "content_accept_filters": [{}],
+                    }
+                ],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            "requires a non-empty selector",
+        )
+
+
+def test_load_paper_config_rejects_content_accept_filter_with_unknown_field():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {
+                        "type": "rss",
+                        "url": "https://example.com/feed.xml",
+                        "content_accept_filters": [
+                            {"selector": "article.body", "type": "css"}
+                        ],
+                    }
+                ],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            "unknown field(s)",
+        )
+
+
 def test_load_paper_config_accepts_bluesky_source():
     with _TempWorkspace() as tmp_path:
         config_path = tmp_path / "paper.json"

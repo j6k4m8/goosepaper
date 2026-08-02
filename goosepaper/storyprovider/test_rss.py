@@ -653,6 +653,66 @@ def test_rss_provider_skips_entries_matching_skip_title_patterns(monkeypatch):
     assert stories[0].headline == "Real headline"
 
 
+def test_rss_provider_applies_content_accept_filters_to_the_fetched_body(monkeypatch):
+    monkeypatch.setattr(
+        rss.feedparser,
+        "parse",
+        lambda _: SimpleNamespace(
+            entries=[
+                _feed_entry(
+                    content=[
+                        rss.feedparser.FeedParserDict(
+                            {
+                                "value": (
+                                    '<div class="chrome">Nav junk</div>'
+                                    '<article class="body"><p>Real content</p></article>'
+                                )
+                            }
+                        )
+                    ]
+                )
+            ]
+        ),
+    )
+
+    provider = rss.RSSFeedStoryProvider(
+        "https://example.com/feed.xml",
+        content_accept_filters=[{"selector": "article.body"}],
+    )
+    stories = provider.get_stories()
+
+    assert "Real content" in stories[0].body_html
+    assert "Nav junk" not in stories[0].body_html
+
+
+def test_rss_provider_only_keeps_entries_matching_accept_title_patterns(monkeypatch):
+    monkeypatch.setattr(
+        rss.feedparser,
+        "parse",
+        lambda _: SimpleNamespace(
+            entries=[
+                _feed_entry(
+                    title="Amazon stock jumps on earnings beat",
+                    content=[rss.feedparser.FeedParserDict({"value": "<p>AMZN</p>"})],
+                ),
+                _feed_entry(
+                    title="Unrelated market roundup",
+                    content=[rss.feedparser.FeedParserDict({"value": "<p>Other</p>"})],
+                ),
+            ]
+        ),
+    )
+
+    provider = rss.RSSFeedStoryProvider(
+        "https://example.com/feed.xml",
+        accept_title_patterns=["amazon", "amzn"],
+    )
+    stories = provider.get_stories()
+
+    assert len(stories) == 1
+    assert stories[0].headline == "Amazon stock jumps on earnings beat"
+
+
 def test_rss_provider_can_show_only_first_byline(monkeypatch):
     monkeypatch.setattr(
         rss.feedparser,

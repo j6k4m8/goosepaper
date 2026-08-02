@@ -130,6 +130,8 @@ def construct_story_providers_from_source_configs(source_configs):
                         "body_source",
                         "content_skip_filters",
                         "skip_title_patterns",
+                        "content_accept_filters",
+                        "accept_title_patterns",
                     }
                 },
             },
