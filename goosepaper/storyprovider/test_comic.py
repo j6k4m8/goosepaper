@@ -1,7 +1,9 @@
 import base64
 import datetime
+import io
 
 import pytest
+from PIL import Image
 
 from . import comic
 
@@ -25,7 +27,20 @@ _GARFIELD_HTML = b"""
 </body></html>
 """
 
-_FAKE_IMAGE_BYTES = b"\x89PNGfakebytes"
+
+def _image_bytes(fmt: str, mode: str = "RGB", size=(4, 3), color=(200, 50, 10)) -> bytes:
+    image = Image.new(mode, size, color if mode != "L" else 128)
+    buffer = io.BytesIO()
+    image.save(buffer, format=fmt)
+    return buffer.getvalue()
+
+
+def _decode_data_uri_image(body_html: str) -> Image.Image:
+    prefix = "data:image/png;base64,"
+    start = body_html.index(prefix) + len(prefix)
+    end = body_html.index('"', start)
+    payload = base64.b64decode(body_html[start:end])
+    return Image.open(io.BytesIO(payload))
 
 
 class _FakeResponse:
@@ -44,13 +59,14 @@ def test_unknown_comic_type_is_rejected():
 
 def test_xkcd_fetches_title_and_hover_text_and_embeds_image(monkeypatch):
     calls = []
+    fake_png = _image_bytes("PNG", size=(5, 4))
 
     def fake_get(url, *, headers, timeout):
         calls.append(url)
         if url == "https://xkcd.com":
             return _FakeResponse(_XKCD_HTML)
         assert url == "https://imgs.xkcd.com/comics/todays_strip.png"
-        return _FakeResponse(_FAKE_IMAGE_BYTES, headers={"Content-Type": "image/png"})
+        return _FakeResponse(fake_png, headers={"Content-Type": "image/png"})
 
     monkeypatch.setattr(comic.requests, "get", fake_get)
 
@@ -62,8 +78,8 @@ def test_xkcd_fetches_title_and_hover_text_and_embeds_image(monkeypatch):
     assert story.headline == "Todays Strip"
     assert story.byline == "XKCD"
     assert "hover joke text" in story.body_html
-    encoded = base64.b64encode(_FAKE_IMAGE_BYTES).decode("ascii")
-    assert f"data:image/png;base64,{encoded}" in story.body_html
+    embedded = _decode_data_uri_image(story.body_html)
+    assert embedded.size == (5, 4)
     assert calls == [
         "https://xkcd.com",
         "https://imgs.xkcd.com/comics/todays_strip.png",
@@ -72,14 +88,17 @@ def test_xkcd_fetches_title_and_hover_text_and_embeds_image(monkeypatch):
 
 def test_calvin_and_hobbes_uses_date_scoped_url_and_browser_headers(monkeypatch):
     seen = {"urls": [], "headers": []}
+    fake_gif = _image_bytes("GIF", size=(6, 5))
 
     def fake_get(url, *, headers, timeout):
         seen["urls"].append(url)
         seen["headers"].append(headers)
-        if "gocomics.com" in url:
+        # Both the page (www.gocomics.com) and image (assets.gocomics.com) URLs contain
+        # "gocomics.com" - route on the exact page URL instead of a substring check.
+        if url == "https://www.gocomics.com/calvinandhobbes/2026/01/05":
             return _FakeResponse(_CAH_HTML)
         assert url == "https://assets.gocomics.com/strip.gif"
-        return _FakeResponse(_FAKE_IMAGE_BYTES, headers={"Content-Type": "image/gif"})
+        return _FakeResponse(fake_gif, headers={"Content-Type": "image/gif"})
 
     monkeypatch.setattr(comic.requests, "get", fake_get)
 
@@ -99,17 +118,22 @@ def test_calvin_and_hobbes_uses_date_scoped_url_and_browser_headers(monkeypatch)
     assert story.headline == "Calvin and Hobbes – January 05, 2026"
     assert story.byline == "Calvin and Hobbes"
     assert story.date == datetime.datetime(2026, 1, 5)
+    embedded = _decode_data_uri_image(story.body_html)
+    assert embedded.size == (6, 5)
 
 
 def test_garfield_has_no_title_or_custom_headers(monkeypatch):
     seen_headers = []
+    fake_jpeg = _image_bytes("JPEG", size=(7, 6))
 
     def fake_get(url, *, headers, timeout):
         seen_headers.append(headers)
-        if "arcamax.com" in url:
+        # Both the page and image URLs live on www.arcamax.com - route on the exact page URL
+        # instead of a substring check.
+        if url == "https://www.arcamax.com/thefunnies/garfield/":
             return _FakeResponse(_GARFIELD_HTML)
         assert url == "https://www.arcamax.com/img/garfield-today.jpg"
-        return _FakeResponse(_FAKE_IMAGE_BYTES, headers={"Content-Type": "image/jpeg"})
+        return _FakeResponse(fake_jpeg, headers={"Content-Type": "image/jpeg"})
 
     monkeypatch.setattr(comic.requests, "get", fake_get)
 
@@ -119,6 +143,33 @@ def test_garfield_has_no_title_or_custom_headers(monkeypatch):
     assert seen_headers == [{}, {}]
     assert stories[0].byline == "Garfield"
     assert stories[0].headline.startswith("Garfield – ")
+    embedded = _decode_data_uri_image(stories[0].body_html)
+    assert embedded.size == (7, 6)
+
+
+def test_cmyk_jpeg_is_converted_to_rgb_png(monkeypatch):
+    """Regression test: arcamax.com serves Garfield as a CMYK JPEG with a large embedded
+    Photoshop/ICC metadata block. Passing those bytes through to WeasyPrint unmodified made it
+    silently drop the *entire* story - no exception, no image, no text, nothing in the rendered
+    PDF - while every other story in the same document rendered fine. Decoding and re-encoding
+    through Pillow (see get_stories()'s docstring) must always produce a plain RGB/L PNG,
+    regardless of the source image's color mode."""
+    fake_cmyk_jpeg = _image_bytes("JPEG", mode="CMYK", size=(8, 8))
+
+    def fake_get(url, *, headers, timeout):
+        if url == "https://www.arcamax.com/thefunnies/garfield/":
+            return _FakeResponse(_GARFIELD_HTML)
+        return _FakeResponse(fake_cmyk_jpeg, headers={"Content-Type": "image/jpeg"})
+
+    monkeypatch.setattr(comic.requests, "get", fake_get)
+
+    provider = comic.DailyComicStoryProvider(comic_type="garfield")
+    stories = provider.get_stories()
+
+    assert "data:image/png;base64," in stories[0].body_html
+    embedded = _decode_data_uri_image(stories[0].body_html)
+    assert embedded.format == "PNG"
+    assert embedded.mode in ("RGB", "L")
 
 
 def test_missing_strip_image_raises_informative_error(monkeypatch):
