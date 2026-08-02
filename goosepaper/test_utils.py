@@ -167,3 +167,11 @@ def test_construct_story_providers_passes_combined_weather_mode():
 
     assert stories[0].mode == "hourly_daily"
     assert stories[0].days == 4
+
+
+def test_construct_story_providers_passes_comic_type_option():
+    stories = construct_story_providers_from_source_configs(
+        [{"type": "comic", "comic_type": "garfield"}]
+    )
+
+    assert stories[0].comic_type == "garfield"

@@ -577,3 +577,60 @@ def test_load_paper_config_rejects_invalid_weather_clock_format():
             lambda: load_paper_config(config_path),
             'clock_format must be either "12h" or "24h"',
         )
+
+
+def test_load_paper_config_accepts_comic_source():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [{"type": "comic", "comic_type": "xkcd"}],
+            },
+        )
+
+        config = load_paper_config(config_path)
+
+        assert config.sources[0].type == "comic"
+        assert config.sources[0].options["comic_type"] == "xkcd"
+
+
+def test_load_paper_config_rejects_comic_source_without_comic_type():
+    """DailyComicStoryProvider itself requires `comic_type` (no default - see comic.py), so the
+    config layer must reject its absence with a clean ConfigError before construction ever gets
+    a chance to blow up with a raw TypeError."""
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [{"type": "comic"}],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            "missing required field(s): comic_type",
+        )
+
+
+def test_load_paper_config_rejects_invalid_comic_type():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [{"type": "comic", "comic_type": "dilbert"}],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            "comic_type must be one of",
+        )
