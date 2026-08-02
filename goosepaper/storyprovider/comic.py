@@ -13,12 +13,14 @@ from __future__ import annotations
 
 import base64
 import datetime
+import io
 from dataclasses import dataclass, field
 from html import escape
 from typing import Dict, List, Optional
 
 import requests
 from lxml import html as lxml_html
+from PIL import Image
 
 from ..story import Story
 from .storyprovider import StoryProvider
@@ -98,6 +100,15 @@ class DailyComicStoryProvider(StoryProvider):
     itself while rendering the PDF) has no way to attach them; (2) it makes the rendered PDF
     self-contained - regenerating or re-delivering it later doesn't depend on the strip's image
     URL still being reachable.
+
+    Before embedding, the fetched bytes are decoded and re-encoded as a clean PNG via Pillow -
+    the same "decode, then re-encode" step remarkable_news's own Go tool does (imaging.Decode +
+    imaging.Save, see module docstring). This isn't optional: arcamax.com's Garfield JPEGs ship
+    with a large embedded Photoshop/ICC metadata block that made WeasyPrint's PDF image embedding
+    silently drop the *entire* story - no exception, no log line, just an empty gap in the
+    output - while every other story in the same document rendered fine. Re-encoding through
+    Pillow strips that metadata and normalizes color mode (e.g. CMYK -> RGB), producing a plain,
+    predictable PNG.
     """
 
     def __init__(self, comic_type: str, date: Optional[datetime.date] = None) -> None:
@@ -144,13 +155,13 @@ class DailyComicStoryProvider(StoryProvider):
             image_url, headers=source.headers, timeout=_DEFAULT_TIMEOUT
         )
         image_response.raise_for_status()
-        content_type = (
-            image_response.headers.get("Content-Type", "image/png").split(";")[0].strip()
-        )
-        data_uri = (
-            f"data:{content_type};base64,"
-            f"{base64.b64encode(image_response.content).decode('ascii')}"
-        )
+
+        image = Image.open(io.BytesIO(image_response.content))
+        if image.mode not in ("RGB", "L"):
+            image = image.convert("RGB")
+        png_buffer = io.BytesIO()
+        image.save(png_buffer, format="PNG")
+        data_uri = f"data:image/png;base64,{base64.b64encode(png_buffer.getvalue()).decode('ascii')}"
 
         alt_text = escape(headline or source.label)
         body_html = f'<img class="comic-strip" src="{data_uri}" alt="{alt_text}" />'
