@@ -29,7 +29,8 @@
             "skip_content_filters": [
                 {"type": "css", "selector": "div.ad-block"},
                 {"type": "regex", "pattern": "Read more.*$", "flags": "s"}
-            ]
+            ],
+            "min_body_text_length": 120
         },
         {
             "type": "rss",

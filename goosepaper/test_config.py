@@ -311,16 +311,16 @@ def test_load_paper_config_accepts_registered_source():
         assert config.sources[0].options == {"handle": "goose", "limit": 2}
 
 
-def test_load_paper_config_accepts_all_four_content_filter_fields():
-    """Happy-path smoke test for all four filter fields at once. The `rejects_*` tests below
+def test_load_paper_config_accepts_all_content_filter_and_length_fields():
+    """Happy-path smoke test for all six filter/length fields at once. The `rejects_*` tests below
     already exercise every validation branch individually (unknown type, missing
     selector/pattern, cross-type fields, unknown fields) - that's where the real risk of
     regression lives, since that logic is hand-written per branch. This test's only job is to
     catch the opposite failure mode: a fully well-formed source getting rejected by mistake, or
-    one of these four field names quietly falling out of the "rss" schema's optional-field set
-    (e.g. a typo introduced during a rename) and being dropped instead of validated. One combined
-    source covering all four fields does that as well as four separate near-identical tests
-    would, without the duplication."""
+    one of these field names quietly falling out of the "rss" schema's optional-field set (e.g. a
+    typo introduced during a rename) and being dropped instead of validated. One combined source
+    covering all six fields does that as well as six separate near-identical tests would, without
+    the duplication."""
     with _TempWorkspace() as tmp_path:
         config_path = tmp_path / "paper.json"
         _write_json(
@@ -342,6 +342,8 @@ def test_load_paper_config_accepts_all_four_content_filter_fields():
                             {"type": "regex", "pattern": "AAPL"},
                         ],
                         "accept_title_patterns": ["amazon", "amzn"],
+                        "min_body_text_length": 120,
+                        "max_body_text_length": 20000,
                     }
                 ],
             },
@@ -359,6 +361,8 @@ def test_load_paper_config_accepts_all_four_content_filter_fields():
             {"type": "regex", "pattern": "AAPL"},
         ]
         assert options["accept_title_patterns"] == ["amazon", "amzn"]
+        assert options["min_body_text_length"] == 120
+        assert options["max_body_text_length"] == 20000
 
 
 def test_load_paper_config_rejects_skip_content_filter_with_unknown_type():

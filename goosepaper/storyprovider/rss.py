@@ -14,6 +14,7 @@ from ..contentfilters import (
     should_accept_content,
     should_accept_title,
     should_skip_title,
+    visible_text_length,
 )
 from .storyprovider import StoryProvider
 from ..story import Story
@@ -36,6 +37,8 @@ class RSSFeedStoryProvider(StoryProvider):
         skip_title_patterns: Optional[List[str]] = None,
         accept_content_filters: Optional[List[Dict[str, Any]]] = None,
         accept_title_patterns: Optional[List[str]] = None,
+        min_body_text_length: Optional[int] = None,
+        max_body_text_length: Optional[int] = None,
     ) -> None:
         if byline not in RSS_BYLINE_MODES:
             raise ValueError(
@@ -55,6 +58,8 @@ class RSSFeedStoryProvider(StoryProvider):
         self.skip_title_patterns = skip_title_patterns or []
         self.accept_content_filters = accept_content_filters or []
         self.accept_title_patterns = accept_title_patterns or []
+        self.min_body_text_length = min_body_text_length
+        self.max_body_text_length = max_body_text_length
         self._since = (
             datetime.datetime.now() - datetime.timedelta(days=since_days_ago)
             if since_days_ago
@@ -97,6 +102,13 @@ class RSSFeedStoryProvider(StoryProvider):
                 )
             if self.skip_content_filters:
                 story.body_html = apply_skip_content_filters(story.body_html, self.skip_content_filters)
+
+            body_length = visible_text_length(story.body_html)
+            if self.min_body_text_length is not None and body_length < self.min_body_text_length:
+                continue
+            if self.max_body_text_length is not None and body_length > self.max_body_text_length:
+                continue
+
             if self.byline_mode == "none":
                 story.byline = None
             elif self.byline_mode == "first" and stories:

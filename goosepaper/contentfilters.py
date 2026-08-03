@@ -98,6 +98,14 @@ def apply_accept_content_filters(html: str, filters: Iterable[Dict[str, Any]]) -
     return html
 
 
+def visible_text_length(html: str) -> int:
+    """Length of `html`'s visible text, tags stripped. Used to gate stories whose extracted body
+    is implausibly short (a failed extraction) or implausibly long (e.g. a hardware review with a
+    50-photo gallery each carrying paragraphs of alt text, which would otherwise balloon a single
+    RSS entry into the bulk of the whole paper)."""
+    return len(re.sub(r"<[^>]+>", " ", html or "").strip())
+
+
 def should_accept_title(title: str, patterns: Iterable[str]) -> bool:
     """True if `patterns` is empty (nothing to restrict to, so every title is accepted) or
     `title` matches at least one - the allowlist counterpart to `should_skip_title`'s denylist,

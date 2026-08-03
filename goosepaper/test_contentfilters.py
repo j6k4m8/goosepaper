@@ -4,7 +4,17 @@ from .contentfilters import (
     should_accept_content,
     should_accept_title,
     should_skip_title,
+    visible_text_length,
 )
+
+
+def test_visible_text_length_strips_tags_and_whitespace():
+    assert visible_text_length("<p>Hello world</p>") == len("Hello world")
+
+
+def test_visible_text_length_handles_empty_html():
+    assert visible_text_length("") == 0
+    assert visible_text_length(None) == 0
 
 
 def test_css_skip_filter_removes_matching_elements():
