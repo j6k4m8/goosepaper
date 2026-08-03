@@ -9,8 +9,9 @@ import requests
 from readability import Document
 
 from ..contentfilters import (
-    apply_content_accept_filters,
-    apply_content_skip_filters,
+    apply_accept_content_filters,
+    apply_skip_content_filters,
+    should_accept_content,
     should_accept_title,
     should_skip_title,
 )
@@ -31,9 +32,9 @@ class RSSFeedStoryProvider(StoryProvider):
         byline: str = "all",
         body_source: str = "auto",
         prefer_feed_title: bool = False,
-        content_skip_filters: Optional[List[Dict[str, Any]]] = None,
+        skip_content_filters: Optional[List[Dict[str, Any]]] = None,
         skip_title_patterns: Optional[List[str]] = None,
-        content_accept_filters: Optional[List[Dict[str, Any]]] = None,
+        accept_content_filters: Optional[List[Dict[str, Any]]] = None,
         accept_title_patterns: Optional[List[str]] = None,
     ) -> None:
         if byline not in RSS_BYLINE_MODES:
@@ -50,9 +51,9 @@ class RSSFeedStoryProvider(StoryProvider):
         self.byline_mode = byline
         self.body_source = body_source
         self.prefer_feed_title = prefer_feed_title
-        self.content_skip_filters = content_skip_filters or []
+        self.skip_content_filters = skip_content_filters or []
         self.skip_title_patterns = skip_title_patterns or []
-        self.content_accept_filters = content_accept_filters or []
+        self.accept_content_filters = accept_content_filters or []
         self.accept_title_patterns = accept_title_patterns or []
         self._since = (
             datetime.datetime.now() - datetime.timedelta(days=since_days_ago)
@@ -88,12 +89,14 @@ class RSSFeedStoryProvider(StoryProvider):
 
             if story is None:
                 continue
-            if self.content_accept_filters:
-                story.body_html = apply_content_accept_filters(
-                    story.body_html, self.content_accept_filters
+            if self.accept_content_filters:
+                if not should_accept_content(story.body_html, self.accept_content_filters):
+                    continue
+                story.body_html = apply_accept_content_filters(
+                    story.body_html, self.accept_content_filters
                 )
-            if self.content_skip_filters:
-                story.body_html = apply_content_skip_filters(story.body_html, self.content_skip_filters)
+            if self.skip_content_filters:
+                story.body_html = apply_skip_content_filters(story.body_html, self.skip_content_filters)
             if self.byline_mode == "none":
                 story.byline = None
             elif self.byline_mode == "first" and stories:

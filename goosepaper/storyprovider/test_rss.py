@@ -598,7 +598,7 @@ def test_rss_provider_can_hide_all_bylines(monkeypatch):
     assert stories[1].byline is None
 
 
-def test_rss_provider_applies_content_skip_filters_to_the_fetched_body(monkeypatch):
+def test_rss_provider_applies_skip_content_filters_to_the_fetched_body(monkeypatch):
     monkeypatch.setattr(
         rss.feedparser,
         "parse",
@@ -617,7 +617,7 @@ def test_rss_provider_applies_content_skip_filters_to_the_fetched_body(monkeypat
 
     provider = rss.RSSFeedStoryProvider(
         "https://example.com/feed.xml",
-        content_skip_filters=[{"type": "css", "selector": "div.ad"}],
+        skip_content_filters=[{"type": "css", "selector": "div.ad"}],
     )
     stories = provider.get_stories()
 
@@ -653,7 +653,7 @@ def test_rss_provider_skips_entries_matching_skip_title_patterns(monkeypatch):
     assert stories[0].headline == "Real headline"
 
 
-def test_rss_provider_applies_content_accept_filters_to_the_fetched_body(monkeypatch):
+def test_rss_provider_applies_accept_content_filters_to_the_fetched_body(monkeypatch):
     monkeypatch.setattr(
         rss.feedparser,
         "parse",
@@ -677,12 +677,50 @@ def test_rss_provider_applies_content_accept_filters_to_the_fetched_body(monkeyp
 
     provider = rss.RSSFeedStoryProvider(
         "https://example.com/feed.xml",
-        content_accept_filters=[{"selector": "article.body"}],
+        accept_content_filters=[{"type": "css", "selector": "article.body"}],
     )
     stories = provider.get_stories()
 
     assert "Real content" in stories[0].body_html
     assert "Nav junk" not in stories[0].body_html
+
+
+def test_rss_provider_only_keeps_entries_matching_regex_accept_content_filters(monkeypatch):
+    """A `regex`-type `accept_content_filters` entry gates the whole story - unlike the `css`
+    type, which only narrows the kept content, a story whose fetched body doesn't match any
+    regex filter is dropped entirely, the same way `accept_title_patterns` drops non-matching
+    titles."""
+    monkeypatch.setattr(
+        rss.feedparser,
+        "parse",
+        lambda _: SimpleNamespace(
+            entries=[
+                _feed_entry(
+                    title="Market roundup",
+                    content=[
+                        rss.feedparser.FeedParserDict(
+                            {"value": "<p>AAPL rallies on strong earnings</p>"}
+                        )
+                    ],
+                ),
+                _feed_entry(
+                    title="Unrelated story",
+                    content=[
+                        rss.feedparser.FeedParserDict({"value": "<p>Nothing relevant here</p>"})
+                    ],
+                ),
+            ]
+        ),
+    )
+
+    provider = rss.RSSFeedStoryProvider(
+        "https://example.com/feed.xml",
+        accept_content_filters=[{"type": "regex", "pattern": "AAPL"}],
+    )
+    stories = provider.get_stories()
+
+    assert len(stories) == 1
+    assert stories[0].headline == "Market roundup"
 
 
 def test_rss_provider_only_keeps_entries_matching_accept_title_patterns(monkeypatch):

@@ -590,9 +590,9 @@ def _source_schema(source_type: str) -> Dict[str, Any]:
                 "since_days_ago",
                 "byline",
                 "body_source",
-                "content_skip_filters",
+                "skip_content_filters",
                 "skip_title_patterns",
-                "content_accept_filters",
+                "accept_content_filters",
                 "accept_title_patterns",
             },
         },
@@ -688,11 +688,11 @@ def _validate_source_options(source_type: str, options: Dict[str, Any], index: i
         ),
         "days": lambda value: _validate_positive_int(value, f"source #{index} days"),
         "clock_format": lambda value: _validate_weather_clock_format(value, index),
-        "content_skip_filters": lambda value: _validate_content_skip_filters(value, index),
+        "skip_content_filters": lambda value: _validate_skip_content_filters(value, index),
         "skip_title_patterns": lambda value: _validate_string_list(
             value, f"source #{index} skip_title_patterns"
         ),
-        "content_accept_filters": lambda value: _validate_content_accept_filters(value, index),
+        "accept_content_filters": lambda value: _validate_accept_content_filters(value, index),
         "accept_title_patterns": lambda value: _validate_string_list(
             value, f"source #{index} accept_title_patterns"
         ),
@@ -773,59 +773,49 @@ def _validate_rss_byline(value: Any, index: int):
         )
 
 
-def _validate_content_skip_filters(value: Any, index: int):
+def _validate_type_keyed_content_filters(value: Any, index: int, field_name: str):
+    """Shared by `skip_content_filters` and `accept_content_filters`: both are lists of `{"type":
+    "css", "selector": "..."}` or `{"type": "regex", "pattern": "...", "flags": "..."}` entries.
+    Keyed by "type", since selector/pattern/flags aren't a shared pool - a "css" entry using
+    "pattern"/"flags" (or a "regex" entry using "selector") is meaningless input that would
+    otherwise pass validation silently and just get ignored by the filter itself. Reject it here
+    instead, same as any other unknown field."""
     if not isinstance(value, list):
-        raise ConfigError(f"source #{index} content_skip_filters must be an array.")
-    # Keyed by "type", since selector/pattern/flags aren't a shared pool - a "css" filter using
-    # "pattern"/"flags" (or a "regex" filter using "selector") is meaningless input that used to
-    # pass validation silently (both were in one combined allowed-keys set) and just get ignored
-    # by apply_content_skip_filters(). Reject it here instead, same as any other unknown field.
+        raise ConfigError(f"source #{index} {field_name} must be an array.")
     allowed_keys_by_type = {
         "css": {"type", "selector"},
         "regex": {"type", "pattern", "flags"},
     }
     for i, item in enumerate(value):
         if not isinstance(item, dict):
-            raise ConfigError(f"source #{index} content_skip_filters[{i}] must be an object.")
+            raise ConfigError(f"source #{index} {field_name}[{i}] must be an object.")
         filter_type = item.get("type")
         if filter_type not in allowed_keys_by_type:
             raise ConfigError(
-                f'source #{index} content_skip_filters[{i}] type must be "css" or "regex".'
+                f'source #{index} {field_name}[{i}] type must be "css" or "regex".'
             )
         extra_keys = set(item) - allowed_keys_by_type[filter_type]
         if extra_keys:
             raise ConfigError(
-                f'source #{index} content_skip_filters[{i}] of type {filter_type} has unknown '
+                f'source #{index} {field_name}[{i}] of type {filter_type} has unknown '
                 "field(s): " + ", ".join(sorted(extra_keys)) + "."
             )
         if filter_type == "css" and not item.get("selector"):
             raise ConfigError(
-                f"source #{index} content_skip_filters[{i}] of type css requires a non-empty selector."
+                f"source #{index} {field_name}[{i}] of type css requires a non-empty selector."
             )
         if filter_type == "regex" and not item.get("pattern"):
             raise ConfigError(
-                f"source #{index} content_skip_filters[{i}] of type regex requires a non-empty pattern."
+                f"source #{index} {field_name}[{i}] of type regex requires a non-empty pattern."
             )
 
 
-def _validate_content_accept_filters(value: Any, index: int):
-    if not isinstance(value, list):
-        raise ConfigError(f"source #{index} content_accept_filters must be an array.")
-    allowed_keys = {"selector"}
-    for i, item in enumerate(value):
-        if not isinstance(item, dict):
-            raise ConfigError(f"source #{index} content_accept_filters[{i}] must be an object.")
-        extra_keys = set(item) - allowed_keys
-        if extra_keys:
-            raise ConfigError(
-                f"source #{index} content_accept_filters[{i}] has unknown field(s): "
-                + ", ".join(sorted(extra_keys))
-                + "."
-            )
-        if not item.get("selector"):
-            raise ConfigError(
-                f"source #{index} content_accept_filters[{i}] requires a non-empty selector."
-            )
+def _validate_skip_content_filters(value: Any, index: int):
+    _validate_type_keyed_content_filters(value, index, "skip_content_filters")
+
+
+def _validate_accept_content_filters(value: Any, index: int):
+    _validate_type_keyed_content_filters(value, index, "accept_content_filters")
 
 
 def _validate_body_source(source_type: str, value: Any, index: int):

@@ -3,8 +3,8 @@ patterns.
 
 Lets a plain RSS source config strip site-specific clutter (ad blocks, cookie banners, paywall
 stubs, ...) or skip sponsored/paywalled entries by title - entirely as data
-(`content_skip_filters` / `skip_title_patterns` on the `"rss"` source type), no custom code
-required. `content_accept_filters` / `accept_title_patterns` are the inverse: narrow down to just
+(`skip_content_filters` / `skip_title_patterns` on the `"rss"` source type), no custom code
+required. `accept_content_filters` / `accept_title_patterns` are the inverse: narrow down to just
 the real article container, or keep only entries about a topic you actually want (e.g. one
 company's name from an otherwise general business feed) - useful when the junk is unpredictable
 but you know exactly where or what the real content is.
@@ -32,7 +32,7 @@ def _parse_flags(flags: str) -> int:
     return combined
 
 
-def apply_content_skip_filters(html: str, filters: Iterable[Dict[str, Any]]) -> str:
+def apply_skip_content_filters(html: str, filters: Iterable[Dict[str, Any]]) -> str:
     """Apply every filter in `filters` to `html`, in two passes: all `regex` filters first
     (against the raw string), then all `css` filters (against the parsed tree) - regex needs the
     raw string, css needs a parsed tree, so doing all of one before the other is simpler and just
@@ -59,16 +59,38 @@ def should_skip_title(title: str, patterns: Iterable[str]) -> bool:
     return any(re.search(pattern, title, re.IGNORECASE) for pattern in patterns)
 
 
-def apply_content_accept_filters(html: str, filters: Iterable[Dict[str, Any]]) -> str:
-    """Narrow `html` down to just one container: try each filter's `selector` in list order,
-    keep the first one that matches an element (`select_one`), and replace the whole tree with
-    just that element's contents. Only CSS selectors are supported - a regex "accept" would just
-    reduce the story to whatever static phrase the pattern matches, not coherent prose, so unlike
-    `content_skip_filters` there's no `type` field here.
+def should_accept_content(html: str, filters: Iterable[Dict[str, Any]]) -> bool:
+    """True if `filters` has no `regex`-type entries (nothing to gate on) or `html`'s extracted
+    text matches at least one of their patterns - the content-level counterpart to
+    `should_accept_title`, e.g. keeping only articles whose body actually mentions a ticker
+    symbol, rather than just its title. Matches against `get_text()` rather than the raw markup
+    so a pattern can't accidentally hit inside a tag or attribute.
 
-    Falls through to the original `html` unchanged if no filter matches - an accept filter that
-    misses its target should never zero out an article, only skip filters remove content."""
+    This is a whole-story gate, unlike a `css`-type entry in the same list (handled separately by
+    `apply_accept_content_filters`), which narrows the kept content instead of deciding whether to
+    keep the story at all - a regex "accept" can't narrow to "the container that matched" the way
+    a selector can, so gating is the only sensible behavior for it."""
+    regex_filters = [filt for filt in filters or [] if filt.get("type") == "regex"]
+    if not regex_filters:
+        return True
+    text = bs4.BeautifulSoup(html, "lxml").get_text()
+    return any(
+        re.search(filt["pattern"], text, _parse_flags(filt.get("flags", "")))
+        for filt in regex_filters
+    )
+
+
+def apply_accept_content_filters(html: str, filters: Iterable[Dict[str, Any]]) -> str:
+    """Narrow `html` down to just one container: try each `css`-type filter's `selector` in list
+    order, keep the first one that matches an element (`select_one`), and replace the whole tree
+    with just that element's contents. `regex`-type entries in the same list are ignored here -
+    they're a whole-story keep/reject gate handled by `should_accept_content`, not a transform.
+
+    Falls through to the original `html` unchanged if no `css` filter matches - an accept filter
+    that misses its target should never zero out an article, only skip filters remove content."""
     for filt in filters or []:
+        if filt.get("type") != "css":
+            continue
         soup = bs4.BeautifulSoup(html, "lxml")
         match = soup.select_one(filt["selector"])
         if match is not None:

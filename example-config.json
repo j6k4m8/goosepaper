@@ -26,7 +26,7 @@
             "byline": "first",
             "body_source": "auto",
             "skip_title_patterns": ["^sponsored:"],
-            "content_skip_filters": [
+            "skip_content_filters": [
                 {"type": "css", "selector": "div.ad-block"},
                 {"type": "regex", "pattern": "Read more.*$", "flags": "s"}
             ]
@@ -37,7 +37,10 @@
             "limit": 10,
             "byline": "none",
             "body_source": "article",
-            "accept_title_patterns": ["amazon", "amzn"]
+            "accept_title_patterns": ["amazon", "amzn"],
+            "accept_content_filters": [
+                {"type": "regex", "pattern": "amazon|amzn", "flags": "i"}
+            ]
         },
         {
             "type": "reddit",
