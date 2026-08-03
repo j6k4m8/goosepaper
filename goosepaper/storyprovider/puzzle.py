@@ -47,7 +47,7 @@ table.futoshiki-grid td.fut-vgap { height: 0.7em; text-align: center; vertical-a
   font-weight: bold; font-size: 0.85em; line-height: 1; }
 table.futoshiki-grid td.fut-spacer { width: 0.7em; height: 0.7em; }
 
-table.kakuro-grid td { width: 2em; height: 2em; border: 1px solid #999; padding: 0;
+table.kakuro-grid td { width: 2em; height: 2em; border: 1px solid #000; padding: 0;
   text-align: center; font-family: monospace; }
 table.kakuro-grid td.kakuro-black {
   background: linear-gradient(to top right, #999 49.5%, #000 49.5%, #000 50.5%, #999 50.5%);
