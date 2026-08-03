@@ -59,6 +59,7 @@ class Story:
             PlacementPreference.FOLIO: "placement-folio",
             PlacementPreference.BANNER: "placement-banner",
             PlacementPreference.UTILITY: "placement-utility",
+            PlacementPreference.APPENDIX: "placement-appendix",
         }[self.placement_preference]
 
     def plain_text(self) -> str:
