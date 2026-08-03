@@ -57,8 +57,39 @@ table.kakuro-grid .kakuro-clue { position: relative; width: 100%; height: 100%; 
 table.kakuro-grid .kakuro-h { position: absolute; top: 0; right: 2px; font-size: 0.5em; color: #000; }
 table.kakuro-grid .kakuro-v { position: absolute; bottom: 0; left: 2px; font-size: 0.5em; color: #000; }
 
-table.shikaku-grid td { width: 1.7em; height: 1.7em; text-align: center; vertical-align: middle;
-  font-family: monospace; font-size: 0.9em; border: 1px solid #ccc; }
+/* Shikaku cell size is as large as Sudoku's (width: 2em, font-size: 1.15em) wherever that
+still fits a printed page, but Shikaku's grid isn't a fixed 9x9 like Sudoku - it's 5x5/10x10/20x20
+depending on difficulty (see puzzlegen/shikaku/config.py), so a single fixed size can't work for
+all three: a 20x20 "hard" grid at Sudoku's cell size overflows every column layout (WeasyPrint
+renders an over-wide auto-layout table at its full natural width rather than clipping it, which
+visibly overlaps neighbouring columns) and is tall enough to break across pages even in a single
+column. Font-size is therefore keyed off both the difficulty (via the shikaku-{difficulty} class
+_shikaku_html() adds to the table) and, for combinations where a single flat size doesn't fit
+every page_profile in that column count, the page's own `columns-N` body class (see
+goosepaper.py's `body_classes`).
+
+Beyond just fitting, cells need to render *square*: WeasyPrint's auto-layout table shrinks a
+too-wide table's cell *width* down to whatever the column actually offers, but `height` is a
+plain specified value that never shrinks to match - so once a table is squeezed narrower than
+its own font-size implies, cells go visibly rectangular (this is exactly what happened to
+Shikaku "medium" in 3-column layouts before these per-column tiers existed: cells rendered at
+~18pt wide by ~25pt tall). The fix is to pick each tier's font-size so the table's *own* natural
+width (cells x width-em x font-size) already lands at or under that column count's tightest
+real page_profile width - then the table never needs to be squeezed at all, and cells come out
+square by construction rather than by shrinking. Each value below was verified this way against
+WeasyPrint's actual rendered output (page count, and per-cell width *and* height measured from
+the rendered PDF) across every page_profile x layout combination - table auto-layout can render
+smaller *or* considerably larger than its specified size depending on how much room the
+containing column actually has, so the nominal em values alone don't predict the result. */
+table.shikaku-grid td { width: 2em; height: 2em; text-align: center; vertical-align: middle;
+  font-family: monospace; border: 1px solid #ccc; }
+table.shikaku-grid.shikaku-easy td { font-size: 1.15em; }
+table.shikaku-grid.shikaku-medium td { font-size: 0.9em; }
+.columns-1 table.shikaku-grid.shikaku-medium td { font-size: 1em; }
+.columns-3 table.shikaku-grid.shikaku-medium td { font-size: 0.6em; }
+table.shikaku-grid.shikaku-hard td { font-size: 0.3em; }
+.columns-1 table.shikaku-grid.shikaku-hard td { font-size: 0.55em; }
+.columns-2 table.shikaku-grid.shikaku-hard td { font-size: 0.4em; }
 table.shikaku-grid td.shikaku-left { border-left: 2px solid #000; }
 table.shikaku-grid td.shikaku-right { border-right: 2px solid #000; }
 table.shikaku-grid td.shikaku-top { border-top: 2px solid #000; }
@@ -226,7 +257,10 @@ def _shikaku_html(puzzle, owner) -> str:
             cls_attr = f' class="{" ".join(classes)}"' if classes else ""
             cells.append(f"<td{cls_attr}>{value}</td>")
         rows_html.append(f"<tr>{''.join(cells)}</tr>")
-    return f'<table class="shikaku-grid">{"".join(rows_html)}</table>'
+    # Cell size for shikaku-grid is difficulty-dependent (see the .shikaku-grid CSS rules'
+    # comment): a "hard" 20x20 grid needs much smaller cells than "easy"/"medium" to still fit
+    # print layouts, so the difficulty is carried as a class the CSS keys off of.
+    return f'<table class="shikaku-grid shikaku-{puzzle.difficulty}">{"".join(rows_html)}</table>'
 
 
 def _render_shikaku(puzzle) -> Tuple[str, str]:
