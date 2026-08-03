@@ -311,7 +311,16 @@ def test_load_paper_config_accepts_registered_source():
         assert config.sources[0].options == {"handle": "goose", "limit": 2}
 
 
-def test_load_paper_config_accepts_rss_skip_content_filters_and_skip_title_patterns():
+def test_load_paper_config_accepts_all_four_content_filter_fields():
+    """Happy-path smoke test for all four filter fields at once. The `rejects_*` tests below
+    already exercise every validation branch individually (unknown type, missing
+    selector/pattern, cross-type fields, unknown fields) - that's where the real risk of
+    regression lives, since that logic is hand-written per branch. This test's only job is to
+    catch the opposite failure mode: a fully well-formed source getting rejected by mistake, or
+    one of these four field names quietly falling out of the "rss" schema's optional-field set
+    (e.g. a typo introduced during a rename) and being dropped instead of validated. One combined
+    source covering all four fields does that as well as four separate near-identical tests
+    would, without the duplication."""
     with _TempWorkspace() as tmp_path:
         config_path = tmp_path / "paper.json"
         _write_json(
@@ -328,18 +337,28 @@ def test_load_paper_config_accepts_rss_skip_content_filters_and_skip_title_patte
                             {"type": "regex", "pattern": "Mehr anzeigen", "flags": "i"},
                         ],
                         "skip_title_patterns": ["^anzeige:"],
+                        "accept_content_filters": [
+                            {"type": "css", "selector": "article.body"},
+                            {"type": "regex", "pattern": "AAPL"},
+                        ],
+                        "accept_title_patterns": ["amazon", "amzn"],
                     }
                 ],
             },
         )
 
-        config = load_paper_config(config_path)
+        options = load_paper_config(config_path).sources[0].options
 
-        assert config.sources[0].options["skip_content_filters"] == [
+        assert options["skip_content_filters"] == [
             {"type": "css", "selector": "div.ad"},
             {"type": "regex", "pattern": "Mehr anzeigen", "flags": "i"},
         ]
-        assert config.sources[0].options["skip_title_patterns"] == ["^anzeige:"]
+        assert options["skip_title_patterns"] == ["^anzeige:"]
+        assert options["accept_content_filters"] == [
+            {"type": "css", "selector": "article.body"},
+            {"type": "regex", "pattern": "AAPL"},
+        ]
+        assert options["accept_title_patterns"] == ["amazon", "amzn"]
 
 
 def test_load_paper_config_rejects_skip_content_filter_with_unknown_type():
@@ -494,37 +513,6 @@ def test_load_paper_config_rejects_regex_skip_content_filter_with_selector_field
             lambda: load_paper_config(config_path),
             "unknown field(s)",
         )
-
-
-def test_load_paper_config_accepts_rss_accept_content_filters_and_accept_title_patterns():
-    with _TempWorkspace() as tmp_path:
-        config_path = tmp_path / "paper.json"
-        _write_json(
-            config_path,
-            {
-                "version": 2,
-                "paper": {"style": "FifthAvenue"},
-                "sources": [
-                    {
-                        "type": "rss",
-                        "url": "https://example.com/feed.xml",
-                        "accept_content_filters": [
-                            {"type": "css", "selector": "article.body"},
-                            {"type": "regex", "pattern": "AAPL"},
-                        ],
-                        "accept_title_patterns": ["amazon", "amzn"],
-                    }
-                ],
-            },
-        )
-
-        config = load_paper_config(config_path)
-
-        assert config.sources[0].options["accept_content_filters"] == [
-            {"type": "css", "selector": "article.body"},
-            {"type": "regex", "pattern": "AAPL"},
-        ]
-        assert config.sources[0].options["accept_title_patterns"] == ["amazon", "amzn"]
 
 
 def test_load_paper_config_rejects_accept_content_filter_with_unknown_type():
