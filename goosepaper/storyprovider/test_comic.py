@@ -175,6 +175,38 @@ def test_cmyk_jpeg_is_converted_to_rgb_jpeg(monkeypatch):
     assert embedded.mode in ("RGB", "L")
 
 
+def test_transparent_source_image_is_composited_onto_white(monkeypatch):
+    """Regression test: Pillow's convert("RGB") does not composite transparent pixels against
+    anything - it just drops the alpha channel and keeps whatever RGB value was stored
+    underneath, which can leave visible phantom colors where transparency was meant to show
+    through (verified directly against Pillow: a semi-transparent black RGBA pixel converts to
+    solid black, not white, and a GIF-style transparency-color-keyed pixel converts to its own
+    (arbitrarily-colored) palette entry, not white). A comic strip with any transparency must be
+    composited onto white before the alpha channel is dropped - the newspaper page underneath is
+    always white in every bundled goosepaper style."""
+    fake_png = io.BytesIO()
+    rgba = Image.new("RGBA", (2, 2), (255, 255, 255, 0))  # fully transparent white
+    rgba.putpixel((0, 0), (0, 0, 0, 255))  # opaque black - must stay black
+    rgba.putpixel((1, 1), (10, 20, 30, 0))  # fully transparent, garbage RGB - must become white
+    rgba.save(fake_png, format="PNG")
+    fake_png_bytes = fake_png.getvalue()
+
+    def fake_get(url, *, headers, timeout):
+        if url == "https://xkcd.com":
+            return _FakeResponse(_XKCD_HTML)
+        return _FakeResponse(fake_png_bytes, headers={"Content-Type": "image/png"})
+
+    monkeypatch.setattr(comic.requests, "get", fake_get)
+
+    provider = comic.DailyComicStoryProvider(comic_type="xkcd")
+    stories = provider.get_stories()
+
+    embedded = _decode_data_uri_image(stories[0].body_html)
+    assert embedded.mode == "RGB"
+    assert embedded.getpixel((0, 0)) == (0, 0, 0)
+    assert embedded.getpixel((1, 1)) == (255, 255, 255)
+
+
 def test_oversized_source_image_is_downscaled(monkeypatch):
     """Regression test: gocomics.com's CDN can serve a strip at print resolution (observed:
     2800px wide) with no smaller variant requested. Combined with the hundreds of other images

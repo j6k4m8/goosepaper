@@ -186,7 +186,23 @@ class DailyComicStoryProvider(StoryProvider):
 
         image = Image.open(io.BytesIO(image_response.content))
         if image.mode not in ("RGB", "L"):
-            image = image.convert("RGB")
+            has_transparency = (
+                image.mode in ("RGBA", "LA", "PA") or "transparency" in image.info
+            )
+            if has_transparency:
+                # Pillow's convert("RGB") does not composite transparent pixels against
+                # anything - it just drops the alpha channel and keeps whatever RGB value
+                # (or, for a GIF's transparency-color-key, whatever palette color) was stored
+                # underneath, which can leave visible phantom colors/edges where transparency
+                # was meant to show through. Composite onto white instead - a comic strip is
+                # always placed on a plain newspaper page, and every bundled goosepaper style
+                # renders that page white, so white is the correct color to blend into here.
+                background = Image.new("RGB", image.size, (255, 255, 255))
+                rgba_image = image.convert("RGBA")
+                background.paste(rgba_image, mask=rgba_image.split()[-1])
+                image = background
+            else:
+                image = image.convert("RGB")
         if max(image.size) > _MAX_IMAGE_DIMENSION:
             image.thumbnail((_MAX_IMAGE_DIMENSION, _MAX_IMAGE_DIMENSION), Image.LANCZOS)
         jpeg_buffer = io.BytesIO()
