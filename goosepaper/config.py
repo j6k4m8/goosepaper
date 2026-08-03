@@ -581,7 +581,7 @@ def _source_schema(source_type: str) -> Dict[str, Any]:
         },
         "reddit": {
             "required": {"subreddit"},
-            "optional": {"limit", "since_days_ago"},
+            "optional": {"limit", "since_days_ago", "multi_sub_order"},
         },
         "rss": {
             "required": {"url"},
@@ -640,6 +640,9 @@ def _validate_source_options(source_type: str, options: Dict[str, Any], index: i
         "limit": lambda value: _validate_positive_int(value, f"source #{index} limit"),
         "subreddit": lambda value: _validate_string(
             value, f"source #{index} subreddit"
+        ),
+        "multi_sub_order": lambda value: _validate_reddit_multi_sub_order(
+            value, index
         ),
         "url": lambda value: _validate_string(value, f"source #{index} url"),
         "server": lambda value: _validate_string(value, f"source #{index} server"),
@@ -745,6 +748,14 @@ def _validate_rss_byline(value: Any, index: int):
     if value not in {"all", "none", "first"}:
         raise ConfigError(
             f'source #{index} byline must be one of "all", "none", or "first".'
+        )
+
+
+def _validate_reddit_multi_sub_order(value: Any, index: int):
+    if value not in {"date", "subreddit"}:
+        raise ConfigError(
+            f'source #{index} multi_sub_order must be either '
+            '"date" or "subreddit".'
         )
 
 

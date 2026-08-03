@@ -311,6 +311,31 @@ def test_load_paper_config_accepts_bluesky_source():
         assert config.sources[0].options["include_replies"] is True
 
 
+def test_load_paper_config_accepts_reddit_multi_sub_order():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {
+                        "type": "reddit",
+                        "subreddit": "news+todayilearned",
+                        "multi_sub_order": "subreddit",
+                    }
+                ],
+            },
+        )
+
+        config = load_paper_config(config_path)
+
+        assert config.sources[0].type == "reddit"
+        assert config.sources[0].options["subreddit"] == "news+todayilearned"
+        assert config.sources[0].options["multi_sub_order"] == "subreddit"
+
+
 def test_load_paper_config_accepts_readwise_source():
     with _TempWorkspace() as tmp_path:
         config_path = tmp_path / "paper.json"
@@ -455,6 +480,30 @@ def test_load_paper_config_rejects_invalid_bluesky_include_replies():
         _assert_config_error(
             lambda: load_paper_config(config_path),
             "include_replies must be true or false",
+        )
+
+
+def test_load_paper_config_rejects_invalid_reddit_multi_sub_order():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {
+                        "type": "reddit",
+                        "subreddit": "news+todayilearned",
+                        "multi_sub_order": "fair",
+                    }
+                ],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            'multi_sub_order must be either "date" or "subreddit"',
         )
 
 

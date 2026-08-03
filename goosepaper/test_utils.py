@@ -82,6 +82,22 @@ def test_construct_story_providers_supports_bluesky():
     assert stories[0].feed_filter == "posts_no_replies"
 
 
+def test_construct_story_providers_passes_reddit_multi_sub_order():
+    stories = construct_story_providers_from_source_configs(
+        [
+            {
+                "type": "reddit",
+                "subreddit": "news+todayilearned",
+                "multi_sub_order": "subreddit",
+            }
+        ]
+    )
+
+    assert stories[0].subreddits == ["news", "todayilearned"]
+    assert stories[0].subreddit == "news+todayilearned"
+    assert stories[0].multi_sub_order == "subreddit"
+
+
 def test_construct_story_providers_supports_readwise(monkeypatch):
     monkeypatch.setenv("GOOSEPAPER_TEST_READWISE_TOKEN", "test-token")
 

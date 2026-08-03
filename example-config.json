@@ -28,13 +28,9 @@
         },
         {
             "type": "reddit",
-            "subreddit": "news",
-            "limit": 6
-        },
-        {
-            "type": "reddit",
-            "subreddit": "todayilearned",
-            "limit": 6
+            "subreddit": "news+todayilearned",
+            "limit": 12,
+            "multi_sub_order": "subreddit"
         },
         {
             "type": "mastodon",

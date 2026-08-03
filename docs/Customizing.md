@@ -165,15 +165,24 @@ Each source entry has a `"type"` plus provider-specific fields.
 ```json
 {
     "type": "reddit",
-    "subreddit": "news"
+    "subreddit": "news+todayilearned",
+    "limit": 12,
+    "multi_sub_order": "date"
 }
 ```
 
 | Field | Type | Default | Description |
 | ----- | ---- | ------- | ----------- |
-| `subreddit` | str | none | The subreddit to use. |
+| `subreddit` | str | none | The subreddit to use. Combine subreddits with `+`, such as `"news+todayilearned"`, to fetch them in one Reddit request. |
 | `limit` | int | `20` | Number of stories to fetch. |
 | `since_days_ago` | number | `null` | If provided, filter stories by recency. |
+| `multi_sub_order` | str | `"date"` | For `+`-combined subreddits, either `"date"` to preserve Reddit's combined feed order or `"subreddit"` to group stories by the order in the `subreddit` string. |
+
+Reddit sources use Reddit's public RSS listings. A single combined source like
+`"news+todayilearned"` is preferred over multiple Reddit source entries when
+you want to reduce Reddit requests. The `limit` is applied to the combined
+listing, not separately to each subreddit; use separate Reddit sources when
+you need per-subreddit limits.
 
 ### RSS
 
