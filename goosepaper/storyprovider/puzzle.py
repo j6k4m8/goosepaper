@@ -44,7 +44,7 @@ table.futoshiki-grid td.fut-cell { width: 1.8em; height: 1.8em; text-align: cent
 table.futoshiki-grid td.fut-hgap { width: 0.7em; text-align: center; vertical-align: middle;
   font-weight: bold; }
 table.futoshiki-grid td.fut-vgap { height: 0.7em; text-align: center; vertical-align: middle;
-  font-weight: bold; font-size: 0.85em; }
+  font-weight: bold; font-size: 0.85em; line-height: 1; }
 table.futoshiki-grid td.fut-spacer { width: 0.7em; height: 0.7em; }
 
 table.kakuro-grid td { width: 2em; height: 2em; border: 1px solid #999; padding: 0;
@@ -142,7 +142,7 @@ def _futoshiki_html(grid, size: int, constraints) -> str:
         if r < size - 1:
             gap_cells = []
             for c in range(size):
-                gap_cells.append(f'<td class="fut-vgap">{v_ineq.get((r, c), "")}</td>')
+                gap_cells.append(f'<td class="fut-vgap">{v_ineq.get((r, c), "&nbsp;")}</td>')
                 if c < size - 1:
                     gap_cells.append('<td class="fut-spacer"></td>')
             rows_html.append(f"<tr>{''.join(gap_cells)}</tr>")
