@@ -1,3 +1,7 @@
+import warnings
+
+import pytest
+
 from .goosepaper import Goosepaper, _bookmark_css
 from .story import Story
 from .styles import Style
@@ -240,10 +244,33 @@ def test_bookmark_css_uses_the_given_levels_by_default():
         body_heading_bookmarks=False,
     )
 
-    assert "h2.story-section-title { bookmark-level: 1; }" in css
-    assert "h1.story-headline { bookmark-level: 2; }" in css
+    assert ".story-section-title { bookmark-level: 1; }" in css
+    assert ".story-headline { bookmark-level: 2; }" in css
     assert ".story-body h1" in css
     assert "bookmark-level: none" in css
+
+
+def test_bookmark_css_selectors_are_class_only_not_tag_coupled():
+    # story-headline is rendered with a caller-configurable tag (Story.to_html's
+    # headline_tag), so the rule must match on class alone rather than assuming <h1>.
+    css = _bookmark_css(
+        section_bookmark_level=1,
+        headline_bookmark_level=2,
+        body_heading_bookmarks=False,
+    )
+
+    assert "h1.story-headline" not in css
+    assert "h2.story-section-title" not in css
+
+
+def test_bookmark_css_anchors_the_masthead_title_to_the_section_level():
+    css = _bookmark_css(
+        section_bookmark_level=1,
+        headline_bookmark_level=2,
+        body_heading_bookmarks=False,
+    )
+
+    assert ".masthead h1 { bookmark-level: 1; }" in css
 
 
 def test_bookmark_css_omits_a_rule_when_its_level_is_none():
@@ -254,7 +281,8 @@ def test_bookmark_css_omits_a_rule_when_its_level_is_none():
     )
 
     assert "story-section-title" not in css
-    assert "h1.story-headline { bookmark-level: 2; }" in css
+    assert ".masthead h1" not in css
+    assert ".story-headline { bookmark-level: 2; }" in css
 
 
 def test_bookmark_css_keeps_body_heading_bookmarks_when_enabled():
@@ -275,3 +303,30 @@ def test_bookmark_css_is_empty_when_everything_is_disabled():
     )
 
     assert css == ""
+
+
+def test_bookmark_css_warns_when_section_and_headline_levels_collide():
+    with pytest.warns(UserWarning, match="same depth"):
+        css = _bookmark_css(
+            section_bookmark_level=1,
+            headline_bookmark_level=1,
+            body_heading_bookmarks=False,
+        )
+
+    assert ".story-section-title { bookmark-level: 1; }" in css
+    assert ".story-headline { bookmark-level: 1; }" in css
+
+
+def test_bookmark_css_does_not_warn_when_levels_differ_or_are_none():
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        _bookmark_css(
+            section_bookmark_level=1,
+            headline_bookmark_level=2,
+            body_heading_bookmarks=False,
+        )
+        _bookmark_css(
+            section_bookmark_level=None,
+            headline_bookmark_level=None,
+            body_heading_bookmarks=False,
+        )
