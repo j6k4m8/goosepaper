@@ -1,4 +1,5 @@
 import datetime
+import re
 import urllib.parse
 from typing import List, Optional
 
@@ -168,6 +169,7 @@ def _story_from_response(
         headline = entry["title"] if prefer_feed_title else (doc.title() or entry["title"])
         body_html = doc.summary() or fallback_body_html
         body_html = _make_urls_absolute(body_html, response.url)
+        body_html = _strip_duplicate_leading_heading(body_html, headline)
     except Exception:
         headline = entry["title"]
         body_html = fallback_body_html
@@ -221,6 +223,77 @@ def _make_urls_absolute(body_html: str, base_url: str) -> str:
     # to confuse WeasyPrint's parser into silently dropping everything from that point until it
     # resyncs, sometimes taking an entire story down with it.
     return container.decode_contents()
+
+
+_TITLE_SUFFIX_RE = re.compile(r"\s*[-|–—]\s*[^-|–—]+$")
+# Tolerates a short "kicker"/eyebrow label before the duplicate heading (e.g. The Register's
+# leading <p class="kicker">ai and ml</p>) without mistaking it for real leading body content.
+_MAX_PRECEDING_CHROME_CHARS = 40
+
+
+def _normalize_heading_text(text: str) -> str:
+    return re.sub(r"\s+", " ", text or "").strip().lower()
+
+
+def _heading_matches_headline(heading_text: str, headline: str) -> bool:
+    """Loosely compares a body-embedded heading against the resolved headline: an exact
+    (normalized) match, or a match once a trailing " - Sitename" / " | Sitename" is stripped off
+    the headline - readability's doc.title() commonly keeps a site-name suffix from the page's
+    own <title> tag (e.g. MacRumors: "... - MacRumors"), but the embedded body heading itself
+    usually doesn't carry it.
+    """
+    normalized_heading = _normalize_heading_text(heading_text)
+    if not normalized_heading:
+        return False
+    if normalized_heading == _normalize_heading_text(headline):
+        return True
+    stripped_headline = _TITLE_SUFFIX_RE.sub("", headline or "")
+    return bool(stripped_headline) and normalized_heading == _normalize_heading_text(
+        stripped_headline
+    )
+
+
+def _strip_duplicate_leading_heading(body_html: str, headline: str) -> str:
+    """Some sites' article markup puts the headline inside the same container readability
+    identifies as "the article body" - e.g. Engadget's `<h1 class="title-gallery">`, The
+    Register's and MacRumors' equivalents - rather than keeping title and body structurally
+    separate. readability's extraction has no way to know that heading duplicates the page title
+    rather than being real body content, so it stays in `doc.summary()`'s output; the story then
+    renders with the headline twice - once from Story's own explicit headline, once again as the
+    first thing inside the body.
+
+    Strips a leading h1/h2/h3 that matches `headline` (see `_heading_matches_headline`) to avoid
+    that. Only ever touches a *leading* heading - one reached after no more than
+    `_MAX_PRECEDING_CHROME_CHARS` of preceding text (enough for a short kicker/eyebrow label, not
+    a real paragraph) - so a heading deeper in genuine body content, even one that happens to
+    repeat the headline verbatim, is left alone. Walks `.descendants` (document order, tags and
+    text alike) rather than just direct children, since the offending heading is often nested
+    inside one or more wrapper `<div>`s rather than sitting right at the top level - any wrapper
+    tag with no text of its own is transparently skipped.
+    """
+    if not headline or not body_html:
+        return body_html
+
+    soup = bs4.BeautifulSoup(body_html, "lxml")
+    container = soup.body or soup
+    preceding_chars = 0
+
+    for node in container.descendants:
+        if isinstance(node, bs4.NavigableString):
+            preceding_chars += len(node.strip())
+            if preceding_chars > _MAX_PRECEDING_CHROME_CHARS:
+                return body_html
+            continue
+        if not isinstance(node, bs4.Tag):
+            continue
+        if node.name not in ("h1", "h2", "h3"):
+            continue
+        if not _heading_matches_headline(node.get_text(), headline):
+            return body_html
+        node.decompose()
+        return str(container)
+
+    return body_html
 
 
 def _entry_source(entry, feed_url: str) -> str:
