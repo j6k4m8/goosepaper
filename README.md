@@ -141,6 +141,8 @@ The paper config uses a strict v2 schema with one file per paper. A minimal exam
 
 `style` selects a visual theme. `layout` controls the overall column density: with `"auto"`, Goosepaper defaults to a single reading column on narrow device profiles like `remarkable1`, `remarkable2`, and `paper_pro_move`, and to denser multi-column pages on larger profiles like `paper_pro`, `letter`, and `a4`. If you want to force it, set `"layout": "1col"`, `"2col"`, or `"3col"`. If you want a linked contents block near the top of the issue, set `"table_of_contents": true` in the `paper` object. If you want to override the body typeface without taking over the whole design, set `"body_font": "Literata"`. If you want to target a specific device or paper shape, set `"page_profile"` to one of `remarkable1`, `remarkable2`, `paper_pro`, `paper_pro_move`, `letter`, or `a4`. (`"rm1"` also works as a short alias.) RSS sources can also set `"byline": "all"`, `"none"`, or `"first"`, plus `"body_source": "auto" | "content" | "summary" | "article"`. Bluesky sources can set `"include_replies": true | false`. Weather sources can set `"mode": "summary" | "hourly" | "daily" | "hourly_daily"` plus `hours`, `step_hours`, `days`, and `clock_format` for richer forecasts.
 
+Any source can also set `"section": "Tech"` to render its stories grouped under that heading, alongside every other source sharing the same section name - useful once a paper mixes several feeds and you want them organized into named groups rather than one flat run of stories. A source with no `"section"` renders ungrouped, same as today.
+
 Delivery still happens only when you pass `--deliver`. If you want user-level delivery defaults, create `~/.config/goosepaper/config.json`:
 
 ```json

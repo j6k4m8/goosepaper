@@ -184,28 +184,39 @@ def construct_story_providers_from_source_configs(source_configs):
     stories = []
 
     for source_config in source_configs:
-        source_type, options = _source_config_parts(source_config)
+        source_type, options, section = _source_config_parts(source_config)
         if source_type in provider_specs:
             module_name, class_name, normalize = provider_specs[source_type]
             module = importlib.import_module(module_name)
             provider_class = getattr(module, class_name)
-            stories.append(provider_class(**normalize(options)))
+            provider = provider_class(**normalize(options))
         elif source_type in _REGISTERED_STORY_PROVIDERS:
             spec = _REGISTERED_STORY_PROVIDERS[source_type]
             provider_class = _resolve_provider(spec["provider"])
-            stories.append(provider_class(**spec["normalize"](options)))
+            provider = provider_class(**spec["normalize"](options))
         else:
             raise ValueError(f"Source type {source_type} does not exist.")
+        if section:
+            from goosepaper.storyprovider.section import SectionProvider
+
+            provider = SectionProvider(provider, section)
+        stories.append(provider)
     return stories
 
 
 def _source_config_parts(source_config):
     if hasattr(source_config, "type") and hasattr(source_config, "options"):
-        return source_config.type, dict(source_config.options)
+        return (
+            source_config.type,
+            dict(source_config.options),
+            getattr(source_config, "section", None),
+        )
     if not isinstance(source_config, dict):
         raise ValueError("Each source must be a dict-like object.")
     if "type" not in source_config:
         raise ValueError("Each source must include a type.")
-    return source_config["type"], {
-        key: value for key, value in source_config.items() if key != "type"
-    }
+    return (
+        source_config["type"],
+        {key: value for key, value in source_config.items() if key not in {"type", "section"}},
+        source_config.get("section"),
+    )

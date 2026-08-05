@@ -1,3 +1,5 @@
+from .config import SourceConfig
+from .storyprovider.section import SectionProvider
 from .util import (
     clean_text,
     clean_html,
@@ -167,3 +169,36 @@ def test_construct_story_providers_passes_combined_weather_mode():
 
     assert stories[0].mode == "hourly_daily"
     assert stories[0].days == 4
+
+
+def test_construct_story_providers_wraps_source_with_section_from_dict():
+    providers = construct_story_providers_from_source_configs(
+        [
+            {"type": "text", "headline": "A", "section": "Tech"},
+            {"type": "text", "headline": "B"},
+        ]
+    )
+
+    assert isinstance(providers[0], SectionProvider)
+    assert providers[0].get_stories()[0].section_title == "Tech"
+
+    # No "section" given - stays the bare provider, no group heading assigned.
+    assert not isinstance(providers[1], SectionProvider)
+    assert providers[1].get_stories()[0].section_title is None
+
+
+def test_construct_story_providers_wraps_source_with_section_from_source_config():
+    """Same as the dict-based test above, but through the SourceConfig objects load_paper_config
+    actually produces - the object and dict code paths in _source_config_parts are separate, so
+    both need covering."""
+    providers = construct_story_providers_from_source_configs(
+        [
+            SourceConfig(type="text", options={"headline": "A"}, section="Tech"),
+            SourceConfig(type="text", options={"headline": "B"}),
+        ]
+    )
+
+    assert isinstance(providers[0], SectionProvider)
+    assert providers[0].get_stories()[0].section_title == "Tech"
+    assert not isinstance(providers[1], SectionProvider)
+    assert providers[1].get_stories()[0].section_title is None

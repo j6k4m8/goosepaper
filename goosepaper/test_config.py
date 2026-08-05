@@ -311,6 +311,88 @@ def test_load_paper_config_accepts_registered_source():
         assert config.sources[0].options == {"handle": "goose", "limit": 2}
 
 
+def test_load_paper_config_accepts_section_on_any_source_type():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {
+                        "type": "rss",
+                        "url": "https://example.com/feed.xml",
+                        "section": "Tech",
+                    },
+                    {"type": "wikipedia", "section": "General"},
+                ],
+            },
+        )
+
+        config = load_paper_config(config_path)
+
+        assert config.sources[0].section == "Tech"
+        # "section" isn't a per-type field - it must not leak into options, which are still
+        # validated against each source type's own schema (a stray "section" key inside options
+        # would be rejected as unknown for "wikipedia", which accepts no fields at all).
+        assert "section" not in config.sources[0].options
+        assert config.sources[1].section == "General"
+
+
+def test_load_paper_config_omits_section_when_not_given():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [{"type": "wikipedia"}],
+            },
+        )
+
+        config = load_paper_config(config_path)
+
+        assert config.sources[0].section is None
+
+
+def test_load_paper_config_rejects_empty_section():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [{"type": "wikipedia", "section": "  "}],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            '"section", if given, must be a non-empty string',
+        )
+
+
+def test_load_paper_config_rejects_non_string_section():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [{"type": "wikipedia", "section": 5}],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            '"section", if given, must be a non-empty string',
+        )
+
+
 def test_load_paper_config_accepts_bluesky_source():
     with _TempWorkspace() as tmp_path:
         config_path = tmp_path / "paper.json"
