@@ -15,8 +15,8 @@ class _Client:
         self.calls = []
         self._items = []
 
-    def list_items(self):
-        self.calls.append("list_items")
+    def list_items(self, refresh=False):
+        self.calls.append(("list_items", refresh))
         return self._items
 
     def upload_pdf(self, visible_name, payload):
@@ -63,7 +63,7 @@ def test_upload_root_pdf_uses_simple_upload_without_listing(monkeypatch, tmp_pat
 
     assert result is not False
     assert ("upload_pdf", "paper", b"%PDF-test") in client.calls
-    assert "list_items" not in client.calls
+    assert not any(call[0] == "list_items" for call in client.calls)
 
 
 def test_upload_defaults_to_interactive_auth(monkeypatch, tmp_path):
@@ -113,7 +113,7 @@ def test_upload_with_folder_scans_minimal_index(monkeypatch, tmp_path):
     result = upload(filepath, DeliverySettings(folder="News", replace_mode="never", cleanup=False))
 
     assert result is not False
-    assert "list_items" in client.calls
+    assert ("list_items", False) in client.calls
     assert ("put_pdf", "paper", b"%PDF-test", "folder-1", True) in client.calls
 
 
@@ -167,6 +167,13 @@ def test_upload_retention_deletes_older_editions_beyond_keep_last_n(monkeypatch,
     delete_calls = [call for call in client.calls if call[0] == "delete"]
     deleted_ids = {call[1] for call in delete_calls}
     assert deleted_ids == {"doc-2026-08-03"}
+
+    # The retention scan must force a fresh list_items() call (refresh=True) rather than trust
+    # whatever was already cached from the folder-resolution scan earlier in upload() - Client
+    # only refreshes that cache on put_pdf()/put_epub(), not on the plain upload_pdf()/
+    # upload_epub() root-level path, so an unqualified call here could read stale data depending
+    # on which path the upload actually took.
+    assert ("list_items", True) in client.calls
 
 
 def test_upload_without_retention_keep_last_n_never_deletes(monkeypatch, tmp_path):
