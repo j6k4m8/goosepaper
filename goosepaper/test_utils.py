@@ -113,6 +113,27 @@ def test_construct_story_providers_passes_rss_content_filter_options():
     assert stories[0].accept_title_patterns == ["amazon", "amzn"]
 
 
+def test_construct_story_providers_passes_rss_body_text_length_options():
+    """Same failure mode as test_construct_story_providers_passes_rss_content_filter_options
+    above, for min_body_text_length/max_body_text_length specifically: these were added to
+    config.py's validation without a matching update to this function's own allowed-keys set,
+    so a well-formed config passed every test_config.py check while the values never reached
+    RSSFeedStoryProvider at all - silently dropped, filter never actually applied."""
+    stories = construct_story_providers_from_source_configs(
+        [
+            {
+                "type": "rss",
+                "url": "https://example.com/feed.xml",
+                "min_body_text_length": 120,
+                "max_body_text_length": 4000,
+            }
+        ]
+    )
+
+    assert stories[0].min_body_text_length == 120
+    assert stories[0].max_body_text_length == 4000
+
+
 def test_construct_story_providers_supports_bluesky():
     stories = construct_story_providers_from_source_configs(
         [
