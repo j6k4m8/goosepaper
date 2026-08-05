@@ -282,6 +282,31 @@ def _base_print_css(
         height: auto;
     }}
 
+    /* Inline <svg> (decorative icons/illustrations some source sites embed directly in article
+    HTML) has no such constraint by default - unlike <img>, which browsers/WeasyPrint shrink to
+    fit an ancestor's width automatically in most contexts, an <svg> renders at its own
+    width/height (or viewBox-implied size) regardless of the column it landed in. Observed: a
+    corner-bracket icon rendering the better part of a page tall/wide in a narrow newspaper
+    column. Same fix as <img>: cap it to the column and let it scale down proportionally. */
+    svg {{
+        max-width: 100%;
+        height: auto;
+    }}
+
+    /* max-width caps an SVG that's too big, but doesn't help one with no size at all: readability
+    (goosepaper's HTML extractor) strips width/height attributes from every <svg> during cleaning,
+    even ones the source page did give an explicit size (verified: readability.Document(html) with
+    an svg width="20px" height="20px" comes back with neither). A replaced element with only a
+    viewBox and no intrinsic width/height defaults to filling its container's available width -
+    turning a small UI icon (a code block's "copy"/"fullscreen" button, meant to render around
+    text-height) into a shape as wide as the column. Give it a small, text-relative default size
+    instead - covers every <svg> goosepaper ever sees, since none of them keep their width
+    attribute this far into the pipeline regardless of what the source page originally had. */
+    svg:not([width]) {{
+        width: 1em;
+        height: 1em;
+    }}
+
     .header {{
         position: relative;
         margin: 0 0 0.65rem;
@@ -562,15 +587,30 @@ def _base_print_css(
         text-align: left;
     }}
 
+    /* One guaranteed break before the appendix block as a whole starts - so it never begins
+    mid-page, tacked onto whatever the last regular/sidebar content happened to leave room for.
+    This is on .appendix itself, not .appendix > article, precisely so it fires exactly once:
+    a rule on every article would repeat the break-per-story behavior this same file already
+    removed on purpose (see the comment below) for wasting a page per entry. */
+    .appendix {{
+        break-before: page;
+    }}
+
+    /* Appendix stories (PlacementPreference.APPENDIX) render in their own block after
+    everything else - just placed at the end, one after another in the normal flow, same as
+    .main-stories/.sidebar articles. No per-story page break: that would waste a page per story
+    for something like a puzzle's solution, where a plain divider is enough. */
     .main-stories > article,
-    .sidebar > article {{
+    .sidebar > article,
+    .appendix > article {{
         margin-bottom: 1rem;
         padding-bottom: 0.9rem;
         border-bottom: 0.9pt solid #d9d9d9;
     }}
 
     .main-stories > article:last-child,
-    .sidebar > article:last-child {{
+    .sidebar > article:last-child,
+    .appendix > article:last-child {{
         margin-bottom: 0;
         padding-bottom: 0;
         border-bottom: 0;
