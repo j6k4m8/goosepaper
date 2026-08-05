@@ -291,7 +291,11 @@ def _strip_duplicate_leading_heading(body_html: str, headline: str) -> str:
         if not _heading_matches_headline(node.get_text(), headline):
             return body_html
         node.decompose()
-        return str(container)
+        # decode_contents(), not str(container): `container` came from `soup.body`, and bs4's
+        # lxml parser always wraps a fragment in a synthetic <html><body> - str()-ing it back
+        # would leave body_html wrapped in a literal <body> tag it never had before, nested
+        # inside whatever real <body>/<div> the caller later embeds it in.
+        return container.decode_contents()
 
     return body_html
 

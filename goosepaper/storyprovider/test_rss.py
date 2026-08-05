@@ -504,6 +504,16 @@ class TestStripDuplicateLeadingHeading:
         assert rss._strip_duplicate_leading_heading("<h1>X</h1>", "") == "<h1>X</h1>"
         assert rss._strip_duplicate_leading_heading("", "Same Title") == ""
 
+    def test_does_not_leak_a_synthetic_body_wrapper(self):
+        # bs4's lxml parser always wraps a bare fragment in <html><body> internally; a naive
+        # str(soup.body) re-serialization would leave that <body> tag in the output even though
+        # the input never had one - regression test for exactly that.
+        result = rss._strip_duplicate_leading_heading(
+            "<h1>Same Title</h1><p>Body text.</p>", "Same Title"
+        )
+        assert "<body" not in result
+        assert result == "<p>Body text.</p>"
+
 
 def test_rss_provider_falls_back_to_feed_summary_when_readability_fails(monkeypatch):
     class BrokenDocument:
