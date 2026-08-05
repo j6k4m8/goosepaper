@@ -142,7 +142,7 @@ def test_upload_retention_deletes_older_editions_beyond_keep_last_n(monkeypatch,
         # retention, since its name doesn't start with the "Daily Goose " prefix.
         _IndexedItem("doc-other", "Weekly Roundup 2026-08-05", "folder-1", "DocumentType"),
     ]
-    monkeypatch.setattr("goosepaper.upload.auth_client", lambda: client)
+    monkeypatch.setattr("goosepaper.upload.auth_client", lambda **kwargs: client)
 
     filepath = tmp_path / "Daily Goose 2026-08-06.pdf"
     filepath.write_bytes(b"%PDF-test")
@@ -181,7 +181,7 @@ def test_upload_without_retention_keep_last_n_never_deletes(monkeypatch, tmp_pat
     client._items = [
         _IndexedItem("doc-old", "Daily Goose 2026-08-01", "", "DocumentType"),
     ]
-    monkeypatch.setattr("goosepaper.upload.auth_client", lambda: client)
+    monkeypatch.setattr("goosepaper.upload.auth_client", lambda **kwargs: client)
 
     filepath = tmp_path / "Daily Goose 2026-08-06.pdf"
     filepath.write_bytes(b"%PDF-test")
