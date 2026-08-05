@@ -22,6 +22,33 @@ def _list_active_items(client):
     return [item for item in client.list_items() if item.parent != "trash"]
 
 
+def _apply_retention(client, parent_id: str, prefix: str, keep_last_n: int) -> None:
+    """Deletes older documents in the same folder as the just-uploaded one, keeping only the
+    `keep_last_n` most recent whose name starts with `prefix` - for a paper delivered on a
+    schedule under a name like "Daily Goose 2026-08-05", `prefix` would be "Daily Goose " so this
+    matches every dated edition of that same paper (and nothing else sharing the folder) without
+    touching the one just uploaded, which is included in this same scan and is always the newest.
+
+    Runs as its own list_items() call after the upload completes, rather than reusing whatever
+    was already listed to resolve the folder/replace target above - simpler to reason about
+    correctly than adjusting for the just-uploaded document not yet existing in an earlier scan,
+    at the cost of one extra API round-trip.
+    """
+    editions = sorted(
+        (
+            item
+            for item in _list_active_items(client)
+            if item.type == "DocumentType"
+            and item.parent == parent_id
+            and item.visibleName.startswith(prefix)
+        ),
+        key=lambda item: item.visibleName,
+        reverse=True,
+    )
+    for stale in editions[keep_last_n:]:
+        client.delete(stale.id, refresh=True)
+
+
 def upload(
     filepath,
     delivery_settings: Optional[DeliverySettings] = None,
@@ -118,6 +145,10 @@ def upload(
 
     if result is not None:
         print("Honk! Upload successful!")
+        if delivery.retention_keep_last_n is not None:
+            _apply_retention(
+                client, parent_id, delivery.retention_prefix, delivery.retention_keep_last_n
+            )
         if cleanup:
             try:
                 os.remove(fpr)
@@ -150,6 +181,19 @@ def main(args=None):
         default=None,
     )
     parser.add_argument(
+        "--retention-keep-last-n",
+        type=int,
+        required=False,
+        help='Keep only the last N delivered documents whose name starts with '
+        '"--retention-prefix", deleting older ones. Requires "--retention-prefix".',
+    )
+    parser.add_argument(
+        "--retention-prefix",
+        required=False,
+        help='The name prefix "--retention-keep-last-n" matches past editions against. '
+        'Requires "--retention-keep-last-n".',
+    )
+    parser.add_argument(
         "--showconfig",
         action="store_true",
         required=False,
@@ -171,6 +215,8 @@ def main(args=None):
             folder_override=parsed.folder,
             replace_mode_override=parsed.replace_mode,
             cleanup_override=parsed.cleanup,
+            retention_keep_last_n_override=parsed.retention_keep_last_n,
+            retention_prefix_override=parsed.retention_prefix,
         )
     except ConfigError as err:
         print(f"Honk! {err}")
