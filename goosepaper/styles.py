@@ -311,7 +311,7 @@ def _base_print_css(
         padding: 0.05em 0.3em;
         border-radius: 2px;
     }}
-    
+
     /* Inline <svg> (decorative icons/illustrations some source sites embed directly in article
     HTML) has no such constraint by default - unlike <img>, which browsers/WeasyPrint shrink to
     fit an ancestor's width automatically in most contexts, an <svg> renders at its own
