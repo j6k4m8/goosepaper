@@ -173,14 +173,15 @@ def _story_from_response(
 
 def _make_urls_absolute(body_html: str, base_url: str) -> str:
     """Readability's extracted body_html can carry relative URLs straight from the source page's
-    own markup (`<img src="/assets/img/foo.webp">`, relative `<a href>`, ...). goosepaper renders
-    the whole newspaper - every story from every source, concatenated - as a single HTML document
-    with one `base_url` (see `Goosepaper.to_pdf`, which sets it to the local filesystem's `cwd` -
-    there's no single correct base for a multi-origin document), so a relative URL that arrives
-    this way resolves against the wrong thing and silently fails - images most visibly ("Failed to
-    load image at 'file:///assets/img/foo.webp': ... No such file or directory" in the log).
-    Absolutize against the article's own URL here, at extraction time, while that's still known
-    and correct for this specific story.
+    own markup (`<img src="/assets/img/foo.webp">`, relative `<a href>`, protocol-relative
+    `<img src="//images.example.com/foo.jpg">`, ...). goosepaper renders the whole newspaper -
+    every story from every source, concatenated - as a single HTML document with one `base_url`
+    (see `Goosepaper.to_pdf`, which sets it to the local filesystem's `cwd` - there's no single
+    correct base for a multi-origin document), so a relative URL that arrives this way resolves
+    against the wrong thing and silently fails - images most visibly ("Failed to load image at
+    'file:///assets/img/foo.webp': ... No such file or directory" in the log). Absolutize against
+    the article's own URL here, at extraction time, while that's still known and correct for this
+    specific story.
     """
     if not body_html or not base_url:
         return body_html
@@ -191,7 +192,12 @@ def _make_urls_absolute(body_html: str, base_url: str) -> str:
     for tag_name, attr in (("img", "src"), ("source", "src"), ("a", "href")):
         for node in container.find_all(tag_name):
             value = node.get(attr)
-            if not value or value.startswith("data:") or urllib.parse.urlparse(value).netloc:
+            # Only a `scheme` (e.g. "https") makes a URL truly absolute. `.netloc` is *not*
+            # enough: protocol-relative URLs ("//host/path") also parse with a netloc but no
+            # scheme, so checking netloc alone left them untouched here - they'd then get
+            # resolved later against the newspaper's file:// base_url instead, producing
+            # broken "file://host/path" URLs.
+            if not value or value.startswith("data:") or urllib.parse.urlparse(value).scheme:
                 continue
             node[attr] = urllib.parse.urljoin(base_url, value)
             changed = True
