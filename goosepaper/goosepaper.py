@@ -37,6 +37,7 @@ class Goosepaper:
         story_providers: List[StoryProvider],
         title: str = None,
         subtitle: str = None,
+        deduplicate: bool = False,
     ):
         """
         Create a new Goosepaper.
@@ -45,24 +46,30 @@ class Goosepaper:
             story_providers: A list of StoryProvider objects to render
             title: The title of the goosepaper
             subtitle: The subtitle of the goosepaper
+            deduplicate: Whether to remove stories with a matching headline and date when
+                rendering. Default: False
 
         """
         self.story_providers = story_providers
         self.title = title if title else "Daily Goosepaper"
         self.subtitle = subtitle + "\n" if subtitle else ""
         self.subtitle += datetime.datetime.today().strftime("%B %d, %Y %H:%M")
+        self.deduplicate = deduplicate
 
-    def get_stories(self, deduplicate: bool = False) -> List[Story]:
+    def get_stories(self, deduplicate: bool = None) -> List[Story]:
         """
         Retrieve the complete list of stories to render in this Goosepaper.
 
         Arguments:
-            deduplicate: Whether to remove duplicate stories. Default: False
+            deduplicate: Whether to remove duplicate stories. Defaults to the value passed to
+                the constructor.
 
         Returns:
             List[Story]
 
         """
+        if deduplicate is None:
+            deduplicate = self.deduplicate
         stories: List[Story] = []
         for prov in self.story_providers:
             try:
