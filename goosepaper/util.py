@@ -65,6 +65,44 @@ def construct_story_providers_from_config_dict(config: dict):
     return construct_story_providers_from_source_configs(config["sources"])
 
 
+_REGISTERED_STORY_PROVIDERS = {}
+
+
+def register_story_provider(
+    source_type, provider, *, required=None, optional=None, normalize=None
+):
+    """Register a StoryProvider so it can be used from a config file (and the CLI)
+    via ``{"type": source_type, ...}``, the same way the built-in providers are.
+
+    Args:
+        source_type: the string used as a source ``"type"`` in a config.
+        provider: the StoryProvider class, or a ``"module.path:ClassName"`` string
+            that is imported lazily the first time the type is used.
+        required: config field names that must be present for this source.
+        optional: config field names that may be present.
+        normalize: maps the source's config options to the provider's constructor
+            kwargs; defaults to passing the options through unchanged.
+    """
+    _REGISTERED_STORY_PROVIDERS[source_type] = {
+        "provider": provider,
+        "required": set(required or ()),
+        "optional": set(optional or ()),
+        "normalize": normalize or (lambda options: dict(options)),
+    }
+
+
+def registered_story_providers():
+    """The registry of externally-registered providers (see register_story_provider)."""
+    return _REGISTERED_STORY_PROVIDERS
+
+
+def _resolve_provider(provider):
+    if isinstance(provider, str):
+        module_name, _, class_name = provider.replace(":", ".").rpartition(".")
+        return getattr(importlib.import_module(module_name), class_name)
+    return provider
+
+
 def construct_story_providers_from_source_configs(source_configs):
     provider_specs = {
         "text": (
@@ -147,12 +185,17 @@ def construct_story_providers_from_source_configs(source_configs):
 
     for source_config in source_configs:
         source_type, options = _source_config_parts(source_config)
-        if source_type not in provider_specs:
+        if source_type in provider_specs:
+            module_name, class_name, normalize = provider_specs[source_type]
+            module = importlib.import_module(module_name)
+            provider_class = getattr(module, class_name)
+            stories.append(provider_class(**normalize(options)))
+        elif source_type in _REGISTERED_STORY_PROVIDERS:
+            spec = _REGISTERED_STORY_PROVIDERS[source_type]
+            provider_class = _resolve_provider(spec["provider"])
+            stories.append(provider_class(**spec["normalize"](options)))
+        else:
             raise ValueError(f"Source type {source_type} does not exist.")
-        module_name, class_name, normalize = provider_specs[source_type]
-        module = importlib.import_module(module_name)
-        provider_class = getattr(module, class_name)
-        stories.append(provider_class(**normalize(options)))
     return stories
 
 
