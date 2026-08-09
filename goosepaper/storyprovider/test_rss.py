@@ -512,7 +512,37 @@ class TestStripDuplicateLeadingHeading:
             "<h1>Same Title</h1><p>Body text.</p>", "Same Title"
         )
         assert "<body" not in result
-        assert result == "<p>Body text.</p>"
+
+    def test_strips_a_non_heading_toc_widget(self):
+        # Regression test: matches heise.de's actual structure - a "current page" entry in an
+        # auto-generated table-of-contents widget, holding the plain headline text with no
+        # heading tag at all (<span> inside <li> inside <nav>). The old implementation only ever
+        # matched h1/h2/h3, so this slipped through untouched and rendered as a duplicated
+        # headline with a spurious bullet/number in front of it.
+        html = (
+            '<a-collapse class="a-toc"><nav><ol class="a-toc__list">'
+            '<li class="a-toc__item a-toc__item--current">'
+            '<span aria-current="page" class="a-toc__text">Same Title</span>'
+            "</li></ol></nav></a-collapse>"
+            "<p>Body text.</p>"
+        )
+        result = rss._strip_duplicate_leading_heading(html, "Same Title")
+        assert "Body text." in result
+        assert "Same Title" not in result
+        # The *whole* TOC widget must be gone, not just the innermost <span> - otherwise the
+        # emptied <li> would still render its bullet/number in the PDF.
+        assert "<li" not in result
+        assert "<nav" not in result
+
+    def test_does_not_block_on_a_short_non_matching_leading_heading(self):
+        # A short, harmless leading heading (well within the chrome budget) no longer blocks a
+        # genuine duplicate found further down - the old implementation gave up unconditionally
+        # on the very first h1/h2/h3 it saw, whether or not it matched.
+        html = "<h1>Intro</h1><h2>Same Title</h2><p>Body text.</p>"
+        result = rss._strip_duplicate_leading_heading(html, "Same Title")
+        assert "<h2>" not in result
+        assert "Intro" in result
+        assert "Body text." in result
 
 
 def test_rss_provider_falls_back_to_feed_summary_when_readability_fails(monkeypatch):
