@@ -1,15 +1,13 @@
-import base64
 import datetime
-import io
 import urllib.parse
 from typing import List, Optional
 
 import bs4
 import feedparser
 import requests
-from PIL import Image
 from readability import Document
 
+from .imageutil import reencode_image_as_data_uri
 from .storyprovider import StoryProvider
 from ..story import Story
 from ..version import __version__
@@ -229,47 +227,28 @@ def _make_urls_absolute(body_html: str, base_url: str) -> str:
     return container.decode_contents() if changed else body_html
 
 
-def _reencode_image_as_data_uri(image_bytes: bytes, max_dimension: int) -> str:
-    """Decodes and re-encodes a fetched image as a clean, size-capped JPEG `data:` URI - bounding
-    pixel dimensions, normalizing color mode (e.g. CMYK -> RGB), and compositing any transparency
-    onto white rather than leaving whatever RGB value was stored underneath a transparent pixel
-    (Pillow's plain `convert("RGB")` doesn't composite - it just drops the alpha channel).
-    """
-    image = Image.open(io.BytesIO(image_bytes))
-    if image.mode not in ("RGB", "L"):
-        has_transparency = (
-            image.mode in ("RGBA", "LA", "PA") or "transparency" in image.info
-        )
-        if has_transparency:
-            background = Image.new("RGB", image.size, (255, 255, 255))
-            rgba_image = image.convert("RGBA")
-            background.paste(rgba_image, mask=rgba_image.split()[-1])
-            image = background
-        else:
-            image = image.convert("RGB")
-    if max(image.size) > max_dimension:
-        image.thumbnail((max_dimension, max_dimension), Image.LANCZOS)
-    jpeg_buffer = io.BytesIO()
-    image.save(jpeg_buffer, format="JPEG", quality=90)
-    return f"data:image/jpeg;base64,{base64.b64encode(jpeg_buffer.getvalue()).decode('ascii')}"
-
-
 def _inline_remote_images(body_html: str) -> str:
     """Re-fetches every remote `<img src="http(s)://...">` in body_html and inlines it as a
-    base64 `data:` JPEG URI via `_reencode_image_as_data_uri`, instead of leaving it as a link to
-    the original remote URL.
+    base64 `data:` JPEG URI via `imageutil.reencode_image_as_data_uri`, instead of leaving it as
+    a link to the original remote URL.
 
     Without this, a story's images are embedded exactly as the source served them, and WeasyPrint
     fetches each `<img src>` itself while rendering the PDF - with no control over what it gets.
-    Verified live against a real daily edition: of 53 images across 110 stories, 28 failed to
-    embed, and for 12 of those the *entire story* silently vanished from the rendered PDF - no
-    exception, no log line, just a gap where the story should have been. Every failing case
-    traced back to the source image itself: multi-megapixel photos (up to 4000px, 500KB-1.4MB),
-    a palette-mode PNG encoding photo-like content far less efficiently than JPEG, and WebP files
-    (a format WeasyPrint's image backend can't decode at all, independent of size). Re-encoding
-    through Pillow first - bounding dimensions, normalizing color mode, always emitting JPEG -
-    keeps every embedded image in the same safe, predictable range regardless of what the source
-    happens to serve.
+    That's a known way for WeasyPrint to silently drop a story's image, or (once combined with
+    the size/weight of everything else already in a full newspaper) sometimes the *entire* story
+    - no exception, no log line, just a gap where it should have been (see imageutil's module
+    docstring for the three contributing factors identified in practice).
+
+    Verified against a real daily edition (110 stories, 26 feeds): 28 of 53 embedded images
+    failed outright before this fix - multi-megapixel photos (up to 4000px, 500KB-1.4MB), a
+    palette-mode PNG encoding photo-like content far less efficiently than JPEG, and WebP files
+    (a format WeasyPrint's image backend can't decode at all, independent of size). This fix
+    makes every one of those 53 images embed successfully (the one exception found live was an
+    SVG - not a raster format Pillow can decode at all, left as its original link). Re-encoding
+    every image through Pillow first, unconditionally, removes per-image failures as a variable -
+    it does not by itself guarantee every story survives a very large, image-heavy edition (that
+    also depends on the document's total combined weight, a separate, document-wide concern),
+    but it's a necessary precondition for the ones that do.
 
     An image that fails to download or decode (network error, corrupt/unsupported data) is left
     as its original remote `<img>` tag rather than aborting the whole story - if that also fails
@@ -293,7 +272,7 @@ def _inline_remote_images(body_html: str) -> str:
                 timeout=_IMAGE_FETCH_TIMEOUT,
             )
             response.raise_for_status()
-            node["src"] = _reencode_image_as_data_uri(response.content, _MAX_IMAGE_DIMENSION)
+            node["src"] = reencode_image_as_data_uri(response.content, _MAX_IMAGE_DIMENSION)
             changed = True
         except Exception as err:
             print(
