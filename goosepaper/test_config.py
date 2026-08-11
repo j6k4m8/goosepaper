@@ -286,6 +286,31 @@ def test_load_paper_config_rejects_invalid_rss_body_source():
         )
 
 
+def test_load_paper_config_accepts_registered_source():
+    from .util import register_story_provider
+
+    register_story_provider(
+        "dummy_cfg_provider", object, required={"handle"}, optional={"limit"}
+    )
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {"type": "dummy_cfg_provider", "handle": "goose", "limit": 2}
+                ],
+            },
+        )
+
+        config = load_paper_config(config_path)
+
+        assert config.sources[0].type == "dummy_cfg_provider"
+        assert config.sources[0].options == {"handle": "goose", "limit": 2}
+
+
 def test_load_paper_config_accepts_bluesky_source():
     with _TempWorkspace() as tmp_path:
         config_path = tmp_path / "paper.json"

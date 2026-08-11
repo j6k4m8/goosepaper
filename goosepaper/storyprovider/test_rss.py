@@ -204,6 +204,67 @@ def test_rss_provider_passes_text_to_readability(monkeypatch):
     assert stories[0].body_html == "<p>Readable summary</p>"
 
 
+def test_rss_provider_prefer_feed_title_overrides_readability_title(monkeypatch):
+    class FakeDocument:
+        def __init__(self, html):
+            pass
+
+        def title(self):
+            return "Golem.de"  # e.g. readability returning just the site name
+
+        def summary(self):
+            return "<p>Readable summary</p>"
+
+    monkeypatch.setattr(
+        rss.feedparser,
+        "parse",
+        lambda _: SimpleNamespace(entries=[_feed_entry(title="The actual headline", summary=None)]),
+    )
+    monkeypatch.setattr(
+        rss.requests,
+        "get",
+        lambda *args, **kwargs: _FakeResponse(ok=True, text="<html></html>"),
+    )
+    monkeypatch.setattr(rss, "Document", FakeDocument)
+
+    provider = rss.RSSFeedStoryProvider(
+        "https://example.com/feed.xml",
+        prefer_feed_title=True,
+    )
+    stories = provider.get_stories()
+
+    assert stories[0].headline == "The actual headline"
+
+
+def test_rss_provider_prefer_feed_title_defaults_to_false(monkeypatch):
+    class FakeDocument:
+        def __init__(self, html):
+            pass
+
+        def title(self):
+            return "Readable title"
+
+        def summary(self):
+            return "<p>Readable summary</p>"
+
+    monkeypatch.setattr(
+        rss.feedparser,
+        "parse",
+        lambda _: SimpleNamespace(entries=[_feed_entry(summary=None)]),
+    )
+    monkeypatch.setattr(
+        rss.requests,
+        "get",
+        lambda *args, **kwargs: _FakeResponse(ok=True, text="<html></html>"),
+    )
+    monkeypatch.setattr(rss, "Document", FakeDocument)
+
+    provider = rss.RSSFeedStoryProvider("https://example.com/feed.xml")
+    stories = provider.get_stories()
+
+    assert stories[0].headline == "Readable title"
+
+
 def test_rss_provider_article_mode_fetches_article_even_when_feed_has_content(
     monkeypatch,
 ):

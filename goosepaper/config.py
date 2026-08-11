@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional, Sequence
 
 from goosepaper.layout import LAYOUT_CHOICES
 from goosepaper.styles import PAGE_PROFILE_CHOICES
-from goosepaper.util import load_config_file
+from goosepaper.util import load_config_file, registered_story_providers
 
 
 CONFIG_VERSION = 2
@@ -624,13 +624,19 @@ def _source_schema(source_type: str) -> Dict[str, Any]:
             "optional": set(),
         },
     }
-    if source_type not in schemas:
-        raise ConfigError(
-            f'Unknown source type "{source_type}". Supported source types are: '
-            + ", ".join(sorted(schemas))
-            + "."
-        )
-    return schemas[source_type]
+    if source_type in schemas:
+        return schemas[source_type]
+    registered = registered_story_providers()
+    if source_type in registered:
+        return {
+            "required": registered[source_type]["required"],
+            "optional": registered[source_type]["optional"],
+        }
+    raise ConfigError(
+        f'Unknown source type "{source_type}". Supported source types are: '
+        + ", ".join(sorted({*schemas, *registered}))
+        + "."
+    )
 
 
 def _validate_source_options(source_type: str, options: Dict[str, Any], index: int):
@@ -676,7 +682,9 @@ def _validate_source_options(source_type: str, options: Dict[str, Any], index: i
     }
 
     for key, value in options.items():
-        validators[key](value)
+        # Registered (external) providers may declare fields the built-ins don't
+        # know how to validate; those are the provider's own concern.
+        validators.get(key, lambda value: None)(value)
 
     if source_type == "wikipedia" and options:
         raise ConfigError("Wikipedia sources do not accept any additional fields.")

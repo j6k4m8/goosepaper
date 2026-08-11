@@ -23,6 +23,7 @@ class RSSFeedStoryProvider(StoryProvider):
         since_days_ago: int = None,
         byline: str = "all",
         body_source: str = "auto",
+        prefer_feed_title: bool = False,
     ) -> None:
         if byline not in RSS_BYLINE_MODES:
             raise ValueError(
@@ -37,6 +38,7 @@ class RSSFeedStoryProvider(StoryProvider):
         self.feed_url = rss_path
         self.byline_mode = byline
         self.body_source = body_source
+        self.prefer_feed_title = prefer_feed_title
         self._since = (
             datetime.datetime.now() - datetime.timedelta(days=since_days_ago)
             if since_days_ago
@@ -61,6 +63,7 @@ class RSSFeedStoryProvider(StoryProvider):
                 source,
                 date,
                 body_source=self.body_source,
+                prefer_feed_title=self.prefer_feed_title,
             )
 
             if story is None:
@@ -82,6 +85,7 @@ def _story_from_entry(
     source: str,
     date: datetime.datetime,
     body_source: str = "auto",
+    prefer_feed_title: bool = False,
 ) -> Optional[Story]:
     if body_source == "summary":
         return Story(
@@ -137,6 +141,7 @@ def _story_from_entry(
         source,
         date,
         fallback_body_html=fallback_body_html,
+        prefer_feed_title=prefer_feed_title,
     )
 
 
@@ -146,6 +151,7 @@ def _story_from_response(
     source: str,
     date: datetime.datetime,
     fallback_body_html: str = "",
+    prefer_feed_title: bool = False,
 ) -> Story:
     page_text = response.text
     if not page_text:
@@ -156,7 +162,10 @@ def _story_from_response(
 
     try:
         doc = Document(page_text)
-        headline = doc.title() or entry["title"]
+        # readability's own title extraction is unreliable on some sites (e.g. it
+        # returns just the site name for every article on some blogs); the feed's
+        # own <title> is usually accurate, so let callers prefer it outright.
+        headline = entry["title"] if prefer_feed_title else (doc.title() or entry["title"])
         body_html = doc.summary() or fallback_body_html
         body_html = _make_urls_absolute(body_html, response.url)
     except Exception:
