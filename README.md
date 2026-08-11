@@ -168,13 +168,14 @@ Check out [this example PDF](https://github.com/j6k4m8/goosepaper/blob/master/do
 
 ## existing story providers ([want to write your own?](https://github.com/j6k4m8/goosepaper/blob/master/CONTRIBUTING.md))
 
--   [Wikipedia Top News / Current Events](https://github.com/j6k4m8/goosepaper/blob/master/goosepaper/storyprovider/wikipedia.py)
--   [Mastodon Toots](https://github.com/j6k4m8/goosepaper/blob/master/goosepaper/storyprovider/mastodon.py)
--   [Bluesky Posts](https://github.com/j6k4m8/goosepaper/blob/master/goosepaper/storyprovider/bluesky.py)
--   [Readwise Reader Documents](https://github.com/j6k4m8/goosepaper/blob/master/goosepaper/storyprovider/readwise.py)
--   [Weather](https://github.com/j6k4m8/goosepaper/blob/master/goosepaper/storyprovider/weather.py). These stories appear in the "ear" of the front page, just like a regular ol' newspaper
--   [RSS Feeds](https://github.com/j6k4m8/goosepaper/blob/master/goosepaper/storyprovider/rss.py)
--   [Reddit Subreddits](https://github.com/j6k4m8/goosepaper/blob/master/goosepaper/storyprovider/reddit.py)
+-   [Custom text](https://github.com/j6k4m8/goosepaper/blob/master/docs/reference/storyprovider/storyprovider.py.md)
+-   [Wikipedia Top News / Current Events](https://github.com/j6k4m8/goosepaper/blob/master/docs/reference/storyprovider/wikipedia.py.md)
+-   [Mastodon Toots](https://github.com/j6k4m8/goosepaper/blob/master/docs/reference/storyprovider/mastodon.py.md)
+-   [Bluesky Posts](https://github.com/j6k4m8/goosepaper/blob/master/docs/reference/storyprovider/bluesky.py.md)
+-   [Readwise Reader Documents](https://github.com/j6k4m8/goosepaper/blob/master/docs/reference/storyprovider/readwise.py.md)
+-   [Weather](https://github.com/j6k4m8/goosepaper/blob/master/docs/reference/storyprovider/weather.py.md)
+-   [RSS Feeds](https://github.com/j6k4m8/goosepaper/blob/master/docs/reference/storyprovider/rss.py.md)
+-   [Reddit Subreddits](https://github.com/j6k4m8/goosepaper/blob/master/docs/reference/storyprovider/reddit.py.md)
 
 # More Questions, Infrequently Asked
 
