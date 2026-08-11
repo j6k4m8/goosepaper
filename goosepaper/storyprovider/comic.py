@@ -18,9 +18,7 @@ strips on each site before relying on it - see the module's test suite and PR hi
 
 from __future__ import annotations
 
-import base64
 import datetime
-import io
 import json
 from dataclasses import dataclass, field
 from html import escape
@@ -28,9 +26,9 @@ from typing import Callable, Dict, List, Literal, Optional
 
 import requests
 from lxml import html as lxml_html
-from PIL import Image
 
 from ..story import Story
+from .imageutil import reencode_image_as_data_uri
 from .storyprovider import StoryProvider
 
 _DEFAULT_TIMEOUT = 20
@@ -183,24 +181,20 @@ class DailyComicStoryProvider(StoryProvider):
     URL still being reachable.
 
     Before embedding, the fetched bytes are decoded and re-encoded as a clean, size-capped JPEG
-    via Pillow - the same "decode, then adjust, then re-encode" pipeline remarkable_news's own Go
-    tool runs (imaging.Decode + resize + imaging.Save with JPEGQuality, see module docstring).
-    This isn't optional: embedding a source image unmodified - at whatever resolution, color
-    mode/metadata, and *format* the source happened to serve that day - was reproduced to make
-    WeasyPrint's PDF image embedding silently drop the *entire* story: no exception, no log line,
-    just an empty gap where the story should have been, in an otherwise fully-rendered
-    multi-hundred-page document. Three contributing factors were identified and all three are
-    addressed by this step: (1) gocomics.com's CDN can serve a strip at print resolution
-    (2800px+ wide) with no smaller variant requested (see `_MAX_IMAGE_DIMENSION`); (2) even at a
-    source's *default* resolution, a lossless PNG re-encode of a dithered/gradient-heavy color
-    strip is itself several times larger than the same content as JPEG - re-encoding as PNG
-    alone was not enough to bring the payload down to a safe size; (3) arcamax.com's Garfield
-    JPEGs ship CMYK-mode pixel data with a large embedded Photoshop/ICC metadata block. Any of
-    these, combined with the hundreds of other images already in a full newspaper, was enough to
-    trigger the failure. Re-encoding through Pillow bounds the pixel dimensions, normalizes color
-    mode (e.g. CMYK -> RGB), and uses JPEG's lossy DCT compression - far more compact than PNG for
-    this kind of photo-like, gradient-heavy content - regardless of what the source serves on a
-    given day.
+    via `imageutil.reencode_image_as_data_uri` - the same "decode, then adjust, then re-encode"
+    pipeline remarkable_news's own Go tool runs (imaging.Decode + resize + imaging.Save with
+    JPEGQuality). This isn't optional: embedding a source image unmodified - at whatever
+    resolution, color mode/metadata, and *format* the source happened to serve that day - was
+    reproduced to make WeasyPrint's PDF image embedding silently drop the *entire* story: no
+    exception, no log line, just an empty gap where the story should have been, in an otherwise
+    fully-rendered multi-hundred-page document. Three contributing factors were identified, all
+    addressed by imageutil's re-encode step (see its own module docstring for the general case):
+    (1) gocomics.com's CDN can serve a strip at print resolution (2800px+ wide) with no smaller
+    variant requested; (2) even at a source's *default* resolution, a lossless PNG re-encode of a
+    dithered/gradient-heavy color strip is several times larger than the same content as JPEG;
+    (3) arcamax.com's Garfield JPEGs ship CMYK-mode pixel data with a large embedded
+    Photoshop/ICC metadata block. Any of these, combined with the hundreds of other images
+    already in a full newspaper, was enough to trigger the failure.
     """
 
     def __init__(
@@ -292,30 +286,7 @@ class DailyComicStoryProvider(StoryProvider):
         )
         image_response.raise_for_status()
 
-        image = Image.open(io.BytesIO(image_response.content))
-        if image.mode not in ("RGB", "L"):
-            has_transparency = (
-                image.mode in ("RGBA", "LA", "PA") or "transparency" in image.info
-            )
-            if has_transparency:
-                # Pillow's convert("RGB") does not composite transparent pixels against
-                # anything - it just drops the alpha channel and keeps whatever RGB value
-                # (or, for a GIF's transparency-color-key, whatever palette color) was stored
-                # underneath, which can leave visible phantom colors/edges where transparency
-                # was meant to show through. Composite onto white instead - a comic strip is
-                # always placed on a plain newspaper page, and every bundled goosepaper style
-                # renders that page white, so white is the correct color to blend into here.
-                background = Image.new("RGB", image.size, (255, 255, 255))
-                rgba_image = image.convert("RGBA")
-                background.paste(rgba_image, mask=rgba_image.split()[-1])
-                image = background
-            else:
-                image = image.convert("RGB")
-        if max(image.size) > _MAX_IMAGE_DIMENSION:
-            image.thumbnail((_MAX_IMAGE_DIMENSION, _MAX_IMAGE_DIMENSION), Image.LANCZOS)
-        jpeg_buffer = io.BytesIO()
-        image.save(jpeg_buffer, format="JPEG", quality=90)
-        data_uri = f"data:image/jpeg;base64,{base64.b64encode(jpeg_buffer.getvalue()).decode('ascii')}"
+        data_uri = reencode_image_as_data_uri(image_response.content, _MAX_IMAGE_DIMENSION)
 
         alt_text = escape(label)
         body_html = f'<img class="comic-strip" src="{data_uri}" alt="{alt_text}" />'
