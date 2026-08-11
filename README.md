@@ -176,13 +176,13 @@ Check out [this example PDF](https://github.com/j6k4m8/goosepaper/blob/master/do
 -   [Weather](https://github.com/j6k4m8/goosepaper/blob/master/docs/reference/storyprovider/weather.py.md)
 -   [RSS Feeds](https://github.com/j6k4m8/goosepaper/blob/master/docs/reference/storyprovider/rss.py.md)
 -   [Reddit Subreddits](https://github.com/j6k4m8/goosepaper/blob/master/docs/reference/storyprovider/reddit.py.md)
--   [Logic Puzzles](goosepaper/storyprovider/puzzle.py) (this fork's addition - see below)
+-   [Logic Puzzles](goosepaper/storyprovider/puzzle.py) - see below
 
 ## puzzle source options
 
-The `"puzzle"` source type (added by this fork) generates one or more logic puzzles - Sudoku,
-Binoxxo, Futoshiki, Kakuro, or Shikaku - and renders each as plain HTML/CSS (no images). Every
-puzzle's solution is collected separately and placed in the paper's appendix.
+The `"puzzle"` source type generates one or more logic puzzles - Sudoku, Binoxxo, Futoshiki,
+Kakuro, or Shikaku - and renders each as plain HTML/CSS (no images). Every puzzle's solution is
+collected separately and placed in the paper's appendix.
 
 ```json
 { "type": "puzzle", "puzzle_type": "sudoku", "difficulty": "hard", "count": 2, "explanation": "footer", "name": "Sudoku" }
