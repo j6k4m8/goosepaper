@@ -1,7 +1,25 @@
+import base64
 import datetime
+import io
 from types import SimpleNamespace
 
+from PIL import Image
+
 from . import rss
+
+
+def _image_bytes(fmt: str, mode: str = "RGB", size=(4, 3), color=(200, 50, 10)) -> bytes:
+    image = Image.new(mode, size, color if mode != "L" else 128)
+    buffer = io.BytesIO()
+    image.save(buffer, format=fmt)
+    return buffer.getvalue()
+
+
+def _decode_data_uri_image(html: str) -> Image.Image:
+    prefix = "data:image/jpeg;base64,"
+    start = html.index(prefix) + len(prefix)
+    end = html.index('"', start)
+    return Image.open(io.BytesIO(base64.b64decode(html[start:end])))
 
 
 def _feed_entry(
@@ -46,6 +64,10 @@ class _FakeResponse:
         self.content = content
         self.encoding = encoding
         self.url = url
+
+    def raise_for_status(self):
+        if not self.ok:
+            raise rss.requests.HTTPError(f"{self.url} returned an error status")
 
 
 def test_rss_provider_prefers_embedded_feed_content(monkeypatch):
@@ -624,3 +646,156 @@ def test_rss_provider_can_show_only_first_byline(monkeypatch):
 
     assert stories[0].byline == "example.com"
     assert stories[1].byline is None
+
+
+class TestReencodeImageAsDataUri:
+    """Direct tests of the Pillow re-encode step, decoupled from HTTP - the actual download is
+    exercised separately in TestInlineRemoteImages."""
+
+    def test_oversized_image_is_downscaled(self):
+        oversized = _image_bytes("PNG", size=(2800, 2000))
+
+        result = rss._reencode_image_as_data_uri(oversized, rss._MAX_IMAGE_DIMENSION)
+
+        embedded = _decode_data_uri_image(f'<img src="{result}">')
+        assert max(embedded.size) == rss._MAX_IMAGE_DIMENSION
+        # Aspect ratio preserved: 2800x2000 is 1.4:1.
+        assert embedded.size == (1200, int(2000 * 1200 / 2800))
+
+    def test_cmyk_jpeg_is_converted_to_rgb_jpeg(self):
+        """Regression test: some sources (e.g. certain CDNs) serve CMYK-mode JPEGs. Passing those
+        through to WeasyPrint unmodified is a known way to make it silently drop the *entire*
+        story - see _inline_remote_images' docstring."""
+        cmyk_jpeg = _image_bytes("JPEG", mode="CMYK", size=(8, 8))
+
+        result = rss._reencode_image_as_data_uri(cmyk_jpeg, rss._MAX_IMAGE_DIMENSION)
+
+        embedded = _decode_data_uri_image(f'<img src="{result}">')
+        assert embedded.format == "JPEG"
+        assert embedded.mode in ("RGB", "L")
+
+    def test_transparent_image_is_composited_onto_white(self):
+        """Pillow's convert("RGB") does not composite transparent pixels against anything - it
+        just drops the alpha channel and keeps whatever RGB value was stored underneath, which
+        can leave visible phantom colors where transparency was meant to show through."""
+        rgba = Image.new("RGBA", (2, 2), (255, 255, 255, 0))  # fully transparent white
+        rgba.putpixel((0, 0), (0, 0, 0, 255))  # opaque black - must stay black
+        rgba.putpixel((1, 1), (10, 20, 30, 0))  # fully transparent, garbage RGB - must become white
+        buffer = io.BytesIO()
+        rgba.save(buffer, format="PNG")
+
+        result = rss._reencode_image_as_data_uri(buffer.getvalue(), rss._MAX_IMAGE_DIMENSION)
+
+        embedded = _decode_data_uri_image(f'<img src="{result}">')
+        assert embedded.mode == "RGB"
+        assert embedded.getpixel((0, 0)) == (0, 0, 0)
+        assert embedded.getpixel((1, 1)) == (255, 255, 255)
+
+
+class TestInlineRemoteImages:
+    def test_inlines_a_remote_http_image_as_a_data_uri(self, monkeypatch):
+        fake_png = _image_bytes("PNG", size=(5, 4))
+        seen_urls = []
+
+        def fake_get(url, *, headers, timeout):
+            seen_urls.append(url)
+            return _FakeResponse(ok=True, content=fake_png)
+
+        monkeypatch.setattr(rss.requests, "get", fake_get)
+
+        result = rss._inline_remote_images(
+            '<p>hello</p><img src="https://example.com/photo.jpg">'
+        )
+
+        assert seen_urls == ["https://example.com/photo.jpg"]
+        assert "data:image/jpeg;base64," in result
+        assert "https://example.com/photo.jpg" not in result
+        embedded = _decode_data_uri_image(result)
+        assert embedded.size == (5, 4)
+
+    def test_leaves_data_uri_images_untouched(self, monkeypatch):
+        def fail_get(*args, **kwargs):
+            raise AssertionError("requests.get should not run for an already-inlined image")
+
+        monkeypatch.setattr(rss.requests, "get", fail_get)
+
+        html = '<img src="data:image/png;base64,aGVsbG8=">'
+        assert rss._inline_remote_images(html) == html
+
+    def test_leaves_non_http_images_untouched(self, monkeypatch):
+        def fail_get(*args, **kwargs):
+            raise AssertionError("requests.get should not run for a src-less/non-http <img>")
+
+        monkeypatch.setattr(rss.requests, "get", fail_get)
+
+        html = "<p>no images here</p>"
+        assert rss._inline_remote_images(html) == html
+
+    def test_a_failing_image_download_leaves_that_image_as_the_original_link(self, monkeypatch):
+        """Regression test for the actual production bug this whole function fixes: an image
+        that WeasyPrint can't handle used to silently take the *entire story* down with it (see
+        _inline_remote_images' docstring). One bad image must not prevent every other image in
+        the same body from still being inlined, and must not raise out of this function."""
+
+        def fake_get(url, *, headers, timeout):
+            if "broken" in url:
+                return _FakeResponse(ok=False, content=b"")
+            return _FakeResponse(ok=True, content=_image_bytes("PNG", size=(3, 3)))
+
+        monkeypatch.setattr(rss.requests, "get", fake_get)
+
+        html = (
+            '<img src="https://example.com/broken.jpg">'
+            '<img src="https://example.com/fine.jpg">'
+        )
+        result = rss._inline_remote_images(html)
+
+        assert 'src="https://example.com/broken.jpg"' in result
+        assert "data:image/jpeg;base64," in result
+
+    def test_a_corrupt_image_body_also_leaves_the_original_link(self, monkeypatch):
+        monkeypatch.setattr(
+            rss.requests,
+            "get",
+            lambda *a, **k: _FakeResponse(ok=True, content=b"not actually an image"),
+        )
+
+        html = '<img src="https://example.com/corrupt.jpg">'
+        result = rss._inline_remote_images(html)
+
+        assert result == html
+
+    def test_get_stories_inlines_images_found_in_the_extracted_article_body(self, monkeypatch):
+        """End-to-end: an <img> that readability extracts from a fetched article page ends up
+        rewritten to a data: URI in the final Story, exercising get_stories()'s own wiring of
+        _inline_remote_images rather than calling it directly."""
+        fake_png = _image_bytes("PNG", size=(6, 5))
+
+        class FakeDocument:
+            def __init__(self, html):
+                pass
+
+            def title(self):
+                return "Readable title"
+
+            def summary(self):
+                return '<img src="https://example.com/article-photo.jpg">'
+
+        def fake_get(url, *, headers, timeout=None):
+            if url == "https://example.com/article-photo.jpg":
+                return _FakeResponse(ok=True, content=fake_png)
+            return _FakeResponse(ok=True, text="<html></html>")
+
+        monkeypatch.setattr(
+            rss.feedparser,
+            "parse",
+            lambda _: SimpleNamespace(entries=[_feed_entry(summary=None)]),
+        )
+        monkeypatch.setattr(rss.requests, "get", fake_get)
+        monkeypatch.setattr(rss, "Document", FakeDocument)
+
+        provider = rss.RSSFeedStoryProvider("https://example.com/feed.xml")
+        stories = provider.get_stories()
+
+        assert "data:image/jpeg;base64," in stories[0].body_html
+        assert "https://example.com/article-photo.jpg" not in stories[0].body_html
