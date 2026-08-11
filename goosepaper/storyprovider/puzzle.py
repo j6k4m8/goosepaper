@@ -47,8 +47,17 @@ table.kakuro-grid td.kakuro-black {
   position: relative;
 }
 table.kakuro-grid .kakuro-clue { position: relative; width: 100%; height: 100%; }
-table.kakuro-grid .kakuro-h { position: absolute; top: 0; right: 2px; font-size: 0.5em; color: #fff; }
-table.kakuro-grid .kakuro-v { position: absolute; bottom: 0; left: 2px; font-size: 0.5em; color: #fff; }
+/* The clue cell's diagonal (linear-gradient(to top right, ...) above) splits it into an
+upper-right triangle (the row/"h" sum, i.e. the sum of the white run to the right) and a
+lower-left triangle (the column/"v" sum, the run going down - see kakuro/rules.py's Run
+docstring). WeasyPrint inverts the vertical axis for an absolutely-positioned span nested this
+way inside a table cell (position:relative div -> position:relative td): "top: 0" renders at the
+visual bottom and "bottom: 0" renders at the visual top, confirmed by rendering an isolated
+labelled cell. `bottom`/`top` below are therefore intentionally the opposite of where each label
+visually needs to land - swapping them is what actually puts "h" at the top (of the upper-right
+triangle) and "v" at the bottom (of the lower-left triangle). */
+table.kakuro-grid .kakuro-h { position: absolute; bottom: 0; right: 2px; font-size: 0.5em; color: #fff; }
+table.kakuro-grid .kakuro-v { position: absolute; top: 0; left: 2px; font-size: 0.5em; color: #fff; }
 
 table.shikaku-grid td { width: 1.7em; height: 1.7em; text-align: center; vertical-align: middle;
   font-family: monospace; font-size: 0.9em; border: 1px solid #ccc; }
