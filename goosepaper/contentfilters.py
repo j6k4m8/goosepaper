@@ -102,8 +102,15 @@ def visible_text_length(html: str) -> int:
     """Length of `html`'s visible text, tags stripped. Used to gate stories whose extracted body
     is implausibly short (a failed extraction) or implausibly long (e.g. a hardware review with a
     50-photo gallery each carrying paragraphs of alt text, which would otherwise balloon a single
-    RSS entry into the bulk of the whole paper)."""
-    return len(re.sub(r"<[^>]+>", " ", html or "").strip())
+    RSS entry into the bulk of the whole paper).
+
+    Collapses whitespace runs (including the newlines/indentation of pretty-printed source HTML)
+    down to a single space before measuring - a rendered page (or a screen reader) collapses that
+    the same way, so none of it is actually "visible text". Without this, a short teaser-only
+    extraction from a heavily-indented page can rack up hundreds of characters of pure source
+    formatting and clear a min-length threshold on whitespace alone, not real content."""
+    text = re.sub(r"<[^>]+>", " ", html or "")
+    return len(re.sub(r"\s+", " ", text).strip())
 
 
 def should_accept_title(title: str, patterns: Iterable[str]) -> bool:
