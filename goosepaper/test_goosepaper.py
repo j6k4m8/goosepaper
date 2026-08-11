@@ -190,11 +190,21 @@ def test_appendix_stories_with_identical_headline_are_deduplicated():
     assert len(appendix_stories) == 1
     assert len(stories) == 3  # 2 puzzles + 1 deduplicated appendix explanation
 
-    # to_html()/to_pdf() only dedupe if a caller explicitly requests it - Goosepaper's
-    # get_stories() itself defaults to deduplicate=False, and _render_html_document() doesn't
-    # pass a value, so it inherits that default. Callers relying on de-duplicated rendering
-    # (e.g. via a subclass or a patched default) get it automatically; this fork's rendering
-    # path does not dedupe unless get_stories(deduplicate=True) is called directly.
+    # to_html()/to_pdf() only dedupe if a caller explicitly requests it. get_stories() defaults
+    # to deduplicate=None, which falls back to the Goosepaper instance's own `deduplicate`
+    # constructor argument (default False) - see test_to_html_* below for that path.
+
+
+def test_to_html_deduplicates_when_constructor_flag_is_set():
+    g = Goosepaper([LoremStoryProvider(limit=3)], deduplicate=True)
+    html = g.to_html()
+    assert html.count("Lorem Ipsum Dolor Sit Amet") == 1
+
+
+def test_to_html_does_not_deduplicate_by_default():
+    g = Goosepaper([LoremStoryProvider(limit=3)])
+    html = g.to_html()
+    assert html.count("Lorem Ipsum Dolor Sit Amet") == 3
 
 
 def test_style_resolves_auto_columns_from_page_profile():

@@ -22,7 +22,12 @@ def _list_active_items(client):
     return [item for item in client.list_items() if item.parent != "trash"]
 
 
-def upload(filepath, delivery_settings: Optional[DeliverySettings] = None, showconfig=False):
+def upload(
+    filepath,
+    delivery_settings: Optional[DeliverySettings] = None,
+    showconfig=False,
+    interactive: bool = True,
+):
     filepath = Path(filepath)
     delivery = _coerce_delivery_settings(delivery_settings)
 
@@ -34,7 +39,7 @@ def upload(filepath, delivery_settings: Optional[DeliverySettings] = None, showc
     if showconfig:
         print(json.dumps(delivery.to_dict(), indent=2))
 
-    client = auth_client()
+    client = auth_client(interactive=interactive)
 
     if not client:
         print("Honk Honk! Couldn't auth! Is your remarkapy config set up (~/.rmapi)?")
@@ -150,6 +155,14 @@ def main(args=None):
         required=False,
         help="Print the resolved delivery settings before uploading.",
     )
+    parser.add_argument(
+        "--no-interactive",
+        dest="interactive",
+        action="store_false",
+        default=True,
+        help="Fail with a clean error instead of prompting for reMarkable pairing if no device "
+        "token is configured. For unattended use (cron, CI) where there's no terminal to prompt.",
+    )
     parsed = parser.parse_args(args)
 
     try:
@@ -167,6 +180,7 @@ def main(args=None):
         parsed.filepath,
         delivery_settings=delivery,
         showconfig=parsed.showconfig,
+        interactive=parsed.interactive,
     )
     return 0 if result else 1
 
