@@ -54,7 +54,7 @@ class _Client:
 
 def test_upload_root_pdf_uses_simple_upload_without_listing(monkeypatch, tmp_path):
     client = _Client()
-    monkeypatch.setattr("goosepaper.upload.auth_client", lambda: client)
+    monkeypatch.setattr("goosepaper.upload.auth_client", lambda **kwargs: client)
 
     filepath = tmp_path / "paper.pdf"
     filepath.write_bytes(b"%PDF-test")
@@ -66,10 +66,46 @@ def test_upload_root_pdf_uses_simple_upload_without_listing(monkeypatch, tmp_pat
     assert "list_items" not in client.calls
 
 
+def test_upload_defaults_to_interactive_auth(monkeypatch, tmp_path):
+    seen = {}
+    client = _Client()
+    monkeypatch.setattr(
+        "goosepaper.upload.auth_client",
+        lambda **kwargs: seen.update(kwargs) or client,
+    )
+
+    filepath = tmp_path / "paper.pdf"
+    filepath.write_bytes(b"%PDF-test")
+
+    upload(filepath, DeliverySettings(folder=None, replace_mode="never", cleanup=False))
+
+    assert seen["interactive"] is True
+
+
+def test_upload_passes_interactive_false_through_to_auth_client(monkeypatch, tmp_path):
+    seen = {}
+    client = _Client()
+    monkeypatch.setattr(
+        "goosepaper.upload.auth_client",
+        lambda **kwargs: seen.update(kwargs) or client,
+    )
+
+    filepath = tmp_path / "paper.pdf"
+    filepath.write_bytes(b"%PDF-test")
+
+    upload(
+        filepath,
+        DeliverySettings(folder=None, replace_mode="never", cleanup=False),
+        interactive=False,
+    )
+
+    assert seen["interactive"] is False
+
+
 def test_upload_with_folder_scans_minimal_index(monkeypatch, tmp_path):
     client = _Client()
     client._items = [_IndexedItem("folder-1", "News", "", "CollectionType")]
-    monkeypatch.setattr("goosepaper.upload.auth_client", lambda: client)
+    monkeypatch.setattr("goosepaper.upload.auth_client", lambda **kwargs: client)
 
     filepath = tmp_path / "paper.pdf"
     filepath.write_bytes(b"%PDF-test")
@@ -83,7 +119,7 @@ def test_upload_with_folder_scans_minimal_index(monkeypatch, tmp_path):
 
 def test_upload_with_new_folder_uses_put_folder_and_nested_put_pdf(monkeypatch, tmp_path):
     client = _Client()
-    monkeypatch.setattr("goosepaper.upload.auth_client", lambda: client)
+    monkeypatch.setattr("goosepaper.upload.auth_client", lambda **kwargs: client)
 
     filepath = tmp_path / "paper.pdf"
     filepath.write_bytes(b"%PDF-test")
