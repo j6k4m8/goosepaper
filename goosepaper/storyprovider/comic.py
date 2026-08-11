@@ -24,7 +24,7 @@ import io
 import json
 from dataclasses import dataclass, field
 from html import escape
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List, Literal, Optional
 
 import requests
 from lxml import html as lxml_html
@@ -109,7 +109,11 @@ class _ComicSource:
     requires_comic_name: bool = False
 
 
-_COMIC_SOURCES: Dict[str, _ComicSource] = {
+# Kept in sync with _COMIC_SOURCES' keys by hand - Literal can't be built from a dict's keys at
+# type-check time, so this is the closest editors get to intellisense/hinting on comic_type.
+ComicType = Literal["xkcd", "gocomics", "arcamax"]
+
+_COMIC_SOURCES: Dict[ComicType, _ComicSource] = {
     "xkcd": _ComicSource(
         label="XKCD",
         page_url="https://xkcd.com",
@@ -201,10 +205,13 @@ class DailyComicStoryProvider(StoryProvider):
 
     def __init__(
         self,
-        comic_type: str,
+        comic_type: ComicType,
         comic_name: Optional[str] = None,
         date: Optional[datetime.date] = None,
     ) -> None:
+        # Literal[...] above only helps editors/type-checkers at call sites written directly in
+        # Python - config-driven callers (see util.py) pass a plain str straight from JSON, so
+        # this runtime check is still the only thing actually catching a bad value from those.
         if comic_type not in _COMIC_SOURCES:
             raise ValueError(
                 f'Unknown comic_type "{comic_type}". Supported: '
