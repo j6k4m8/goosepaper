@@ -648,51 +648,11 @@ def test_rss_provider_can_show_only_first_byline(monkeypatch):
     assert stories[1].byline is None
 
 
-class TestReencodeImageAsDataUri:
-    """Direct tests of the Pillow re-encode step, decoupled from HTTP - the actual download is
-    exercised separately in TestInlineRemoteImages."""
-
-    def test_oversized_image_is_downscaled(self):
-        oversized = _image_bytes("PNG", size=(2800, 2000))
-
-        result = rss._reencode_image_as_data_uri(oversized, rss._MAX_IMAGE_DIMENSION)
-
-        embedded = _decode_data_uri_image(f'<img src="{result}">')
-        assert max(embedded.size) == rss._MAX_IMAGE_DIMENSION
-        # Aspect ratio preserved: 2800x2000 is 1.4:1.
-        assert embedded.size == (1200, int(2000 * 1200 / 2800))
-
-    def test_cmyk_jpeg_is_converted_to_rgb_jpeg(self):
-        """Regression test: some sources (e.g. certain CDNs) serve CMYK-mode JPEGs. Passing those
-        through to WeasyPrint unmodified is a known way to make it silently drop the *entire*
-        story - see _inline_remote_images' docstring."""
-        cmyk_jpeg = _image_bytes("JPEG", mode="CMYK", size=(8, 8))
-
-        result = rss._reencode_image_as_data_uri(cmyk_jpeg, rss._MAX_IMAGE_DIMENSION)
-
-        embedded = _decode_data_uri_image(f'<img src="{result}">')
-        assert embedded.format == "JPEG"
-        assert embedded.mode in ("RGB", "L")
-
-    def test_transparent_image_is_composited_onto_white(self):
-        """Pillow's convert("RGB") does not composite transparent pixels against anything - it
-        just drops the alpha channel and keeps whatever RGB value was stored underneath, which
-        can leave visible phantom colors where transparency was meant to show through."""
-        rgba = Image.new("RGBA", (2, 2), (255, 255, 255, 0))  # fully transparent white
-        rgba.putpixel((0, 0), (0, 0, 0, 255))  # opaque black - must stay black
-        rgba.putpixel((1, 1), (10, 20, 30, 0))  # fully transparent, garbage RGB - must become white
-        buffer = io.BytesIO()
-        rgba.save(buffer, format="PNG")
-
-        result = rss._reencode_image_as_data_uri(buffer.getvalue(), rss._MAX_IMAGE_DIMENSION)
-
-        embedded = _decode_data_uri_image(f'<img src="{result}">')
-        assert embedded.mode == "RGB"
-        assert embedded.getpixel((0, 0)) == (0, 0, 0)
-        assert embedded.getpixel((1, 1)) == (255, 255, 255)
-
-
 class TestInlineRemoteImages:
+    """Wiring tests: does _inline_remote_images fetch the right URLs, skip the right ones, and
+    tolerate a failure without losing the rest? The actual Pillow re-encode step it delegates to
+    (size capping, CMYK/transparency handling) has its own direct tests in test_imageutil.py."""
+
     def test_inlines_a_remote_http_image_as_a_data_uri(self, monkeypatch):
         fake_png = _image_bytes("PNG", size=(5, 4))
         seen_urls = []
