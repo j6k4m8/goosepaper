@@ -634,3 +634,99 @@ def test_load_paper_config_rejects_invalid_comic_type():
             lambda: load_paper_config(config_path),
             "comic_type must be one of",
         )
+
+
+def test_load_paper_config_accepts_gocomics_source_with_comic_name():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {"type": "comic", "comic_type": "gocomics", "comic_name": "garfield"}
+                ],
+            },
+        )
+
+        config = load_paper_config(config_path)
+
+        assert config.sources[0].options["comic_type"] == "gocomics"
+        assert config.sources[0].options["comic_name"] == "garfield"
+
+
+def test_load_paper_config_accepts_arcamax_source_with_comic_name():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {"type": "comic", "comic_type": "arcamax", "comic_name": "garfield"}
+                ],
+            },
+        )
+
+        config = load_paper_config(config_path)
+
+        assert config.sources[0].options["comic_type"] == "arcamax"
+        assert config.sources[0].options["comic_name"] == "garfield"
+
+
+def test_load_paper_config_rejects_gocomics_source_without_comic_name():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [{"type": "comic", "comic_type": "gocomics"}],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            'requires a "comic_name"',
+        )
+
+
+def test_load_paper_config_rejects_arcamax_source_without_comic_name():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [{"type": "comic", "comic_type": "arcamax"}],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            'requires a "comic_name"',
+        )
+
+
+def test_load_paper_config_rejects_xkcd_source_with_comic_name():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {"type": "comic", "comic_type": "xkcd", "comic_name": "xkcd"}
+                ],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            'does not accept "comic_name"',
+        )

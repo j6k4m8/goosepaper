@@ -625,7 +625,7 @@ def _source_schema(source_type: str) -> Dict[str, Any]:
         },
         "comic": {
             "required": {"comic_type"},
-            "optional": set(),
+            "optional": {"comic_name"},
         },
     }
     if source_type in schemas:
@@ -684,6 +684,7 @@ def _validate_source_options(source_type: str, options: Dict[str, Any], index: i
         "days": lambda value: _validate_positive_int(value, f"source #{index} days"),
         "clock_format": lambda value: _validate_weather_clock_format(value, index),
         "comic_type": lambda value: _validate_comic_type(value, index),
+        "comic_name": lambda value: _validate_string(value, f"source #{index} comic_name"),
     }
 
     for key, value in options.items():
@@ -693,6 +694,20 @@ def _validate_source_options(source_type: str, options: Dict[str, Any], index: i
 
     if source_type == "wikipedia" and options:
         raise ConfigError("Wikipedia sources do not accept any additional fields.")
+
+    if source_type == "comic":
+        comic_type = options.get("comic_type")
+        requires_comic_name = comic_type in {"gocomics", "arcamax"}
+        has_comic_name = "comic_name" in options
+        if requires_comic_name and not has_comic_name:
+            raise ConfigError(
+                f'Source #{index}: comic_type "{comic_type}" requires a "comic_name" - the '
+                'comic\'s own slug on that site, e.g. "garfield" or "calvinandhobbes".'
+            )
+        if not requires_comic_name and has_comic_name:
+            raise ConfigError(
+                f'Source #{index}: comic_type "{comic_type}" does not accept "comic_name".'
+            )
 
 
 def _validate_folder(folder: Optional[str], context: str):
@@ -747,7 +762,7 @@ def _validate_weather_mode(value: Any, index: int):
         )
 
 
-_COMIC_TYPES = {"xkcd", "cah", "garfield"}
+_COMIC_TYPES = {"xkcd", "gocomics", "arcamax"}
 
 
 def _validate_comic_type(value: Any, index: int):
