@@ -12,8 +12,7 @@ Unlike that per-comic origin, gocomics.com and arcamax.com each serve *every* st
 catalog (hundreds of them) through one identical URL/markup template - only the slug in the URL
 differs per comic. So rather than hardcoding one `_ComicSource` per specific comic, there is one
 entry per *site* here, and the specific comic is a runtime parameter (`comic_name`, the site's
-own slug for it, e.g. "garfield" or "calvinandhobbes"). This was verified live against several
-strips on each site before relying on it - see the module's test suite and PR history.
+own slug for it, e.g. "garfield" or "calvinandhobbes").
 """
 
 from __future__ import annotations
