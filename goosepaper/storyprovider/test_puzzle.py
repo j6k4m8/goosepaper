@@ -22,8 +22,8 @@ def test_grid_size_is_derived_from_difficulty():
     easy = PuzzleStoryProvider(puzzle_type="binoxxo", difficulty="easy", count=1, seed=1)
     hard = PuzzleStoryProvider(puzzle_type="binoxxo", difficulty="hard", count=1, seed=1)
 
-    easy_puzzle = next(s for s in easy.get_stories() if not s.headline.endswith("- Lösung"))
-    hard_puzzle = next(s for s in hard.get_stories() if not s.headline.endswith("- Lösung"))
+    easy_puzzle = next(s for s in easy.get_stories() if not s.headline.endswith("- Solution"))
+    hard_puzzle = next(s for s in hard.get_stories() if not s.headline.endswith("- Solution"))
 
     assert easy_puzzle.body_html.count("<tr") == binoxxo.DIFFICULTIES["easy"].size
     assert hard_puzzle.body_html.count("<tr") == binoxxo.DIFFICULTIES["hard"].size
@@ -39,7 +39,7 @@ def test_single_puzzle_headline_has_no_index_suffix():
     provider = PuzzleStoryProvider(puzzle_type="sudoku", count=1, seed=1)
     stories = provider.get_stories()
 
-    puzzles = [s for s in stories if not s.headline.endswith("- Lösung")]
+    puzzles = [s for s in stories if not s.headline.endswith("- Solution")]
     assert puzzles[0].headline == "Medium Sudoku"
 
 
@@ -50,8 +50,8 @@ def test_multiple_same_type_puzzles_get_distinct_headlines():
     provider = PuzzleStoryProvider(puzzle_type="sudoku", count=2, seed=1)
     stories = provider.get_stories()
 
-    puzzles = [s for s in stories if not s.headline.endswith("- Lösung")]
-    solutions = [s for s in stories if s.headline.endswith("- Lösung")]
+    puzzles = [s for s in stories if not s.headline.endswith("- Solution")]
+    solutions = [s for s in stories if s.headline.endswith("- Solution")]
     assert len(puzzles) == 2
     assert len(solutions) == 2
     assert len({s.headline for s in puzzles}) == 2
@@ -64,8 +64,8 @@ def test_solutions_are_placed_in_the_appendix():
     provider = PuzzleStoryProvider(puzzle_type="sudoku", count=2, seed=1)
     stories = provider.get_stories()
 
-    puzzles = [s for s in stories if not s.headline.endswith("- Lösung")]
-    solutions = [s for s in stories if s.headline.endswith("- Lösung")]
+    puzzles = [s for s in stories if not s.headline.endswith("- Solution")]
+    solutions = [s for s in stories if s.headline.endswith("- Solution")]
     assert len(puzzles) == 2
     assert len(solutions) == 2
     assert all(s.placement_preference == PlacementPreference.APPENDIX for s in solutions)
@@ -86,7 +86,7 @@ def test_explanation_inline_is_appended_to_each_puzzle_instance():
     )
     stories = provider.get_stories()
 
-    puzzles = [s for s in stories if not s.headline.endswith("- Lösung")]
+    puzzles = [s for s in stories if not s.headline.endswith("- Solution")]
     assert len(puzzles) == 2
     assert all("puzzle-explanation-inline" in s.body_html for s in puzzles)
     # No separate explanation story is created in inline mode.
@@ -99,7 +99,7 @@ def test_explanation_footer_adds_one_story_in_normal_reading_order():
     )
     stories = provider.get_stories()
 
-    explanations = [s for s in stories if s.headline == "Wie funktioniert Sudoku?"]
+    explanations = [s for s in stories if s.headline == "How does Sudoku work?"]
     assert len(explanations) == 1
     assert explanations[0].placement_preference == PlacementPreference.NONE
     assert not explanations[0].include_in_toc
@@ -113,7 +113,7 @@ def test_explanation_footer_uses_a_real_css_footnote():
     provider = PuzzleStoryProvider(puzzle_type="sudoku", count=1, seed=1, explanation="footer")
     stories = provider.get_stories()
 
-    explanation = next(s for s in stories if s.headline == "Wie funktioniert Sudoku?")
+    explanation = next(s for s in stories if s.headline == "How does Sudoku work?")
     assert "puzzle-footnote" in explanation.body_html
     assert "puzzle-footnote-1" in explanation.body_html  # sudoku is first in _EXPLANATIONS
 
@@ -129,7 +129,7 @@ def test_explanation_footer_marks_every_puzzle_instance_with_a_matching_xref():
 
     puzzles = [
         s for s in stories
-        if not s.headline.endswith("- Lösung") and not s.headline.startswith("Wie funktioniert")
+        if not s.headline.endswith("- Solution") and not s.headline.startswith("How does")
     ]
     assert len(puzzles) == 2
     for puzzle in puzzles:
@@ -151,13 +151,13 @@ def test_footer_xref_numbers_match_the_footnote_across_sources_and_difficulties(
     g = Goosepaper([easy_sudoku, medium_sudoku])
     stories = g.get_stories(deduplicate=True)
 
-    explanations = [s for s in stories if s.headline == "Wie funktioniert Sudoku?"]
+    explanations = [s for s in stories if s.headline == "How does Sudoku work?"]
     assert len(explanations) == 1
     assert "puzzle-footnote-1" in explanations[0].body_html
 
     puzzles = [
         s for s in stories
-        if not s.headline.endswith("- Lösung") and not s.headline.startswith("Wie funktioniert")
+        if not s.headline.endswith("- Solution") and not s.headline.startswith("How does")
     ]
     assert len(puzzles) == 2
     for puzzle in puzzles:
@@ -170,7 +170,7 @@ def test_explanation_appendix_adds_one_story_placed_in_the_appendix():
     )
     stories = provider.get_stories()
 
-    explanations = [s for s in stories if s.headline == "Wie funktioniert Sudoku?"]
+    explanations = [s for s in stories if s.headline == "How does Sudoku work?"]
     assert len(explanations) == 1
     assert explanations[0].placement_preference == PlacementPreference.APPENDIX
 
@@ -195,7 +195,7 @@ def test_repeated_appendix_explanations_across_sources_are_deduplicated():
     g = Goosepaper([easy_sudoku, hard_sudoku])
     stories = g.get_stories(deduplicate=True)
 
-    explanations = [s for s in stories if s.headline == "Wie funktioniert Sudoku?"]
+    explanations = [s for s in stories if s.headline == "How does Sudoku work?"]
     assert len(explanations) == 1
 
 
@@ -209,7 +209,7 @@ def test_no_name_shows_no_visible_label():
     for story in stories:
         assert '<h2 class="puzzle-custom-label">' not in story.body_html
     # The internal identity is untouched by the absence of `name`.
-    puzzles = [s for s in stories if not s.headline.endswith("- Lösung")]
+    puzzles = [s for s in stories if not s.headline.endswith("- Solution")]
     assert puzzles[0].headline == "Medium Sudoku"
 
 
@@ -217,10 +217,10 @@ def test_name_becomes_the_visible_label_instead_of_the_auto_generated_text():
     provider = PuzzleStoryProvider(puzzle_type="sudoku", count=1, seed=1, name="Sudoku Mittel")
     stories = provider.get_stories()
 
-    puzzle = next(s for s in stories if not s.headline.endswith("- Lösung"))
-    solution = next(s for s in stories if s.headline.endswith("- Lösung"))
+    puzzle = next(s for s in stories if not s.headline.endswith("- Solution"))
+    solution = next(s for s in stories if s.headline.endswith("- Solution"))
     assert '<h2 class="puzzle-custom-label">Sudoku Mittel</h2>' in puzzle.body_html
-    assert '<h2 class="puzzle-custom-label">Sudoku Mittel - Lösung</h2>' in solution.body_html
+    assert '<h2 class="puzzle-custom-label">Sudoku Mittel - Solution</h2>' in solution.body_html
     # The internal identity (headline) is still the disambiguated auto-generated label, not
     # `name` - so cross-source dedup/anchor uniqueness keeps working exactly as before,
     # regardless of what a user names two otherwise-different puzzle instances.
@@ -233,7 +233,7 @@ def test_custom_name_is_html_escaped():
     )
     stories = provider.get_stories()
 
-    puzzle = next(s for s in stories if not s.headline.endswith("- Lösung"))
+    puzzle = next(s for s in stories if not s.headline.endswith("- Solution"))
     assert "<script>" not in puzzle.body_html
     assert "&lt;script&gt;" in puzzle.body_html
 
@@ -250,6 +250,6 @@ def test_two_sources_sharing_type_and_difficulty_lose_one_puzzle_to_dedup():
     second = PuzzleStoryProvider(puzzle_type="sudoku", difficulty="medium", seed=2)
 
     stories = Goosepaper([first, second]).get_stories(deduplicate=True)
-    puzzles = [s for s in stories if not s.headline.endswith("- Lösung")]
+    puzzles = [s for s in stories if not s.headline.endswith("- Solution")]
 
     assert len(puzzles) == 1  # one of the two genuinely-different puzzles was lost

@@ -90,7 +90,7 @@ footnote-marker auto-generated content suppressed. */
 .puzzle-footnote { float: footnote; }
 .puzzle-footnote::footnote-call { content: ""; }
 .puzzle-footnote-xref { vertical-align: super; font-size: 0.7em; line-height: 0; }
-/* The explanation Story's own headline ("Wie funktioniert Sudoku?") is a sibling of .story-body,
+/* The explanation Story's own headline ("How does Sudoku work?") is a sibling of .story-body,
 not something float: footnote takes with it - only the .puzzle-footnote span floats away, leaving
 the heading behind as an orphaned line with nothing under it. Hide it: the Story still needs a
 real, stable headline for Goosepaper's own deduplicate=True matching (see get_stories()'s
@@ -116,30 +116,29 @@ article:has(.puzzle-body) > .story-headline { display: none; }
 </style>
 """
 
-# Short German rules blurb per puzzle type - used by the `explanation` option (see
+# Short rules blurb per puzzle type - used by the `explanation` option (see
 # PuzzleStoryProvider). Kept intentionally brief: this is a reminder, not a rulebook.
 _EXPLANATIONS: Dict[str, str] = {
     "sudoku": (
-        "Fülle das Raster so, dass in jeder Zeile, jeder Spalte und jedem markierten Block "
-        "die Zahlen 1 bis 9 jeweils genau einmal vorkommen."
+        "Fill the grid so that the numbers 1 to 9 each appear exactly once in every row, "
+        "column, and marked block."
     ),
     "binoxxo": (
-        "Fülle das Raster mit den Symbolen X und O. Nie mehr als zwei gleiche Symbole "
-        "direkt nebeneinander oder untereinander, jede Zeile und Spalte enthält gleich "
-        "viele X wie O, und keine Zeile bzw. Spalte wiederholt sich."
+        "Fill the grid with the symbols X and O. No more than two identical symbols in a "
+        "row or column, each row and column contains an equal number of Xs and Os, and no "
+        "row or column repeats."
     ),
     "futoshiki": (
-        "Fülle das Raster so, dass in jeder Zeile und jeder Spalte jede Zahl genau einmal "
-        "vorkommt. Die Ungleichheitszeichen zwischen benachbarten Feldern müssen erfüllt sein."
+        "Fill the grid so that every number appears exactly once in each row and each "
+        "column. The inequality signs between neighboring cells must be satisfied."
     ),
     "kakuro": (
-        "Fülle die weißen Felder mit Ziffern von 1 bis 9, sodass jeder zusammenhängende "
-        "Zahlenblock in Summe die angegebene Zahl ergibt. Innerhalb eines Blocks darf keine "
-        "Ziffer mehrfach vorkommen."
+        "Fill the white cells with digits from 1 to 9 so that each contiguous block of "
+        "digits sums to the given number. No digit may repeat within a block."
     ),
     "shikaku": (
-        "Zerlege das Raster in rechteckige Bereiche, sodass jedes Rechteck genau eine Zahl "
-        "enthält und seine Fläche - die Anzahl seiner Felder - dieser Zahl entspricht."
+        "Divide the grid into rectangular regions so that each rectangle contains exactly "
+        "one number, and its area - the number of its cells - matches that number."
     ),
 }
 
@@ -444,7 +443,7 @@ class PuzzleStoryProvider(StoryProvider):
         stable, distinct identity per story regardless of what's configured, and the label
         supplies that - it's just never rendered, see the .puzzle-body CSS rule above). What
         *does* show, per puzzle instance, is:
-          - `name`, if given, as that instance's own heading; the same text (plus " - Lösung")
+          - `name`, if given, as that instance's own heading; the same text (plus " - Solution")
             on its solution.
           - nothing, if `name` isn't given - only the enclosing section's own heading identifies
             what the reader is looking at. Fine when a section already covers exactly one
@@ -489,7 +488,7 @@ class PuzzleStoryProvider(StoryProvider):
                 f'<h2 class="puzzle-custom-label">{escape(self.name)}</h2>' if self.name else ""
             )
             visible_solution_label = (
-                f'<h2 class="puzzle-custom-label">{escape(self.name)} - Lösung</h2>'
+                f'<h2 class="puzzle-custom-label">{escape(self.name)} - Solution</h2>'
                 if self.name
                 else ""
             )
@@ -517,7 +516,7 @@ class PuzzleStoryProvider(StoryProvider):
             )
             solutions.append(
                 Story(
-                    headline=f"{label} - Lösung",
+                    headline=f"{label} - Solution",
                     body_html=(
                         _PUZZLE_CSS
                         + f'<div class="puzzle-body">{visible_solution_label}{solution_html}</div>'
@@ -532,7 +531,7 @@ class PuzzleStoryProvider(StoryProvider):
         if self.explanation == "footer":
             stories.append(
                 Story(
-                    headline=f"Wie funktioniert {self.puzzle_type.title()}?",
+                    headline=f"How does {self.puzzle_type.title()} work?",
                     body_html=(
                         _PUZZLE_CSS
                         + f'<span class="puzzle-footnote puzzle-footnote-{footnote_number}">'
@@ -546,7 +545,7 @@ class PuzzleStoryProvider(StoryProvider):
         elif self.explanation == "appendix":
             stories.append(
                 Story(
-                    headline=f"Wie funktioniert {self.puzzle_type.title()}?",
+                    headline=f"How does {self.puzzle_type.title()} work?",
                     body_html=(
                         _PUZZLE_CSS
                         + f'<p class="puzzle-explanation-footer">{explanation_text}</p>'

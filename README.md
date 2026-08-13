@@ -196,7 +196,7 @@ collected separately and placed in the paper's appendix.
 | `count` | optional | `1` | How many puzzle instances of this `puzzle_type`+`difficulty` to generate. |
 | `seed` | optional | random | RNG seed, for reproducible generation. |
 | `explanation` | optional | `"none"` | `"none"`, `"inline"` (a short rules blurb repeated under every puzzle instance), `"footer"` (a real CSS footnote at the bottom of whichever page it lands on - one footnote per `puzzle_type` in the whole paper, with every instance of that type carrying its own small reference mark pointing at it), or `"appendix"` (one rules blurb per `puzzle_type`, grouped with the solutions at the end of the document). |
-| `name` | optional | none | Visible heading for this puzzle instance (and its solution, suffixed " - Lösung"). If omitted, no heading renders for the puzzle itself - only the enclosing section's own title identifies it. Useful when several different puzzle types share one section; redundant (and best left unset) when a section already covers exactly one type+difficulty. |
+| `name` | optional | none | Visible heading for this puzzle instance (and its solution, suffixed " - Solution"). If omitted, no heading renders for the puzzle itself - only the enclosing section's own title identifies it. Useful when several different puzzle types share one section; redundant (and best left unset) when a section already covers exactly one type+difficulty. |
 
 # More Questions, Infrequently Asked
 
