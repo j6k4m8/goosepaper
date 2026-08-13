@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import random
 from html import escape
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Literal, Optional, Tuple
 
 from ..puzzlegen import binoxxo, futoshiki, kakuro, shikaku, sudoku
 from ..story import Story
@@ -141,6 +141,10 @@ _EXPLANATIONS: Dict[str, str] = {
         "one number, and its area - the number of its cells - matches that number."
     ),
 }
+
+# Kept in sync with _EXPLANATION_MODES by hand - Literal can't be built from a set's members at
+# type-check time, so this is the closest editors get to intellisense/hinting on `explanation`.
+ExplanationMode = Literal["none", "inline", "footer", "appendix"]
 
 _EXPLANATION_MODES = {"none", "inline", "footer", "appendix"}
 
@@ -310,6 +314,10 @@ def _render_shikaku(puzzle) -> Tuple[str, str]:
 # --- Provider ------------------------------------------------------------------------------
 
 
+# Kept in sync with _GENERATORS' keys by hand - Literal can't be built from a dict's keys at
+# type-check time, so this is the closest editors get to intellisense/hinting on `puzzle_type`.
+PuzzleType = Literal["sudoku", "binoxxo", "futoshiki", "kakuro", "shikaku"]
+
 _GENERATORS = {
     "sudoku": sudoku.generate_puzzle,
     "binoxxo": binoxxo.generate_puzzle,
@@ -371,12 +379,12 @@ class PuzzleStoryProvider(StoryProvider):
 
     def __init__(
         self,
-        puzzle_type: str,
+        puzzle_type: PuzzleType,
         box_size: int = 3,
         difficulty: str = sudoku.DEFAULT_DIFFICULTY,
         count: int = 1,
         seed: Optional[int] = None,
-        explanation: str = "none",
+        explanation: ExplanationMode = "none",
         name: Optional[str] = None,
     ) -> None:
         if puzzle_type not in _GENERATORS:
