@@ -394,8 +394,7 @@ class TestMakeUrlsAbsolute:
         already all absolute (common, not an edge case) leaked the wrapper straight into the
         newspaper's assembled HTML verbatim. A second <html> tag appearing mid-document is enough
         to confuse WeasyPrint's parser into silently dropping everything after it until it
-        resyncs - verified live: found 64 such leaks across one real edition, several immediately
-        preceding a story that vanished entirely from the rendered PDF."""
+        resyncs, sometimes taking an entire story down with it."""
         html = "<html><body><p>Already-absolute content, nothing to rewrite.</p></body></html>"
 
         result = rss._make_urls_absolute(html, "https://example.com/posts/some-article/")

@@ -219,8 +219,7 @@ def _make_urls_absolute(body_html: str, base_url: str) -> str:
     # article happened to have zero relative URLs (i.e. every link/image on the page was already
     # absolute - common, not an edge case). A second <html> tag appearing mid-document is enough
     # to confuse WeasyPrint's parser into silently dropping everything from that point until it
-    # resyncs - verified live: found 64 such leaked wrappers across one real 111-story edition,
-    # several immediately preceding a story that vanished entirely from the rendered PDF.
+    # resyncs, sometimes taking an entire story down with it.
     return container.decode_contents()
 
 
