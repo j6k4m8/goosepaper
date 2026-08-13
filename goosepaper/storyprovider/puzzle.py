@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import random
 from html import escape
-from typing import Callable, Dict, List, Literal, Optional, Tuple
+from typing import Callable, Container, Dict, List, Literal, Optional, Tuple
 
 from ..puzzlegen import binoxxo, futoshiki, kakuro, shikaku, sudoku
 from ..story import Story
@@ -348,6 +348,11 @@ _DIFFICULTIES = {
 }
 
 
+def _validate_choice(value: str, valid: Container[str], label: str) -> None:
+    if value not in valid:
+        raise ValueError(f'Unknown {label} "{value}". Supported: {", ".join(sorted(valid))}.')
+
+
 class PuzzleStoryProvider(StoryProvider):
     """Generates one or more logic puzzles and renders each as an HTML story. Solutions are
     collected separately and placed in the paper's appendix (PlacementPreference.APPENDIX),
@@ -387,16 +392,8 @@ class PuzzleStoryProvider(StoryProvider):
         explanation: ExplanationMode = "none",
         name: Optional[str] = None,
     ) -> None:
-        if puzzle_type not in _GENERATORS:
-            raise ValueError(
-                f'Unknown puzzle_type "{puzzle_type}". Supported: '
-                f'{", ".join(sorted(_GENERATORS))}.'
-            )
-        if explanation not in _EXPLANATION_MODES:
-            raise ValueError(
-                f'Unknown explanation mode "{explanation}". Supported: '
-                f'{", ".join(sorted(_EXPLANATION_MODES))}.'
-            )
+        _validate_choice(puzzle_type, _GENERATORS, "puzzle_type")
+        _validate_choice(explanation, _EXPLANATION_MODES, "explanation mode")
         self.puzzle_type = puzzle_type
         self.box_size = box_size
         self.difficulty = difficulty
