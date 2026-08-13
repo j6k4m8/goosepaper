@@ -197,7 +197,6 @@ def _make_urls_absolute(body_html: str, base_url: str) -> str:
 
     soup = bs4.BeautifulSoup(body_html, "lxml")
     container = soup.body or soup
-    changed = False
     for tag_name, attr in (("img", "src"), ("source", "src"), ("a", "href")):
         for node in container.find_all(tag_name):
             value = node.get(attr)
@@ -209,9 +208,19 @@ def _make_urls_absolute(body_html: str, base_url: str) -> str:
             if not value or value.startswith("data:") or urllib.parse.urlparse(value).scheme:
                 continue
             node[attr] = urllib.parse.urljoin(base_url, value)
-            changed = True
 
-    return container.decode_contents() if changed else body_html
+    # Always re-serialize via decode_contents(), even when nothing needed absolutizing - not an
+    # optimization to skip. bs4's lxml parser wraps whatever it's given in a synthetic
+    # <html><body> (readability's own doc.summary() output already looks exactly like a full
+    # document, so lxml has no reason to suspect it's a fragment); container.decode_contents()
+    # is what strips that wrapper back off. Returning the untouched input on a "nothing to
+    # change" run - as the original version of this function did - let that synthetic
+    # <html><body> leak straight into the final newspaper's body_html verbatim whenever an
+    # article happened to have zero relative URLs (i.e. every link/image on the page was already
+    # absolute - common, not an edge case). A second <html> tag appearing mid-document is enough
+    # to confuse WeasyPrint's parser into silently dropping everything from that point until it
+    # resyncs, sometimes taking an entire story down with it.
+    return container.decode_contents()
 
 
 def _entry_source(entry, feed_url: str) -> str:
