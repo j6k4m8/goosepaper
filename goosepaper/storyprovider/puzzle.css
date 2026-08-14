@@ -1,0 +1,181 @@
+/* ==========================================================================
+   Shared grid base
+   ========================================================================== */
+
+table.puzzle-grid,
+table.futoshiki-grid,
+table.kakuro-grid,
+table.shikaku-grid {
+  border-collapse: collapse;
+  margin: 0 auto 1em auto;
+  page-break-inside: avoid;
+}
+
+/* ==========================================================================
+   Sudoku / Binoxxo - plain n x n grid, optionally with box divisions
+   ========================================================================== */
+
+table.puzzle-grid td {
+  width: 2em;
+  height: 2em;
+  text-align: center;
+  vertical-align: middle;
+  font-family: monospace;
+  font-size: 1.15em;
+  border: 1px solid #999;
+  padding: 0;
+}
+
+table.puzzle-grid tr:first-child td { border-top: 2px solid #000; }
+table.puzzle-grid td:first-child { border-left: 2px solid #000; }
+table.puzzle-grid td.box-left { border-left: 2px solid #000; }
+table.puzzle-grid tr.box-top td { border-top: 2px solid #000; }
+table.puzzle-grid tr:last-child td { border-bottom: 2px solid #000; }
+table.puzzle-grid td:last-child { border-right: 2px solid #000; }
+
+/* ==========================================================================
+   Futoshiki - grid with inequality signs in the gaps between cells
+   ========================================================================== */
+
+table.futoshiki-grid td.fut-cell {
+  width: 1.8em;
+  height: 1.8em;
+  text-align: center;
+  vertical-align: middle;
+  font-family: monospace;
+  font-size: 1.1em;
+  border: 1px solid #999;
+}
+
+table.futoshiki-grid td.fut-hgap {
+  width: 0.7em;
+  text-align: center;
+  vertical-align: middle;
+  font-weight: bold;
+}
+
+table.futoshiki-grid td.fut-vgap {
+  height: 0.7em;
+  text-align: center;
+  vertical-align: middle;
+  font-weight: bold;
+  font-size: 0.85em;
+  line-height: 1;
+}
+
+table.futoshiki-grid td.fut-spacer {
+  width: 0.7em;
+  height: 0.7em;
+}
+
+/* ==========================================================================
+   Kakuro - grid with diagonally-split clue cells (row-sum / column-sum)
+   ========================================================================== */
+
+table.kakuro-grid td {
+  width: 2em;
+  height: 2em;
+  border: 1px solid #000;
+  padding: 0;
+  text-align: center;
+  font-family: monospace;
+}
+
+table.kakuro-grid td.kakuro-black {
+  background: linear-gradient(to top right, #999 49.5%, #000 49.5%, #000 50.5%, #999 50.5%);
+}
+
+/* Each clue cell's two sums (row-sum top-right, column-sum bottom-left; see kakuro/rules.py's
+   Run docstring) sit in a nested 2x2 <table>, not absolutely-positioned or CSS-grid spans -
+   both of those hit WeasyPrint layout bugs (inverted vertical axis / duplicated grid-item
+   boxes) that plain table-cell centering doesn't. */
+table.kakuro-grid table.kakuro-clue {
+  width: 100%;
+  height: 100%;
+  border-collapse: collapse;
+}
+
+table.kakuro-grid table.kakuro-clue td {
+  width: 50%;
+  height: 50%;
+  border: none;
+  padding: 0;
+  text-align: center;
+  vertical-align: middle;
+  font-size: 0.5em;
+  color: #000;
+}
+
+/* ==========================================================================
+   Shikaku - variable-size grid (5x5 to 20x20) divided into rectangles
+   ========================================================================== */
+
+/* Font size is tiered by difficulty and, where needed, by column count: WeasyPrint's
+   auto-layout table shrinks a too-wide table's cell width to fit the column but not its
+   height, so cells go rectangular unless each tier's size already fits the column at full
+   width. Values were verified against actual rendered page/cell dimensions per page profile. */
+table.shikaku-grid td {
+  width: 2em;
+  height: 2em;
+  text-align: center;
+  vertical-align: middle;
+  font-family: monospace;
+  border: 1px solid #ccc;
+}
+
+table.shikaku-grid.shikaku-easy td { font-size: 1.15em; }
+table.shikaku-grid.shikaku-medium td { font-size: 0.9em; }
+.columns-1 table.shikaku-grid.shikaku-medium td { font-size: 1em; }
+.columns-3 table.shikaku-grid.shikaku-medium td { font-size: 0.6em; }
+table.shikaku-grid.shikaku-hard td { font-size: 0.3em; }
+.columns-1 table.shikaku-grid.shikaku-hard td { font-size: 0.55em; }
+.columns-2 table.shikaku-grid.shikaku-hard td { font-size: 0.4em; }
+
+table.shikaku-grid td.shikaku-left { border-left: 2px solid #000; }
+table.shikaku-grid td.shikaku-right { border-right: 2px solid #000; }
+table.shikaku-grid td.shikaku-top { border-top: 2px solid #000; }
+table.shikaku-grid td.shikaku-bottom { border-bottom: 2px solid #000; }
+
+/* ==========================================================================
+   Explanations and labels
+   ========================================================================== */
+
+.puzzle-explanation-inline {
+  font-size: 0.92em;
+  color: #444;
+  margin-top: 0.6em;
+}
+
+.puzzle-explanation-footer {
+  font-size: 0.85em;
+  color: #555;
+  margin-top: 1em;
+  padding-top: 0.5em;
+  border-top: 0.75pt solid #ccc;
+}
+
+/* "footer" explanations are real CSS footnotes (float: footnote) so they land at the bottom of
+   whichever page they end up on, rather than a paragraph glued onto the puzzle body. Each
+   puzzle_type gets a fixed footnote number (see _EXPLANATION_NUMBER in puzzle.py) instead of
+   WeasyPrint's own auto-incrementing counter: deduplication means only one footnote per
+   puzzle_type actually exists, but every repeat instance still needs to show that same number. */
+.puzzle-footnote { float: footnote; }
+.puzzle-footnote::footnote-call { content: ""; }
+.puzzle-footnote-xref { vertical-align: super; font-size: 0.7em; line-height: 0; }
+
+/* The explanation story's headline is a sibling of .story-body, not something the float takes
+   with it - hide it (and its article's divider) even though a stable headline is still needed
+   for goosepaper's own dedup matching. */
+article:has(.puzzle-footnote) > .story-headline { display: none; }
+article:has(.puzzle-footnote) { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+
+.puzzle-footnote-1::footnote-marker { content: "1. "; }
+.puzzle-footnote-2::footnote-marker { content: "2. "; }
+.puzzle-footnote-3::footnote-marker { content: "3. "; }
+.puzzle-footnote-4::footnote-marker { content: "4. "; }
+.puzzle-footnote-5::footnote-marker { content: "5. "; }
+
+/* PuzzleStoryProvider hides its own auto-generated headline label - only a config-driven
+   `name`, if given, or nothing (relying on the enclosing section heading) actually renders. */
+article:has(.puzzle-body) > .story-headline { display: none; }
+.puzzle-custom-label { margin: 0 0 0.4em; font-size: 1.05em; font-weight: bold; }

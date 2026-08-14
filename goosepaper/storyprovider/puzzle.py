@@ -9,6 +9,7 @@ renderer) already handles.
 
 from __future__ import annotations
 
+import importlib.resources as resources
 import random
 from html import escape
 from typing import Callable, Container, Dict, List, Literal, Optional, Tuple
@@ -18,103 +19,15 @@ from ..story import Story
 from ..util import PlacementPreference
 from .storyprovider import StoryProvider
 
-_PUZZLE_CSS = """
-<style>
-table.puzzle-grid, table.futoshiki-grid, table.kakuro-grid, table.shikaku-grid {
-  border-collapse: collapse; margin: 0 auto 1em auto; page-break-inside: avoid;
-}
-table.puzzle-grid td { width: 2em; height: 2em; text-align: center; vertical-align: middle;
-  font-family: monospace; font-size: 1.15em; border: 1px solid #999; padding: 0; }
-table.puzzle-grid tr:first-child td { border-top: 2px solid #000; }
-table.puzzle-grid td:first-child { border-left: 2px solid #000; }
-table.puzzle-grid td.box-left { border-left: 2px solid #000; }
-table.puzzle-grid tr.box-top td { border-top: 2px solid #000; }
-table.puzzle-grid tr:last-child td { border-bottom: 2px solid #000; }
-table.puzzle-grid td:last-child { border-right: 2px solid #000; }
-
-table.futoshiki-grid td.fut-cell { width: 1.8em; height: 1.8em; text-align: center;
-  vertical-align: middle; font-family: monospace; font-size: 1.1em; border: 1px solid #999; }
-table.futoshiki-grid td.fut-hgap { width: 0.7em; text-align: center; vertical-align: middle;
-  font-weight: bold; }
-table.futoshiki-grid td.fut-vgap { height: 0.7em; text-align: center; vertical-align: middle;
-  font-weight: bold; font-size: 0.85em; }
-table.futoshiki-grid td.fut-spacer { width: 0.7em; height: 0.7em; }
-
-table.kakuro-grid td { width: 2em; height: 2em; border: 1px solid #999; padding: 0;
-  text-align: center; font-family: monospace; }
-table.kakuro-grid td.kakuro-black {
-  background: linear-gradient(to top right, #000 49.5%, #999 49.5%, #999 50.5%, #000 50.5%);
-  position: relative;
-}
-table.kakuro-grid .kakuro-clue { position: relative; width: 100%; height: 100%; }
-/* The clue cell's diagonal (linear-gradient(to top right, ...) above) splits it into an
-upper-right triangle (the row/"h" sum, i.e. the sum of the white run to the right) and a
-lower-left triangle (the column/"v" sum, the run going down - see kakuro/rules.py's Run
-docstring). WeasyPrint inverts the vertical axis for an absolutely-positioned span nested this
-way inside a table cell (position:relative div -> position:relative td): "top: 0" renders at the
-visual bottom and "bottom: 0" renders at the visual top, confirmed by rendering an isolated
-labelled cell. `bottom`/`top` below are therefore intentionally the opposite of where each label
-visually needs to land - swapping them is what actually puts "h" at the top (of the upper-right
-triangle) and "v" at the bottom (of the lower-left triangle). */
-table.kakuro-grid .kakuro-h { position: absolute; bottom: 0; right: 2px; font-size: 0.5em; color: #fff; }
-table.kakuro-grid .kakuro-v { position: absolute; top: 0; left: 2px; font-size: 0.5em; color: #fff; }
-
-table.shikaku-grid td { width: 1.7em; height: 1.7em; text-align: center; vertical-align: middle;
-  font-family: monospace; font-size: 0.9em; border: 1px solid #ccc; }
-table.shikaku-grid td.shikaku-left { border-left: 2px solid #000; }
-table.shikaku-grid td.shikaku-right { border-right: 2px solid #000; }
-table.shikaku-grid td.shikaku-top { border-top: 2px solid #000; }
-table.shikaku-grid td.shikaku-bottom { border-bottom: 2px solid #000; }
-
-.puzzle-explanation-inline {
-  font-size: 0.92em; color: #444; margin-top: 0.6em;
-}
-.puzzle-explanation-footer {
-  font-size: 0.85em; color: #555; margin-top: 1em; padding-top: 0.5em;
-  border-top: 0.75pt solid #ccc;
-}
-
-/* "footer" explanations are real CSS footnotes (float: footnote), not a paragraph glued onto the
-end of a puzzle's own body - so they land at the bottom of whichever page they end up on instead
-of interrupting the reading flow. Deduplication (see get_stories()'s docstring) means only one
-puzzle_type's worth of footnote content actually exists per document; every puzzle instance that
-type appears in - including repeats across difficulties - carries its own .puzzle-footnote-xref
-marker instead, showing the same number. WeasyPrint's own auto-numbering (the `footnote` CSS
-counter) can't be reused for that: it counts every float: footnote in the whole document in
-order, so a later instance's marker would show a different, unrelated number - there's also no
-working way in this WeasyPrint version to point a plain cross-reference at "whatever number this
-other footnote got" (target-counter() was tried; it did not resolve). So the number is entirely
-our own - fixed per puzzle_type (see _EXPLANATION_NUMBER) - and both the floated footnote's own
-marker and every xref marker render that literal digit, with WeasyPrint's own footnote-call/
-footnote-marker auto-generated content suppressed. */
-.puzzle-footnote { float: footnote; }
-.puzzle-footnote::footnote-call { content: ""; }
-.puzzle-footnote-xref { vertical-align: super; font-size: 0.7em; line-height: 0; }
-/* The explanation Story's own headline ("How does Sudoku work?") is a sibling of .story-body,
-not something float: footnote takes with it - only the .puzzle-footnote span floats away, leaving
-the heading behind as an orphaned line with nothing under it. Hide it: the Story still needs a
-real, stable headline for Goosepaper's own deduplicate=True matching (see get_stories()'s
-docstring), it just shouldn't render as a visible section of its own. Same story for the
-surrounding <article>'s own divider (margin/padding/border-bottom, from the base .main-stories >
-article rule) - with headline and body both gone/floated, an empty divider line would be all
-that's left behind in the normal flow. */
-article:has(.puzzle-footnote) > .story-headline { display: none; }
-article:has(.puzzle-footnote) { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
-.puzzle-footnote-1::footnote-marker { content: "1. "; }
-.puzzle-footnote-2::footnote-marker { content: "2. "; }
-.puzzle-footnote-3::footnote-marker { content: "3. "; }
-.puzzle-footnote-4::footnote-marker { content: "4. "; }
-.puzzle-footnote-5::footnote-marker { content: "5. "; }
-
-/* PuzzleStoryProvider no longer shows its own auto-generated "Medium Sudoku"-style label (see
-get_stories()'s docstring) - that text still exists as the Story's actual `headline`, since
-Goosepaper's own cross-provider dedup/anchor-uniqueness machinery needs a stable, distinct
-identity per story regardless of what's configured, but it's never rendered: config-driven
-`name`, if given, or nothing (relying on the enclosing section's own heading) is the point. */
-article:has(.puzzle-body) > .story-headline { display: none; }
-.puzzle-custom-label { margin: 0 0 0.4em; font-size: 1.05em; font-weight: bold; }
-</style>
-"""
+# Static CSS for every puzzle type lives in puzzle.css, right next to this module - kept as a
+# real .css file (not an f-string) since none of it needs Python-side interpolation, so it gets
+# proper syntax highlighting/linting and stays free of Python string-escaping concerns even
+# though it's dense with explanatory comments about WeasyPrint quirks.
+_PUZZLE_CSS = (
+    "<style>"
+    + resources.files(__package__).joinpath("puzzle.css").read_text(encoding="utf-8")
+    + "</style>"
+)
 
 # Short rules blurb per puzzle type - used by the `explanation` option (see
 # PuzzleStoryProvider). Kept intentionally brief: this is a reminder, not a rulebook.
@@ -253,10 +166,11 @@ def _kakuro_html(grid, puzzle) -> str:
                     h = sums.get("h", "")
                     v = sums.get("v", "")
                     content = (
-                        '<div class="kakuro-clue">'
-                        f'<span class="kakuro-h">{h}</span>'
-                        f'<span class="kakuro-v">{v}</span>'
-                        "</div>"
+                        '<table class="kakuro-clue"><tr>'
+                        f'<td></td><td class="kakuro-h">{h}</td>'
+                        "</tr><tr>"
+                        f'<td class="kakuro-v">{v}</td><td></td>'
+                        "</tr></table>"
                     )
                 else:
                     content = ""
