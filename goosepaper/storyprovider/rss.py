@@ -8,19 +8,12 @@ import feedparser
 import requests
 from readability import Document
 
-from .imageutil import reencode_image_as_data_uri
 from .storyprovider import StoryProvider
 from ..story import Story
 from ..version import __version__
 
 RSS_BYLINE_MODES = {"all", "none", "first"}
 RSS_BODY_SOURCES = {"auto", "content", "summary", "article"}
-
-_IMAGE_FETCH_TIMEOUT = 20
-# Matches a real newspaper column's rendered width - a source image well beyond this is pure
-# waste, not extra quality (see _inline_remote_images' docstring for why capping it matters far
-# more than that).
-_MAX_IMAGE_DIMENSION = 1200
 
 
 class RSSFeedStoryProvider(StoryProvider):
@@ -54,6 +47,13 @@ class RSSFeedStoryProvider(StoryProvider):
         )
 
     def get_stories(self) -> List[Story]:
+        """Returned Stories' body_html may still contain remote `<img src="http(s)://...">`
+        links, exactly as the source article served them - this provider no longer fetches or
+        re-encodes them itself. That happens centrally, later, in Goosepaper's own render/export
+        methods (see goosepaper.py's `_inline_story_images()` and its call sites). A caller that
+        uses this provider's Stories directly, bypassing Goosepaper, gets unprocessed remote
+        image links.
+        """
         feed = feedparser.parse(self.feed_url)
         limit = min(self.limit, len(feed.entries))
         if limit == 0:
@@ -76,12 +76,6 @@ class RSSFeedStoryProvider(StoryProvider):
 
             if story is None:
                 continue
-            try:
-                story.body_html = _inline_remote_images(story.body_html)
-            except Exception as err:
-                print(
-                    f"Sad honk :/ Couldn't process images for {story.headline!r}: {err}"
-                )
             if self.byline_mode == "none":
                 story.byline = None
             elif self.byline_mode == "first" and stories:
@@ -315,61 +309,6 @@ def _strip_duplicate_leading_heading(body_html: str, headline: str) -> str:
             continue
 
     return body_html
-
-
-def _inline_remote_images(body_html: str) -> str:
-    """Re-fetches every remote `<img src="http(s)://...">` in body_html and inlines it as a
-    base64 `data:` JPEG URI via `imageutil.reencode_image_as_data_uri`, instead of leaving it as
-    a link to the original remote URL.
-
-    Without this, a story's images are embedded exactly as the source served them, and WeasyPrint
-    fetches each `<img src>` itself while rendering the PDF - with no control over what it gets.
-    That's a known way for WeasyPrint to silently drop a story's image, or (once combined with
-    the size/weight of everything else already in a full newspaper) sometimes the *entire* story
-    - no exception, no log line, just a gap where it should have been (see imageutil's module
-    docstring for the three contributing factors identified in practice).
-
-    Verified against a real daily edition (110 stories, 26 feeds): 28 of 53 embedded images
-    failed outright before this fix - multi-megapixel photos (up to 4000px, 500KB-1.4MB), a
-    palette-mode PNG encoding photo-like content far less efficiently than JPEG, and WebP files
-    (a format WeasyPrint's image backend can't decode at all, independent of size). This fix
-    makes every one of those 53 images embed successfully (the one exception found live was an
-    SVG - not a raster format Pillow can decode at all, left as its original link). Re-encoding
-    every image through Pillow first, unconditionally, removes per-image failures as a variable -
-    it does not by itself guarantee every story survives a very large, image-heavy edition (that
-    also depends on the document's total combined weight, a separate, document-wide concern),
-    but it's a necessary precondition for the ones that do.
-
-    An image that fails to download or decode (network error, corrupt/unsupported data) is left
-    as its original remote `<img>` tag rather than aborting the whole story - if that also fails
-    later during rendering, it's no worse off than before this function existed; if it happens to
-    render fine as-is, nothing was lost by trying.
-    """
-    if not body_html:
-        return body_html
-
-    soup = bs4.BeautifulSoup(body_html, "lxml")
-    container = soup.body or soup
-    changed = False
-    for node in container.find_all("img"):
-        src = node.get("src")
-        if not src or not src.startswith(("http://", "https://")):
-            continue
-        try:
-            response = requests.get(
-                src,
-                headers={"User-Agent": f"goosepaper/{__version__}"},
-                timeout=_IMAGE_FETCH_TIMEOUT,
-            )
-            response.raise_for_status()
-            node["src"] = reencode_image_as_data_uri(response.content, _MAX_IMAGE_DIMENSION)
-            changed = True
-        except Exception as err:
-            print(
-                f"Sad honk :/ Couldn't re-embed image {src}: {err} - leaving it as a remote link."
-            )
-
-    return container.decode_contents() if changed else body_html
 
 
 def _entry_source(entry, feed_url: str) -> str:
