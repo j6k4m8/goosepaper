@@ -119,7 +119,7 @@ def test_gocomics_uses_date_scoped_url_and_browser_headers_and_derives_label(mon
     assert seen["urls"] == ["https://www.gocomics.com/calvinandhobbes/2026/01/05"]
     # Only the page fetch needs gocomics.com's browser-like headers - see the "gocomics" entry
     # in _COMIC_SOURCES and get_stories()'s docstring (the strip image itself, on gocomics.com's
-    # own CDN, isn't header-gated - verified live against a real strip URL).
+    # own CDN, isn't header-gated).
     assert seen["headers"][0]["User-Agent"].startswith("Mozilla/5.0")
     assert seen["headers"][0]["Accept-Language"] == "en"
 

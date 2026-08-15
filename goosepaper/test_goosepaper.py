@@ -441,6 +441,38 @@ def test_inline_story_images_preserves_a_leading_style_block(monkeypatch):
     assert "https://example.com/strip.png" not in result
 
 
+def test_render_html_document_inlines_images_from_a_real_comic_story(monkeypatch):
+    """Goes one step further than the hand-built body_html above: runs the actual
+    DailyComicStoryProvider.get_stories() - not a stand-in for its <style>+<div> shape - through
+    a real Goosepaper.to_html(), to catch any future drift between comic._COMIC_CSS's real
+    structure and what a hand-copied fixture assumes it looks like."""
+    xkcd_html = b"""
+    <html><body>
+    <div id="comic">
+    <img src="//imgs.xkcd.com/comics/todays_strip.png" title="hover joke" alt="Todays Strip"/>
+    </div>
+    </body></html>
+    """
+    fake_png = _image_bytes("PNG", size=(50, 40))
+
+    def fake_get(url, *, headers=None, timeout=None):
+        if url == "https://xkcd.com":
+            return _FakeResponse(xkcd_html)
+        return _FakeResponse(fake_png)
+
+    monkeypatch.setattr(comic.requests, "get", fake_get)
+    monkeypatch.setattr(goosepaper_module.requests, "get", fake_get)
+
+    provider = comic.DailyComicStoryProvider(comic_type="xkcd")
+    g = Goosepaper([provider])
+
+    html = g.to_html(page_profile="remarkable2", layout="1col")
+
+    assert ".comic-strip-body { text-align: center; }" in html
+    assert "data:image/jpeg;base64," in html
+    assert "https://imgs.xkcd.com/comics/todays_strip.png" not in html
+
+
 def test_render_html_document_inlines_images_from_any_story_provider(monkeypatch):
     """Image inlining applies uniformly to every story provider (a plain Story with an <img>,
     not just RSS/comic), because it happens once here rather than being opt-in per provider."""

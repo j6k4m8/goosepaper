@@ -164,10 +164,10 @@ class DailyComicStoryProvider(StoryProvider):
 
     The strip image itself is left as a remote `<img src>` link, not fetched or embedded here -
     this provider's job ends at resolving which URL is the actual strip. Only the *page* fetch
-    needs gocomics.com's browser-like headers (verified live: without them the page 403s; the
-    same check against gocomics.com's own CDN host serving the strip image itself succeeded with
-    no special headers at all, generic ones, or the browser-like ones alike - the image isn't
-    gated the way the page is). Fetching, format/size normalization, and embedding as a `data:`
+    needs gocomics.com's browser-like headers - without them it 403s. The image itself, served
+    from gocomics.com's own CDN host, isn't gated the same way: it responds identically whether
+    the request carries no special headers at all, a generic one, or the browser-like ones.
+    Fetching, format/size normalization, and embedding as a `data:`
     URI all happen once, centrally, in Goosepaper (`_render_html_document()` for to_html()/
     to_pdf(), `to_epub()` separately for epub output) - the same generic pass every other story
     provider's images go through (see goosepaper.py's `_inline_story_images()` and imageutil.py's
