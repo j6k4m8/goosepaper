@@ -75,8 +75,10 @@ def _image_max_dimension(profile: PageProfile, effective_columns: int) -> int:
 def _inline_story_images(body_html: str, max_dimension: int) -> str:
     """Finds every `<img>` in body_html - a remote `http(s)://` URL or an already-inlined `data:`
     URI - and replaces it with a size-capped, format-normalized `data:` JPEG via
-    `imageutil.reencode_image_as_data_uri`. An image that fails to fetch or decode is left
-    untouched rather than aborting the whole story.
+    `imageutil.reencode_image_as_data_uri`. An image that fails to fetch or decode is removed
+    from the story rather than aborting the whole story - leaving its original `http(s)://` src
+    in place instead would mean WeasyPrint's own image loader tries (and fails) to fetch the same
+    dead URL a second time at render time, logging the same failure twice.
 
     This runs once per render, here, rather than per-provider: it applies uniformly to every
     story regardless of source, and it can size images off the actual page_profile/layout being
@@ -112,6 +114,8 @@ def _inline_story_images(body_html: str, max_dimension: int) -> str:
             changed = True
         except Exception as err:
             print(f"Sad honk :/ Failed to inline image {src[:80]!r}: {err}")
+            node.decompose()
+            changed = True
 
     if not changed:
         return body_html

@@ -377,17 +377,20 @@ def test_inline_story_images_re_encodes_an_already_inlined_data_uri(monkeypatch)
     assert embedded.mode in ("RGB", "L")
 
 
-def test_inline_story_images_leaves_a_failing_image_untouched(monkeypatch):
+def test_inline_story_images_removes_a_failing_image(monkeypatch):
     def fake_get(url, *, headers, timeout):
         raise RuntimeError("network's down")
 
     monkeypatch.setattr(goosepaper_module.requests, "get", fake_get)
 
-    html = '<img src="https://example.com/broken.jpg">'
-    assert _inline_story_images(html, max_dimension=1200) == html
+    html = '<p>hi</p><img src="https://example.com/broken.jpg">'
+    result = _inline_story_images(html, max_dimension=1200)
+    assert "https://example.com/broken.jpg" not in result
+    assert "<img" not in result
+    assert "<p>hi</p>" in result
 
 
-def test_inline_story_images_leaves_an_http_error_response_untouched(monkeypatch):
+def test_inline_story_images_removes_an_http_error_response(monkeypatch):
     """Same failure-tolerance guarantee as the connection-error case above, but via a response
     that comes back successfully at the transport level and only fails raise_for_status() -
     the only test that actually exercises _FakeResponse's ok=False branch."""
@@ -395,22 +398,28 @@ def test_inline_story_images_leaves_an_http_error_response_untouched(monkeypatch
         goosepaper_module.requests, "get", lambda url, *, headers, timeout: _FakeResponse(b"", ok=False)
     )
 
-    html = '<img src="https://example.com/gone.jpg">'
-    assert _inline_story_images(html, max_dimension=1200) == html
+    html = '<p>hi</p><img src="https://example.com/gone.jpg">'
+    result = _inline_story_images(html, max_dimension=1200)
+    assert "https://example.com/gone.jpg" not in result
+    assert "<img" not in result
+    assert "<p>hi</p>" in result
 
 
-def test_inline_story_images_leaves_an_undecodable_response_untouched(monkeypatch):
+def test_inline_story_images_removes_an_undecodable_response(monkeypatch):
     """A response that succeeds (HTTP 200) but isn't actual image data - e.g. an anti-bot HTML
-    interstitial served where comic.py's resolved strip URL was expected - must be left
-    untouched like any other failure, not raise out of _inline_story_images or embed garbage."""
+    interstitial served where comic.py's resolved strip URL was expected - must be dropped like
+    any other failure, not raise out of _inline_story_images or embed garbage."""
     monkeypatch.setattr(
         goosepaper_module.requests,
         "get",
         lambda url, *, headers, timeout: _FakeResponse(b"<html><body>Access denied</body></html>"),
     )
 
-    html = '<img src="https://example.com/not-actually-an-image.jpg">'
-    assert _inline_story_images(html, max_dimension=1200) == html
+    html = '<p>hi</p><img src="https://example.com/not-actually-an-image.jpg">'
+    result = _inline_story_images(html, max_dimension=1200)
+    assert "https://example.com/not-actually-an-image.jpg" not in result
+    assert "<img" not in result
+    assert "<p>hi</p>" in result
 
 
 def test_inline_story_images_skips_relative_and_missing_src():
