@@ -36,16 +36,30 @@ class _FakeResponse:
         self,
         *,
         ok=True,
-        text="<html></html>",
+        text=None,
         content=b"<html></html>",
         encoding="utf-8",
         url="https://example.com/story",
+        apparent_encoding="utf-8",
+        headers=None,
     ):
         self.ok = ok
-        self.text = text
         self.content = content
         self.encoding = encoding
         self.url = url
+        self.apparent_encoding = apparent_encoding
+        self.headers = headers or {}
+        self._text_override = text
+
+    @property
+    def text(self):
+        # Mirrors requests.Response.text: decodes .content using whatever
+        # .encoding currently is, so tests can verify a fix that changes
+        # .encoding before .text is read. Tests that pass an explicit `text=`
+        # keep getting that fixed value unchanged.
+        if self._text_override is not None:
+            return self._text_override
+        return self.content.decode(self.encoding or "utf-8", errors="replace")
 
 
 def test_rss_provider_prefers_embedded_feed_content(monkeypatch):
@@ -596,6 +610,86 @@ def test_rss_provider_can_hide_all_bylines(monkeypatch):
 
     assert stories[0].byline is None
     assert stories[1].byline is None
+
+
+def test_rss_provider_falls_back_to_sniffed_encoding_when_charset_is_undeclared(
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        rss.feedparser,
+        "parse",
+        lambda _: SimpleNamespace(entries=[_feed_entry(summary=None)]),
+    )
+    utf8_body = "<html><body>Über den Tellerrand</body></html>".encode("utf-8")
+    monkeypatch.setattr(
+        rss.requests,
+        "get",
+        lambda *args, **kwargs: _FakeResponse(
+            ok=True,
+            content=utf8_body,
+            encoding="ISO-8859-1",
+            apparent_encoding="utf-8",
+            headers={"content-type": "text/html"},
+        ),
+    )
+
+    seen = {}
+
+    class FakeDocument:
+        def __init__(self, html):
+            seen["html"] = html
+
+        def title(self):
+            return None
+
+        def summary(self):
+            return f"<p>{seen['html']}</p>"
+
+    monkeypatch.setattr(rss, "Document", FakeDocument)
+
+    provider = rss.RSSFeedStoryProvider("https://example.com/feed.xml")
+    provider.get_stories()
+
+    assert "Über den Tellerrand" in seen["html"]
+
+
+def test_rss_provider_respects_declared_charset(monkeypatch):
+    monkeypatch.setattr(
+        rss.feedparser,
+        "parse",
+        lambda _: SimpleNamespace(entries=[_feed_entry(summary=None)]),
+    )
+    latin1_body = "café".encode("ISO-8859-1")
+    monkeypatch.setattr(
+        rss.requests,
+        "get",
+        lambda *args, **kwargs: _FakeResponse(
+            ok=True,
+            content=latin1_body,
+            encoding="ISO-8859-1",
+            apparent_encoding="utf-8",  # would mis-decode if wrongly used instead
+            headers={"content-type": "text/html; charset=ISO-8859-1"},
+        ),
+    )
+
+    seen = {}
+
+    class FakeDocument:
+        def __init__(self, html):
+            seen["html"] = html
+
+        def title(self):
+            return None
+
+        def summary(self):
+            return f"<p>{seen['html']}</p>"
+
+    monkeypatch.setattr(rss, "Document", FakeDocument)
+
+    provider = rss.RSSFeedStoryProvider("https://example.com/feed.xml")
+    provider.get_stories()
+
+    assert seen["html"] == "café"
 
 
 def test_rss_provider_can_show_only_first_byline(monkeypatch):
