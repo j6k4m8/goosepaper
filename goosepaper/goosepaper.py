@@ -3,6 +3,7 @@ import io
 import pathlib
 import re
 import tempfile
+import warnings
 from html import escape
 from typing import List, Optional, Type, Union
 from uuid import uuid4
@@ -23,6 +24,39 @@ def _get_style(style):
         except Exception as err:
             raise ValueError(f"Invalid style {style}") from err
     return style_obj
+
+
+def _bookmark_css(
+    *,
+    section_bookmark_level: Optional[int],
+    headline_bookmark_level: Optional[int],
+    body_heading_bookmarks: bool,
+) -> str:
+    if (
+        section_bookmark_level is not None
+        and section_bookmark_level == headline_bookmark_level
+    ):
+        warnings.warn(
+            "section_bookmark_level and headline_bookmark_level are both "
+            f"{section_bookmark_level}; sections and story headlines will sit at the same "
+            "depth in the PDF outline instead of headlines nesting under sections.",
+            stacklevel=2,
+        )
+    rules = []
+    if section_bookmark_level is not None:
+        rules.append(f".story-section-title {{ bookmark-level: {section_bookmark_level}; }}")
+        # The masthead title isn't itself a section, but nothing else claims a bookmark
+        # level for it - anchor it explicitly to the section level rather than leaving it
+        # to whatever level WeasyPrint's UA stylesheet happens to assign a bare <h1>.
+        rules.append(f".masthead h1 {{ bookmark-level: {section_bookmark_level}; }}")
+    if headline_bookmark_level is not None:
+        rules.append(f".story-headline {{ bookmark-level: {headline_bookmark_level}; }}")
+    if not body_heading_bookmarks:
+        rules.append(
+            ".story-body h1, .story-body h2, .story-body h3, "
+            ".story-body h4, .story-body h5, .story-body h6 { bookmark-level: none; }"
+        )
+    return "\n".join(rules)
 
 
 class Goosepaper:
@@ -316,6 +350,9 @@ class Goosepaper:
         table_of_contents: bool = False,
         layout: str = "auto",
         page_profile: str = "remarkable2",
+        section_bookmark_level: Optional[int] = 1,
+        headline_bookmark_level: Optional[int] = 2,
+        body_heading_bookmarks: bool = False,
     ) -> Optional[str]:
         """
         Renders the current Goosepaper to a PDF file on disk.
@@ -326,6 +363,22 @@ class Goosepaper:
                 function will return None.
             style: The style to use for the paper. Default: FifthAvenueStyle
             font_size: The font size to use for the paper. Default: 14
+            section_bookmark_level: PDF outline (bookmark) level for section headings and the
+                paper's own masthead title, or None to leave WeasyPrint's default (one bookmark
+                per heading tag) untouched. Default: 1
+            headline_bookmark_level: PDF outline level for story headlines, or None to leave
+                WeasyPrint's default untouched. Note that "untouched" is WeasyPrint's raw
+                per-tag default (h1 -> level 1), which can numerically coincide with
+                section_bookmark_level and collapse the two-level hierarchy just as if you'd
+                set both levels to the same number - it does not guarantee headlines stay
+                independent of the configured section level. Default: 2
+            body_heading_bookmarks: Whether headings inside a story's own body content (e.g. an
+                article's preserved subheadings) should appear in the PDF outline at all.
+                Default: False - WeasyPrint's default UA stylesheet turns every <h1>-<h6> into a
+                bookmark matching its tag, which - combined with section headings rendering as
+                <h2> and story headlines as <h1> - produces a flat, cluttered outline where
+                incidental subheadings from a story's own source markup sit at the same level as
+                section and story titles.
 
         Returns:
             str: The filename of the PDF file. If `filename` is an IO object,
@@ -358,10 +411,20 @@ class Goosepaper:
             font_config=font_config,
             base_url=base_url,
         )
+        bookmark_stylesheets = []
+        bookmark_css_text = _bookmark_css(
+            section_bookmark_level=section_bookmark_level,
+            headline_bookmark_level=headline_bookmark_level,
+            body_heading_bookmarks=body_heading_bookmarks,
+        )
+        if bookmark_css_text:
+            bookmark_stylesheets.append(
+                CSS(string=bookmark_css_text, font_config=font_config, base_url=base_url)
+            )
         if isinstance(filename, str):
             h.write_pdf(
                 filename,
-                stylesheets=[c, *style_obj.get_stylesheets()],
+                stylesheets=[c, *bookmark_stylesheets, *style_obj.get_stylesheets()],
                 font_config=font_config,
             )
             return filename
@@ -369,7 +432,7 @@ class Goosepaper:
             tf = tempfile.NamedTemporaryFile(suffix=".pdf")
             h.write_pdf(
                 tf,
-                stylesheets=[c, *style_obj.get_stylesheets()],
+                stylesheets=[c, *bookmark_stylesheets, *style_obj.get_stylesheets()],
             )
             tf.seek(0)
             filename.write(tf.read())
