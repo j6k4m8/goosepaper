@@ -92,6 +92,13 @@ class DeliverySettings:
     folder: Optional[str] = None
     replace_mode: str = "never"
     cleanup: bool = False
+    # Retention prunes *other* documents in `folder` from a previous delivery - distinct from
+    # `cleanup`, which only ever touches the local file just uploaded. Both must be set together:
+    # keep_last_n has nothing to match past editions against without a prefix, and a prefix with
+    # no count wouldn't know how many to keep. Off (None/None) by default - existing callers see
+    # no behavior change. See upload()'s own docstring for what "match" means.
+    retention_keep_last_n: Optional[int] = None
+    retention_prefix: Optional[str] = None
 
     def __post_init__(self):
         _validate_folder(self.folder, "delivery folder")
@@ -103,12 +110,28 @@ class DeliverySettings:
             )
         if not isinstance(self.cleanup, bool):
             raise ValueError("cleanup must be a boolean.")
+        if self.retention_keep_last_n is not None and (
+            not isinstance(self.retention_keep_last_n, int)
+            or isinstance(self.retention_keep_last_n, bool)
+            or self.retention_keep_last_n <= 0
+        ):
+            raise ValueError("retention_keep_last_n must be a positive integer or null.")
+        if self.retention_prefix is not None and (
+            not isinstance(self.retention_prefix, str) or not self.retention_prefix
+        ):
+            raise ValueError("retention_prefix must be a non-empty string or null.")
+        if self.retention_keep_last_n is not None and self.retention_prefix is None:
+            raise ValueError("retention_keep_last_n requires retention_prefix to also be set.")
+        if self.retention_prefix is not None and self.retention_keep_last_n is None:
+            raise ValueError("retention_prefix requires retention_keep_last_n to also be set.")
 
     def to_dict(self) -> Dict[str, Any]:
         return {
             "folder": self.folder,
             "replace_mode": self.replace_mode,
             "cleanup": self.cleanup,
+            "retention_keep_last_n": self.retention_keep_last_n,
+            "retention_prefix": self.retention_prefix,
         }
 
 
@@ -234,6 +257,21 @@ def build_cli_parser() -> argparse.ArgumentParser:
         help="Keep the output file after delivery, even if user defaults say otherwise.",
     )
     parser.add_argument(
+        "--retention-keep-last-n",
+        type=int,
+        required=False,
+        help='Keep only the last N delivered documents whose name starts with '
+        '"--retention-prefix" in the delivery folder, deleting older ones. Requires '
+        '"--retention-prefix".',
+    )
+    parser.add_argument(
+        "--retention-prefix",
+        required=False,
+        help='The name prefix "--retention-keep-last-n" matches past editions against '
+        '(e.g. "Daily Goose " for documents named "Daily Goose 2026-08-05"). Requires '
+        '"--retention-keep-last-n".',
+    )
+    parser.add_argument(
         "-n",
         "--nostory",
         required=False,
@@ -309,7 +347,8 @@ def resolve_runtime_config(args: Optional[Sequence[str]] = None) -> ResolvedConf
     if not cli_args.deliver and _has_delivery_cli_overrides(cli_args):
         raise ConfigError(
             "Delivery override flags require '--deliver'. "
-            "Run goosepaper with '--deliver' to use '--folder', '--replace-mode', or cleanup overrides."
+            "Run goosepaper with '--deliver' to use '--folder', '--replace-mode', cleanup, or "
+            "retention overrides."
         )
 
     if cli_args.nostory and not cli_args.deliver:
@@ -348,6 +387,8 @@ def resolve_runtime_config(args: Optional[Sequence[str]] = None) -> ResolvedConf
             folder_override=cli_args.folder,
             replace_mode_override=cli_args.replace_mode,
             cleanup_override=cli_args.cleanup,
+            retention_keep_last_n_override=cli_args.retention_keep_last_n,
+            retention_prefix_override=cli_args.retention_prefix,
         ),
         output=cli_args.output or default_output_filename(),
         deliver=cli_args.deliver,
@@ -364,6 +405,8 @@ def resolve_delivery_settings(
     folder_override: Optional[str] = None,
     replace_mode_override: Optional[str] = None,
     cleanup_override: Optional[bool] = None,
+    retention_keep_last_n_override: Optional[int] = None,
+    retention_prefix_override: Optional[str] = None,
 ) -> DeliverySettings:
     user_defaults = user_defaults or DeliverySettings()
     paper_delivery = paper_delivery or DeliveryIntent()
@@ -382,6 +425,16 @@ def resolve_delivery_settings(
             cleanup=user_defaults.cleanup
             if cleanup_override is None
             else cleanup_override,
+            retention_keep_last_n=(
+                retention_keep_last_n_override
+                if retention_keep_last_n_override is not None
+                else user_defaults.retention_keep_last_n
+            ),
+            retention_prefix=(
+                retention_prefix_override
+                if retention_prefix_override is not None
+                else user_defaults.retention_prefix
+            ),
         )
     except ValueError as err:
         raise ConfigError(str(err)) from err
@@ -521,7 +574,11 @@ def _parse_delivery_intent(raw: Any) -> DeliveryIntent:
 
 def _parse_delivery_settings(raw: Any, context: str) -> DeliverySettings:
     section = _require_object(raw, context)
-    _reject_unknown_keys(section, {"folder", "replace_mode", "cleanup"}, context)
+    _reject_unknown_keys(
+        section,
+        {"folder", "replace_mode", "cleanup", "retention_keep_last_n", "retention_prefix"},
+        context,
+    )
 
     replace_mode = section.get("replace_mode", DeliverySettings.replace_mode)
     cleanup = section.get("cleanup", DeliverySettings.cleanup)
@@ -530,6 +587,8 @@ def _parse_delivery_settings(raw: Any, context: str) -> DeliverySettings:
         folder=section.get("folder"),
         replace_mode=replace_mode,
         cleanup=cleanup,
+        retention_keep_last_n=section.get("retention_keep_last_n"),
+        retention_prefix=section.get("retention_prefix"),
     )
 
 
@@ -837,5 +896,7 @@ def _has_delivery_cli_overrides(cli_args: argparse.Namespace) -> bool:
             cli_args.folder is not None,
             cli_args.replace_mode is not None,
             cli_args.cleanup is not None,
+            cli_args.retention_keep_last_n is not None,
+            cli_args.retention_prefix is not None,
         ]
     )

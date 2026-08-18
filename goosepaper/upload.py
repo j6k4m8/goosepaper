@@ -18,8 +18,38 @@ def _name_for_matching(value: str, nocase: bool) -> str:
     return value.lower() if nocase else value
 
 
-def _list_active_items(client):
-    return [item for item in client.list_items() if item.parent != "trash"]
+def _list_active_items(client, refresh: bool = False):
+    return [item for item in client.list_items(refresh=refresh) if item.parent != "trash"]
+
+
+def _apply_retention(client, parent_id: str, prefix: str, keep_last_n: int) -> None:
+    """Deletes older documents in the same folder as the just-uploaded one, keeping only the
+    `keep_last_n` most recent whose name starts with `prefix` - for a paper delivered on a
+    schedule under a name like "Daily Goose 2026-08-05", `prefix` would be "Daily Goose " so this
+    matches every dated edition of that same paper (and nothing else sharing the folder).
+
+    Always passes refresh=True to list_items() here, deliberately not reusing whatever was
+    already listed to resolve the folder/replace target above: Client.list_items() caches the
+    root state and only re-fetches it when asked, and while put_pdf()/put_epub() (used whenever
+    a folder is involved, i.e. exactly when retention is usable at all) do refresh that cache via
+    their own refresh=True, upload_pdf()/upload_epub() (the plain root-level path) do not - so an
+    unqualified list_items() call here could silently read stale, pre-upload state depending on
+    which upload path just ran. Forcing refresh=True removes that as something to reason about,
+    at the cost of one guaranteed extra API round-trip.
+    """
+    editions = sorted(
+        (
+            item
+            for item in _list_active_items(client, refresh=True)
+            if item.type == "DocumentType"
+            and item.parent == parent_id
+            and item.visibleName.startswith(prefix)
+        ),
+        key=lambda item: item.visibleName,
+        reverse=True,
+    )
+    for stale in editions[keep_last_n:]:
+        client.delete(stale.id, refresh=True)
 
 
 def upload(
@@ -118,6 +148,10 @@ def upload(
 
     if result is not None:
         print("Honk! Upload successful!")
+        if delivery.retention_keep_last_n is not None:
+            _apply_retention(
+                client, parent_id, delivery.retention_prefix, delivery.retention_keep_last_n
+            )
         if cleanup:
             try:
                 os.remove(fpr)
@@ -150,6 +184,19 @@ def main(args=None):
         default=None,
     )
     parser.add_argument(
+        "--retention-keep-last-n",
+        type=int,
+        required=False,
+        help='Keep only the last N delivered documents whose name starts with '
+        '"--retention-prefix", deleting older ones. Requires "--retention-prefix".',
+    )
+    parser.add_argument(
+        "--retention-prefix",
+        required=False,
+        help='The name prefix "--retention-keep-last-n" matches past editions against. '
+        'Requires "--retention-keep-last-n".',
+    )
+    parser.add_argument(
         "--showconfig",
         action="store_true",
         required=False,
@@ -171,6 +218,8 @@ def main(args=None):
             folder_override=parsed.folder,
             replace_mode_override=parsed.replace_mode,
             cleanup_override=parsed.cleanup,
+            retention_keep_last_n_override=parsed.retention_keep_last_n,
+            retention_prefix_override=parsed.retention_prefix,
         )
     except ConfigError as err:
         print(f"Honk! {err}")
