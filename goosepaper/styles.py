@@ -312,6 +312,20 @@ def _base_print_css(
         border-radius: 2px;
     }}
 
+    /* Article HTML pulled in via RSS/readability sometimes keeps interactive UI controls from
+    the source page - most commonly an image "click to zoom" lightbox trigger button (a common
+    WordPress/Gutenberg pattern), typically an icon-only <button> whose real position/visibility
+    is set by JavaScript that never runs here. Unpositioned, it falls into normal document flow
+    as an empty-looking box using the browser/WeasyPrint UA stylesheet's default <button>
+    styling (grey background, border, rounded corners) - it reads as a flat grey block with
+    nothing legible inside, since it typically contains only an icon (often a light-on-dark SVG
+    that's invisible against that same default grey). No <button> in extracted article prose is
+    ever meaningfully interactive in a static, print/PDF context, so hide every one uniformly
+    rather than chase each source site's specific button/icon markup one at a time. */
+    button {{
+        display: none;
+    }}
+
     /* Inline <svg> (decorative icons/illustrations some source sites embed directly in article
     HTML) has no such constraint by default - unlike <img>, which browsers/WeasyPrint shrink to
     fit an ancestor's width automatically in most contexts, an <svg> renders at its own
