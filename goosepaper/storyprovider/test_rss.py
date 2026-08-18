@@ -47,6 +47,10 @@ class _FakeResponse:
         self.encoding = encoding
         self.url = url
 
+    def raise_for_status(self):
+        if not self.ok:
+            raise rss.requests.HTTPError(f"{self.url} returned an error status")
+
 
 def test_rss_provider_prefers_embedded_feed_content(monkeypatch):
     monkeypatch.setattr(

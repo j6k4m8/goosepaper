@@ -1,3 +1,4 @@
+import base64
 import datetime
 import io
 import pathlib
@@ -7,11 +8,26 @@ from html import escape
 from typing import List, Optional, Type, Union
 from uuid import uuid4
 
+import bs4
+import requests
+
 from goosepaper.story import Story
 
-from .styles import Style
+from .storyprovider.imageutil import reencode_image_as_data_uri
 from .storyprovider.storyprovider import StoryProvider
+from .styles import PageProfile, Style
 from .util import PlacementPreference
+from .version import __version__
+
+_IMAGE_FETCH_TIMEOUT = 20
+# Images are sized off the actual page geometry (see _image_max_dimension) rather than a single
+# guessed constant - this DPI is the only remaining guess, chosen as a reasonable target for
+# both e-ink tablets (a reMarkable 2 is ~226 DPI) and printed/on-screen PDF profiles alike.
+_IMAGE_TARGET_DPI = 200
+_IMAGE_MIN_DIMENSION = 400
+# Used only if a page_profile's size/margins can't be parsed for some reason - matches the flat
+# constant every story provider used before this was made layout-aware.
+_IMAGE_DIMENSION_FALLBACK = 1200
 
 
 def _get_style(style):
@@ -23,6 +39,105 @@ def _get_style(style):
         except Exception as err:
             raise ValueError(f"Invalid style {style}") from err
     return style_obj
+
+
+def _parse_length_inches(value: str) -> float:
+    """Parses a PageProfile length ("6.18in", "9mm") into inches - the only two units any
+    bundled page_profile currently uses (see styles.py's _PAGE_PROFILES)."""
+    value = value.strip()
+    if value.endswith("mm"):
+        return float(value[:-2]) / 25.4
+    if value.endswith("in"):
+        return float(value[:-2])
+    raise ValueError(f"Unsupported page_profile length unit: {value!r}")
+
+
+def _image_max_dimension(profile: PageProfile, effective_columns: int) -> int:
+    """Derives a sensible embedded-image pixel cap from the actual page geometry: an image wider
+    than what a single rendered column will ever display is pure waste, not extra quality - the
+    same reasoning every story provider's old hardcoded 1200px constant used, but computed per
+    page_profile/layout instead of guessed once for all six of them (a remarkable2 column and a
+    letter column are not remotely the same physical width).
+    """
+    try:
+        width_str, _height_str = profile.size.split()
+        content_width_in = (
+            _parse_length_inches(width_str)
+            - _parse_length_inches(profile.margin_left)
+            - _parse_length_inches(profile.margin_right)
+        )
+        column_width_in = content_width_in / max(1, effective_columns)
+        return max(_IMAGE_MIN_DIMENSION, round(column_width_in * _IMAGE_TARGET_DPI))
+    except (ValueError, IndexError):
+        return _IMAGE_DIMENSION_FALLBACK
+
+
+def _inline_story_images(body_html: str, max_dimension: int) -> str:
+    """Finds every `<img>` in body_html - a remote `http(s)://` URL or an already-inlined `data:`
+    URI - and replaces it with a size-capped, format-normalized `data:` JPEG via
+    `imageutil.reencode_image_as_data_uri`. An image that fails to fetch or decode is removed
+    from the story rather than aborting the whole story - leaving its original `http(s)://` src
+    in place instead would mean WeasyPrint's own image loader tries (and fails) to fetch the same
+    dead URL a second time at render time, logging the same failure twice.
+
+    This runs once per render, here, rather than per-provider: it applies uniformly to every
+    story regardless of source, and it can size images off the actual page_profile/layout being
+    rendered, which no individual story provider has any visibility into.
+    """
+    if not body_html:
+        return body_html
+
+    soup = bs4.BeautifulSoup(body_html, "lxml")
+    container = soup.body or soup
+    changed = False
+    for node in container.find_all("img"):
+        src = node.get("src")
+        if not src:
+            continue
+        try:
+            if src.startswith(("http://", "https://")):
+                response = requests.get(
+                    src,
+                    headers={"User-Agent": f"goosepaper/{__version__}"},
+                    timeout=_IMAGE_FETCH_TIMEOUT,
+                )
+                response.raise_for_status()
+                raw_bytes = response.content
+            elif src.startswith("data:") and ";base64," in src:
+                # An already-inlined image (e.g. from a second render pass) - decoded back to
+                # bytes here since body_html only carries text, not bytes, between provider and
+                # render step.
+                raw_bytes = base64.b64decode(src.split(";base64,", 1)[1])
+            else:
+                continue
+            node["src"] = reencode_image_as_data_uri(raw_bytes, max_dimension)
+            changed = True
+        except Exception as err:
+            print(f"Sad honk :/ Failed to inline image {src[:80]!r}: {err}")
+            node.decompose()
+            changed = True
+
+    if not changed:
+        return body_html
+
+    # A body_html fragment that starts with a bare <style> tag (e.g. comic.py's CSS block,
+    # prepended before its <div>) isn't valid at the top of an HTML <body> - lxml silently
+    # relocates it into an implied <head>, separate from `container`. Re-serializing only
+    # `container.decode_contents()` would then drop that CSS outright. Prepending the head's
+    # own content restores it, since decode_contents() otherwise plain-strips it.
+    head_content = soup.head.decode_contents() if soup.head else ""
+    return head_content + container.decode_contents()
+
+
+def _inline_all_story_images(stories: List[Story], max_dimension: int) -> None:
+    """Runs _inline_story_images() over every story in place, isolating one story's failure
+    from the rest - shared by both to_html()/to_pdf() (via _render_html_document()) and
+    to_epub(), which otherwise duplicated this loop identically."""
+    for story in stories:
+        try:
+            story.body_html = _inline_story_images(story.body_html, max_dimension)
+        except Exception as err:
+            print(f"Sad honk :/ Couldn't process images for {story.headline!r}: {err}")
 
 
 class Goosepaper:
@@ -107,6 +222,11 @@ class Goosepaper:
         style_obj = _get_style(style)
         stories = self.get_stories()
         effective_columns = style_obj.resolve_column_count(layout, page_profile)
+
+        image_max_dimension = _image_max_dimension(
+            style_obj.get_page_profile(page_profile), effective_columns
+        )
+        _inline_all_story_images(stories, image_max_dimension)
 
         ears = [
             story
@@ -524,6 +644,13 @@ class Goosepaper:
                     break
             else:
                 stories.append(story)
+
+        # Unlike to_html()/to_pdf(), there's no page_profile/layout here to size images off of -
+        # an epub's text reflows to whatever screen/font size the reader uses. _IMAGE_DIMENSION_
+        # FALLBACK is a flat, reasonable cap for that "unknown target" case (the same value used
+        # elsewhere when a page_profile can't be parsed), rather than leaving every story
+        # provider's remote image links completely unprocessed.
+        _inline_all_story_images(stories, _IMAGE_DIMENSION_FALLBACK)
 
         book = epub.EpubBook()
         title = f"{self.title} - {self.subtitle}"

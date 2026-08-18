@@ -47,6 +47,13 @@ class RSSFeedStoryProvider(StoryProvider):
         )
 
     def get_stories(self) -> List[Story]:
+        """Returned Stories' body_html may still contain remote `<img src="http(s)://...">`
+        links, exactly as the source article served them - this provider no longer fetches or
+        re-encodes them itself. That happens centrally, later, in Goosepaper's own render/export
+        methods (see goosepaper.py's `_inline_story_images()` and its call sites). A caller that
+        uses this provider's Stories directly, bypassing Goosepaper, gets unprocessed remote
+        image links.
+        """
         feed = feedparser.parse(self.feed_url)
         limit = min(self.limit, len(feed.entries))
         if limit == 0:

@@ -176,6 +176,7 @@ Check out [this example PDF](https://github.com/j6k4m8/goosepaper/blob/master/do
 -   [Weather](https://github.com/j6k4m8/goosepaper/blob/master/docs/reference/storyprovider/weather.py.md)
 -   [RSS Feeds](https://github.com/j6k4m8/goosepaper/blob/master/docs/reference/storyprovider/rss.py.md)
 -   [Reddit Subreddits](https://github.com/j6k4m8/goosepaper/blob/master/docs/reference/storyprovider/reddit.py.md)
+-   [Daily Comic Strips](https://github.com/j6k4m8/goosepaper/blob/master/docs/reference/storyprovider/comic.py.md)
 
 # More Questions, Infrequently Asked
 
