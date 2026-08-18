@@ -408,6 +408,143 @@ class TestMakeUrlsAbsolute:
         assert rss._make_urls_absolute("<p>x</p>", "") == "<p>x</p>"
 
 
+def test_rss_provider_strips_headline_duplicated_inside_article_body(monkeypatch):
+    # Mirrors real sites (Engadget, The Register) whose article markup nests the headline as a
+    # heading inside the same container readability extracts as "the article body" - without
+    # stripping it, the story would render with the headline twice.
+    class FakeDocument:
+        def __init__(self, html):
+            pass
+
+        def title(self):
+            return "Real Headline Here"
+
+        def summary(self):
+            return (
+                '<div class="news-article">'
+                "<h1 class=\"title-gallery\">Real Headline Here</h1>"
+                "<p>The actual first paragraph of the story.</p>"
+                "</div>"
+            )
+
+    monkeypatch.setattr(
+        rss.feedparser,
+        "parse",
+        lambda _: SimpleNamespace(entries=[_feed_entry(summary=None)]),
+    )
+    monkeypatch.setattr(
+        rss.requests,
+        "get",
+        lambda *args, **kwargs: _FakeResponse(ok=True, text="<html></html>"),
+    )
+    monkeypatch.setattr(rss, "Document", FakeDocument)
+
+    provider = rss.RSSFeedStoryProvider("https://example.com/feed.xml")
+    stories = provider.get_stories()
+
+    assert stories[0].headline == "Real Headline Here"
+    assert "title-gallery" not in stories[0].body_html
+    assert "The actual first paragraph of the story." in stories[0].body_html
+
+
+class TestStripDuplicateLeadingHeading:
+    def test_strips_an_exact_match(self):
+        result = rss._strip_duplicate_leading_heading(
+            "<h1>Same Title</h1><p>Body text.</p>", "Same Title"
+        )
+        assert "<h1>" not in result
+        assert "Body text." in result
+
+    def test_strips_when_nested_inside_wrapper_divs(self):
+        # Engadget's actual structure: heading lives inside nested <div>s, not at the top level.
+        result = rss._strip_duplicate_leading_heading(
+            '<div><div class="news-article"><h1 class="title-gallery">Same Title</h1>'
+            "<p>Body text.</p></div></div>",
+            "Same Title",
+        )
+        assert "title-gallery" not in result
+        assert "Body text." in result
+
+    def test_strips_past_a_short_leading_kicker(self):
+        # The Register's actual structure: a short category "kicker" precedes the heading.
+        result = rss._strip_duplicate_leading_heading(
+            '<p class="kicker">ai and ml</p><h1>Same Title</h1><p>Body text.</p>',
+            "Same Title",
+        )
+        assert "<h1>" not in result
+        assert "Body text." in result
+
+    def test_strips_when_headline_has_a_site_name_suffix(self):
+        # MacRumors' actual structure: doc.title() keeps the page's "<title> - MacRumors" suffix,
+        # but the embedded heading itself doesn't carry it.
+        result = rss._strip_duplicate_leading_heading(
+            "<h1>Same Title</h1><p>Body text.</p>", "Same Title - MacRumors"
+        )
+        assert "<h1>" not in result
+        assert "Body text." in result
+
+    def test_leaves_a_real_leading_paragraph_alone(self):
+        html = '<p>A real, substantial opening paragraph of actual body content.</p><h1>Same Title</h1>'
+        assert rss._strip_duplicate_leading_heading(html, "Same Title") == html
+
+    def test_leaves_a_non_matching_leading_heading_alone(self):
+        html = "<h1>A Completely Different Heading</h1><p>Body text.</p>"
+        assert rss._strip_duplicate_leading_heading(html, "Same Title") == html
+
+    def test_leaves_a_heading_deeper_in_real_content_alone(self):
+        # Even one that happens to repeat the headline verbatim - only a *leading* duplicate is
+        # the known failure mode this addresses.
+        html = (
+            "<p>A real, substantial opening paragraph of actual body content.</p>"
+            "<h2>Same Title</h2><p>More body text.</p>"
+        )
+        assert rss._strip_duplicate_leading_heading(html, "Same Title") == html
+
+    def test_noop_without_a_headline_or_body(self):
+        assert rss._strip_duplicate_leading_heading("<h1>X</h1>", "") == "<h1>X</h1>"
+        assert rss._strip_duplicate_leading_heading("", "Same Title") == ""
+
+    def test_does_not_leak_a_synthetic_body_wrapper(self):
+        # bs4's lxml parser always wraps a bare fragment in <html><body> internally; a naive
+        # str(soup.body) re-serialization would leave that <body> tag in the output even though
+        # the input never had one - regression test for exactly that.
+        result = rss._strip_duplicate_leading_heading(
+            "<h1>Same Title</h1><p>Body text.</p>", "Same Title"
+        )
+        assert "<body" not in result
+
+    def test_strips_a_non_heading_toc_widget(self):
+        # Regression test: matches heise.de's actual structure - a "current page" entry in an
+        # auto-generated table-of-contents widget, holding the plain headline text with no
+        # heading tag at all (<span> inside <li> inside <nav>). The old implementation only ever
+        # matched h1/h2/h3, so this slipped through untouched and rendered as a duplicated
+        # headline with a spurious bullet/number in front of it.
+        html = (
+            '<a-collapse class="a-toc"><nav><ol class="a-toc__list">'
+            '<li class="a-toc__item a-toc__item--current">'
+            '<span aria-current="page" class="a-toc__text">Same Title</span>'
+            "</li></ol></nav></a-collapse>"
+            "<p>Body text.</p>"
+        )
+        result = rss._strip_duplicate_leading_heading(html, "Same Title")
+        assert "Body text." in result
+        assert "Same Title" not in result
+        # The *whole* TOC widget must be gone, not just the innermost <span> - otherwise the
+        # emptied <li> would still render its bullet/number in the PDF.
+        assert "<li" not in result
+        assert "<nav" not in result
+
+    def test_does_not_block_on_a_short_non_matching_leading_heading(self):
+        # A short, harmless leading heading (well within the chrome budget) no longer blocks a
+        # genuine duplicate found further down - the old implementation gave up unconditionally
+        # on the very first h1/h2/h3 it saw, whether or not it matched.
+        html = "<h1>Intro</h1><h2>Same Title</h2><p>Body text.</p>"
+        result = rss._strip_duplicate_leading_heading(html, "Same Title")
+        assert "<h2>" not in result
+        assert "Intro" in result
+        assert "Body text." in result
+
+
 def test_rss_provider_falls_back_to_feed_summary_when_readability_fails(monkeypatch):
     class BrokenDocument:
         def __init__(self, html):
