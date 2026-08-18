@@ -24,7 +24,24 @@
             "url": "https://feeds.npr.org/1001/rss.xml",
             "limit": 5,
             "byline": "first",
-            "body_source": "auto"
+            "body_source": "auto",
+            "skip_title_patterns": ["^sponsored:"],
+            "skip_content_filters": [
+                {"type": "css", "selector": "div.ad-block"},
+                {"type": "regex", "pattern": "Read more.*$", "flags": "s"}
+            ],
+            "min_body_text_length": 120
+        },
+        {
+            "type": "rss",
+            "url": "https://www.cnbc.com/id/10001147/device/rss/rss.html",
+            "limit": 10,
+            "byline": "none",
+            "body_source": "article",
+            "accept_title_patterns": ["amazon", "amzn"],
+            "accept_content_filters": [
+                {"type": "regex", "pattern": "amazon|amzn", "flags": "i"}
+            ]
         },
         {
             "type": "reddit",

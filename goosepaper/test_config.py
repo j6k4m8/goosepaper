@@ -311,6 +311,312 @@ def test_load_paper_config_accepts_registered_source():
         assert config.sources[0].options == {"handle": "goose", "limit": 2}
 
 
+def test_load_paper_config_accepts_all_content_filter_and_length_fields():
+    """Happy-path smoke test for all six filter/length fields at once. The `rejects_*` tests below
+    already exercise every validation branch individually (unknown type, missing
+    selector/pattern, cross-type fields, unknown fields) - that's where the real risk of
+    regression lives, since that logic is hand-written per branch. This test's only job is to
+    catch the opposite failure mode: a fully well-formed source getting rejected by mistake, or
+    one of these field names quietly falling out of the "rss" schema's optional-field set (e.g. a
+    typo introduced during a rename) and being dropped instead of validated. One combined source
+    covering all six fields does that as well as six separate near-identical tests would, without
+    the duplication."""
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {
+                        "type": "rss",
+                        "url": "https://example.com/feed.xml",
+                        "skip_content_filters": [
+                            {"type": "css", "selector": "div.ad"},
+                            {"type": "regex", "pattern": "Mehr anzeigen", "flags": "i"},
+                        ],
+                        "skip_title_patterns": ["^anzeige:"],
+                        "accept_content_filters": [
+                            {"type": "css", "selector": "article.body"},
+                            {"type": "regex", "pattern": "AAPL"},
+                        ],
+                        "accept_title_patterns": ["amazon", "amzn"],
+                        "min_body_text_length": 120,
+                        "max_body_text_length": 20000,
+                    }
+                ],
+            },
+        )
+
+        options = load_paper_config(config_path).sources[0].options
+
+        assert options["skip_content_filters"] == [
+            {"type": "css", "selector": "div.ad"},
+            {"type": "regex", "pattern": "Mehr anzeigen", "flags": "i"},
+        ]
+        assert options["skip_title_patterns"] == ["^anzeige:"]
+        assert options["accept_content_filters"] == [
+            {"type": "css", "selector": "article.body"},
+            {"type": "regex", "pattern": "AAPL"},
+        ]
+        assert options["accept_title_patterns"] == ["amazon", "amzn"]
+        assert options["min_body_text_length"] == 120
+        assert options["max_body_text_length"] == 20000
+
+
+def test_load_paper_config_rejects_skip_content_filter_with_unknown_type():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {
+                        "type": "rss",
+                        "url": "https://example.com/feed.xml",
+                        "skip_content_filters": [{"type": "xpath", "selector": "//div"}],
+                    }
+                ],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            'type must be "css" or "regex"',
+        )
+
+
+def test_load_paper_config_rejects_css_skip_content_filter_without_selector():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {
+                        "type": "rss",
+                        "url": "https://example.com/feed.xml",
+                        "skip_content_filters": [{"type": "css"}],
+                    }
+                ],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            "requires a non-empty selector",
+        )
+
+
+def test_load_paper_config_rejects_regex_skip_content_filter_without_pattern():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {
+                        "type": "rss",
+                        "url": "https://example.com/feed.xml",
+                        "skip_content_filters": [{"type": "regex"}],
+                    }
+                ],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            "requires a non-empty pattern",
+        )
+
+
+def test_load_paper_config_rejects_skip_content_filter_with_unknown_field():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {
+                        "type": "rss",
+                        "url": "https://example.com/feed.xml",
+                        "skip_content_filters": [
+                            {"type": "css", "selector": "div.ad", "typo_field": True}
+                        ],
+                    }
+                ],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            "unknown field(s)",
+        )
+
+
+def test_load_paper_config_rejects_css_skip_content_filter_with_pattern_field():
+    """selector/pattern/flags aren't a shared pool across both filter types - a "css" filter
+    can't also carry "pattern"/"flags" (meant for "regex"), even though the key itself is valid
+    on some skip_content_filters entry. Pins down the fix for a validation gap where this used to
+    pass silently (and the stray field was just ignored by apply_skip_content_filters)."""
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {
+                        "type": "rss",
+                        "url": "https://example.com/feed.xml",
+                        "skip_content_filters": [
+                            {"type": "css", "selector": "div.ad", "pattern": "should not be allowed"}
+                        ],
+                    }
+                ],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            "unknown field(s)",
+        )
+
+
+def test_load_paper_config_rejects_regex_skip_content_filter_with_selector_field():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {
+                        "type": "rss",
+                        "url": "https://example.com/feed.xml",
+                        "skip_content_filters": [
+                            {"type": "regex", "pattern": "foo", "selector": "should not be allowed"}
+                        ],
+                    }
+                ],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            "unknown field(s)",
+        )
+
+
+def test_load_paper_config_rejects_accept_content_filter_with_unknown_type():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {
+                        "type": "rss",
+                        "url": "https://example.com/feed.xml",
+                        "accept_content_filters": [{"type": "xpath", "selector": "//div"}],
+                    }
+                ],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            'type must be "css" or "regex"',
+        )
+
+
+def test_load_paper_config_rejects_css_accept_content_filter_without_selector():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {
+                        "type": "rss",
+                        "url": "https://example.com/feed.xml",
+                        "accept_content_filters": [{"type": "css"}],
+                    }
+                ],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            "requires a non-empty selector",
+        )
+
+
+def test_load_paper_config_rejects_regex_accept_content_filter_without_pattern():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {
+                        "type": "rss",
+                        "url": "https://example.com/feed.xml",
+                        "accept_content_filters": [{"type": "regex"}],
+                    }
+                ],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            "requires a non-empty pattern",
+        )
+
+
+def test_load_paper_config_rejects_accept_content_filter_with_unknown_field():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {
+                        "type": "rss",
+                        "url": "https://example.com/feed.xml",
+                        "accept_content_filters": [
+                            {"type": "css", "selector": "article.body", "typo_field": True}
+                        ],
+                    }
+                ],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            "unknown field(s)",
+        )
+
+
 def test_load_paper_config_accepts_bluesky_source():
     with _TempWorkspace() as tmp_path:
         config_path = tmp_path / "paper.json"

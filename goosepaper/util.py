@@ -128,6 +128,12 @@ def construct_story_providers_from_source_configs(source_configs):
                         "since_days_ago",
                         "byline",
                         "body_source",
+                        "skip_content_filters",
+                        "skip_title_patterns",
+                        "accept_content_filters",
+                        "accept_title_patterns",
+                        "min_body_text_length",
+                        "max_body_text_length",
                     }
                 },
             },

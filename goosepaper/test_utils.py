@@ -86,6 +86,54 @@ def test_construct_story_providers_passes_rss_byline_option():
     assert stories[0].body_source == "summary"
 
 
+def test_construct_story_providers_passes_rss_content_filter_options():
+    """`config.py` only validates that these four fields are well-formed; it's this function's
+    own allowed-keys set (see `util.py`) that decides whether a validated field actually reaches
+    `RSSFeedStoryProvider` at all. That set is a separate, easy-to-typo copy of the same four
+    field names - e.g. a stray plural/singular or skip/accept slip here would pass every
+    `test_config.py` check yet silently drop the option in production, since nothing else in the
+    test suite drives a config through this exact function. This is the one test that would
+    catch that."""
+    stories = construct_story_providers_from_source_configs(
+        [
+            {
+                "type": "rss",
+                "url": "https://example.com/feed.xml",
+                "skip_content_filters": [{"type": "css", "selector": "div.ad"}],
+                "skip_title_patterns": ["^anzeige:"],
+                "accept_content_filters": [{"type": "regex", "pattern": "AAPL"}],
+                "accept_title_patterns": ["amazon", "amzn"],
+            }
+        ]
+    )
+
+    assert stories[0].skip_content_filters == [{"type": "css", "selector": "div.ad"}]
+    assert stories[0].skip_title_patterns == ["^anzeige:"]
+    assert stories[0].accept_content_filters == [{"type": "regex", "pattern": "AAPL"}]
+    assert stories[0].accept_title_patterns == ["amazon", "amzn"]
+
+
+def test_construct_story_providers_passes_rss_body_text_length_options():
+    """Same failure mode as test_construct_story_providers_passes_rss_content_filter_options
+    above, for min_body_text_length/max_body_text_length specifically: these were added to
+    config.py's validation without a matching update to this function's own allowed-keys set,
+    so a well-formed config passed every test_config.py check while the values never reached
+    RSSFeedStoryProvider at all - silently dropped, filter never actually applied."""
+    stories = construct_story_providers_from_source_configs(
+        [
+            {
+                "type": "rss",
+                "url": "https://example.com/feed.xml",
+                "min_body_text_length": 120,
+                "max_body_text_length": 4000,
+            }
+        ]
+    )
+
+    assert stories[0].min_body_text_length == 120
+    assert stories[0].max_body_text_length == 4000
+
+
 def test_construct_story_providers_supports_bluesky():
     stories = construct_story_providers_from_source_configs(
         [

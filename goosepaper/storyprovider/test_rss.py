@@ -598,6 +598,247 @@ def test_rss_provider_can_hide_all_bylines(monkeypatch):
     assert stories[1].byline is None
 
 
+def test_rss_provider_applies_skip_content_filters_to_the_fetched_body(monkeypatch):
+    monkeypatch.setattr(
+        rss.feedparser,
+        "parse",
+        lambda _: SimpleNamespace(
+            entries=[
+                _feed_entry(
+                    content=[
+                        rss.feedparser.FeedParserDict(
+                            {"value": '<p>Real content</p><div class="ad">Buy now</div>'}
+                        )
+                    ]
+                )
+            ]
+        ),
+    )
+
+    provider = rss.RSSFeedStoryProvider(
+        "https://example.com/feed.xml",
+        skip_content_filters=[{"type": "css", "selector": "div.ad"}],
+    )
+    stories = provider.get_stories()
+
+    assert "Real content" in stories[0].body_html
+    assert "Buy now" not in stories[0].body_html
+
+
+def test_rss_provider_skips_entries_matching_skip_title_patterns(monkeypatch):
+    monkeypatch.setattr(
+        rss.feedparser,
+        "parse",
+        lambda _: SimpleNamespace(
+            entries=[
+                _feed_entry(
+                    title="Anzeige: Sponsored post",
+                    content=[rss.feedparser.FeedParserDict({"value": "<p>Ad</p>"})],
+                ),
+                _feed_entry(
+                    title="Real headline",
+                    content=[rss.feedparser.FeedParserDict({"value": "<p>Real</p>"})],
+                ),
+            ]
+        ),
+    )
+
+    provider = rss.RSSFeedStoryProvider(
+        "https://example.com/feed.xml",
+        skip_title_patterns=[r"^anzeige:"],
+    )
+    stories = provider.get_stories()
+
+    assert len(stories) == 1
+    assert stories[0].headline == "Real headline"
+
+
+def test_rss_provider_applies_accept_content_filters_to_the_fetched_body(monkeypatch):
+    monkeypatch.setattr(
+        rss.feedparser,
+        "parse",
+        lambda _: SimpleNamespace(
+            entries=[
+                _feed_entry(
+                    content=[
+                        rss.feedparser.FeedParserDict(
+                            {
+                                "value": (
+                                    '<div class="chrome">Nav junk</div>'
+                                    '<article class="body"><p>Real content</p></article>'
+                                )
+                            }
+                        )
+                    ]
+                )
+            ]
+        ),
+    )
+
+    provider = rss.RSSFeedStoryProvider(
+        "https://example.com/feed.xml",
+        accept_content_filters=[{"type": "css", "selector": "article.body"}],
+    )
+    stories = provider.get_stories()
+
+    assert "Real content" in stories[0].body_html
+    assert "Nav junk" not in stories[0].body_html
+
+
+def test_rss_provider_only_keeps_entries_matching_regex_accept_content_filters(monkeypatch):
+    """A `regex`-type `accept_content_filters` entry gates the whole story - unlike the `css`
+    type, which only narrows the kept content, a story whose fetched body doesn't match any
+    regex filter is dropped entirely, the same way `accept_title_patterns` drops non-matching
+    titles."""
+    monkeypatch.setattr(
+        rss.feedparser,
+        "parse",
+        lambda _: SimpleNamespace(
+            entries=[
+                _feed_entry(
+                    title="Market roundup",
+                    content=[
+                        rss.feedparser.FeedParserDict(
+                            {"value": "<p>AAPL rallies on strong earnings</p>"}
+                        )
+                    ],
+                ),
+                _feed_entry(
+                    title="Unrelated story",
+                    content=[
+                        rss.feedparser.FeedParserDict({"value": "<p>Nothing relevant here</p>"})
+                    ],
+                ),
+            ]
+        ),
+    )
+
+    provider = rss.RSSFeedStoryProvider(
+        "https://example.com/feed.xml",
+        accept_content_filters=[{"type": "regex", "pattern": "AAPL"}],
+    )
+    stories = provider.get_stories()
+
+    assert len(stories) == 1
+    assert stories[0].headline == "Market roundup"
+
+
+def test_rss_provider_only_keeps_entries_matching_accept_title_patterns(monkeypatch):
+    monkeypatch.setattr(
+        rss.feedparser,
+        "parse",
+        lambda _: SimpleNamespace(
+            entries=[
+                _feed_entry(
+                    title="Amazon stock jumps on earnings beat",
+                    content=[rss.feedparser.FeedParserDict({"value": "<p>AMZN</p>"})],
+                ),
+                _feed_entry(
+                    title="Unrelated market roundup",
+                    content=[rss.feedparser.FeedParserDict({"value": "<p>Other</p>"})],
+                ),
+            ]
+        ),
+    )
+
+    provider = rss.RSSFeedStoryProvider(
+        "https://example.com/feed.xml",
+        accept_title_patterns=["amazon", "amzn"],
+    )
+    stories = provider.get_stories()
+
+    assert len(stories) == 1
+    assert stories[0].headline == "Amazon stock jumps on earnings beat"
+
+
+def test_rss_provider_skips_stories_below_min_body_text_length(monkeypatch):
+    monkeypatch.setattr(
+        rss.feedparser,
+        "parse",
+        lambda _: SimpleNamespace(
+            entries=[
+                _feed_entry(
+                    title="Too short",
+                    content=[rss.feedparser.FeedParserDict({"value": "<p>Hi</p>"})],
+                ),
+                _feed_entry(
+                    title="Long enough",
+                    content=[
+                        rss.feedparser.FeedParserDict(
+                            {"value": "<p>" + "word " * 20 + "</p>"}
+                        )
+                    ],
+                ),
+            ]
+        ),
+    )
+
+    provider = rss.RSSFeedStoryProvider(
+        "https://example.com/feed.xml",
+        min_body_text_length=50,
+    )
+    stories = provider.get_stories()
+
+    assert len(stories) == 1
+    assert stories[0].headline == "Long enough"
+
+
+def test_rss_provider_skips_stories_above_max_body_text_length(monkeypatch):
+    monkeypatch.setattr(
+        rss.feedparser,
+        "parse",
+        lambda _: SimpleNamespace(
+            entries=[
+                _feed_entry(
+                    title="Way too long",
+                    content=[
+                        rss.feedparser.FeedParserDict(
+                            {"value": "<p>" + "word " * 200 + "</p>"}
+                        )
+                    ],
+                ),
+                _feed_entry(
+                    title="Reasonable length",
+                    content=[
+                        rss.feedparser.FeedParserDict(
+                            {"value": "<p>" + "word " * 20 + "</p>"}
+                        )
+                    ],
+                ),
+            ]
+        ),
+    )
+
+    provider = rss.RSSFeedStoryProvider(
+        "https://example.com/feed.xml",
+        max_body_text_length=500,
+    )
+    stories = provider.get_stories()
+
+    assert len(stories) == 1
+    assert stories[0].headline == "Reasonable length"
+
+
+def test_rss_provider_body_text_length_filters_default_to_disabled(monkeypatch):
+    monkeypatch.setattr(
+        rss.feedparser,
+        "parse",
+        lambda _: SimpleNamespace(
+            entries=[
+                _feed_entry(
+                    title="Any length",
+                    content=[rss.feedparser.FeedParserDict({"value": "<p>Hi</p>"})],
+                )
+            ]
+        ),
+    )
+
+    provider = rss.RSSFeedStoryProvider("https://example.com/feed.xml")
+    stories = provider.get_stories()
+
+    assert len(stories) == 1
+
+
 def test_rss_provider_can_show_only_first_byline(monkeypatch):
     monkeypatch.setattr(
         rss.feedparser,
