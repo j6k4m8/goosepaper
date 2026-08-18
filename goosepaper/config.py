@@ -585,7 +585,13 @@ def _source_schema(source_type: str) -> Dict[str, Any]:
         },
         "rss": {
             "required": {"url"},
-            "optional": {"limit", "since_days_ago", "byline", "body_source"},
+            "optional": {
+                "limit",
+                "since_days_ago",
+                "byline",
+                "body_source",
+                "prefer_feed_title",
+            },
         },
         "mastodon": {
             "required": {"server", "username"},
@@ -663,6 +669,9 @@ def _validate_source_options(source_type: str, options: Dict[str, Any], index: i
         "tags": lambda value: _validate_string_list(value, f"source #{index} tags"),
         "byline": lambda value: _validate_rss_byline(value, index),
         "body_source": lambda value: _validate_body_source(source_type, value, index),
+        "prefer_feed_title": lambda value: _validate_bool(
+            value, f"source #{index} prefer_feed_title"
+        ),
         "include_replies": lambda value: _validate_bool(
             value, f"source #{index} include_replies"
         ),
