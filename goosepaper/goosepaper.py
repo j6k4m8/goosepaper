@@ -14,8 +14,11 @@ from .storyprovider.storyprovider import StoryProvider
 from .util import PlacementPreference
 
 # Matches the format this class has always used - kept as the default so existing callers that
-# don't pass datetime_format see no behavior change.
-_DEFAULT_DATETIME_FORMAT = "%B %d, %Y %H:%M"
+# don't pass datetime_format see no behavior change. Public (no leading underscore) since
+# config.py's PaperSettings.datetime_format imports it directly, the same way it already does for
+# LAYOUT_CHOICES/PAGE_PROFILE_CHOICES - a single source of truth instead of a second copy of the
+# literal that could silently drift from this one.
+DEFAULT_DATETIME_FORMAT = "%B %d, %Y %H:%M"
 
 
 def _get_style(style):
@@ -42,7 +45,7 @@ class Goosepaper:
         title: str = None,
         subtitle: str = None,
         deduplicate: bool = False,
-        datetime_format: Optional[str] = _DEFAULT_DATETIME_FORMAT,
+        datetime_format: Optional[str] = DEFAULT_DATETIME_FORMAT,
     ):
         """
         Create a new Goosepaper.
