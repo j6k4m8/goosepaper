@@ -13,6 +13,10 @@ from .styles import Style
 from .storyprovider.storyprovider import StoryProvider
 from .util import PlacementPreference
 
+# Matches the format this class has always used - kept as the default so existing callers that
+# don't pass datetime_format see no behavior change.
+_DEFAULT_DATETIME_FORMAT = "%B %d, %Y %H:%M"
+
 
 def _get_style(style):
     if isinstance(style, str):
@@ -38,6 +42,7 @@ class Goosepaper:
         title: str = None,
         subtitle: str = None,
         deduplicate: bool = False,
+        datetime_format: Optional[str] = _DEFAULT_DATETIME_FORMAT,
     ):
         """
         Create a new Goosepaper.
@@ -48,12 +53,18 @@ class Goosepaper:
             subtitle: The subtitle of the goosepaper
             deduplicate: Whether to remove stories with a matching headline and date when
                 rendering. Default: False
+            datetime_format: strftime() format string for the generation-time stamp appended to
+                the subtitle (e.g. "%d.%m.%Y" for a date-only German format). None or "" omits
+                the stamp entirely. Default: "%B %d, %Y %H:%M".
 
         """
         self.story_providers = story_providers
         self.title = title if title else "Daily Goosepaper"
         self.subtitle = subtitle + "\n" if subtitle else ""
-        self.subtitle += datetime.datetime.today().strftime("%B %d, %Y %H:%M")
+        if datetime_format:
+            self.subtitle += datetime.datetime.today().strftime(datetime_format)
+        else:
+            self.subtitle = self.subtitle.removesuffix("\n")
         self.deduplicate = deduplicate
 
     def get_stories(self, deduplicate: bool = None) -> List[Story]:
