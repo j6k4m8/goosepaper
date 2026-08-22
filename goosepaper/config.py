@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
 
+from goosepaper.goosepaper import DEFAULT_DATETIME_FORMAT
 from goosepaper.layout import LAYOUT_CHOICES
 from goosepaper.styles import PAGE_PROFILE_CHOICES
 from goosepaper.util import load_config_file, registered_story_providers
@@ -30,12 +31,19 @@ class PaperSettings:
     table_of_contents: bool = False
     layout: str = "auto"
     page_profile: str = "remarkable2"
+    # strftime() format string for the generation-time stamp appended under the subtitle - e.g.
+    # "%d.%m.%Y" for a date-only German format. None/"" omits the stamp entirely (not every
+    # locale considers a generation timestamp normal on a daily paper). Defaults to Goosepaper's
+    # own DEFAULT_DATETIME_FORMAT, so existing configs see no behavior change.
+    datetime_format: Optional[str] = DEFAULT_DATETIME_FORMAT
 
     def __post_init__(self):
         if self.title is not None and not isinstance(self.title, str):
             raise ValueError("Paper title must be a string or null.")
         if self.subtitle is not None and not isinstance(self.subtitle, str):
             raise ValueError("Paper subtitle must be a string or null.")
+        if self.datetime_format is not None and not isinstance(self.datetime_format, str):
+            raise ValueError("Paper datetime_format must be a string or null.")
         if not isinstance(self.style, str) or not self.style:
             raise ValueError("Paper style must be a non-empty string.")
         if (
@@ -73,6 +81,7 @@ class PaperSettings:
             "table_of_contents": self.table_of_contents,
             "layout": self.layout,
             "page_profile": self.page_profile,
+            "datetime_format": self.datetime_format,
         }
 
 
@@ -486,6 +495,7 @@ def _parse_paper_settings(raw: Any) -> PaperSettings:
             "table_of_contents",
             "layout",
             "page_profile",
+            "datetime_format",
         },
         "paper",
     )
@@ -500,6 +510,7 @@ def _parse_paper_settings(raw: Any) -> PaperSettings:
     )
     layout = section.get("layout", PaperSettings.layout)
     page_profile = section.get("page_profile", PaperSettings.page_profile)
+    datetime_format = section.get("datetime_format", PaperSettings.datetime_format)
 
     return PaperSettings(
         title=title,
@@ -510,6 +521,7 @@ def _parse_paper_settings(raw: Any) -> PaperSettings:
         table_of_contents=table_of_contents,
         layout=layout,
         page_profile=page_profile,
+        datetime_format=datetime_format,
     )
 
 

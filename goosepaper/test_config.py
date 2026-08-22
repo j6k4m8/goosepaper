@@ -194,6 +194,50 @@ def test_load_paper_config_accepts_auto_layout_and_null_body_font():
         assert config.paper.page_profile == "remarkable2"
 
 
+def test_load_paper_config_datetime_format_defaults_to_us_style():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(config_path, {"version": 2, "paper": {}, "sources": []})
+
+        config = load_paper_config(config_path)
+
+        assert config.paper.datetime_format == "%B %d, %Y %H:%M"
+
+
+def test_load_paper_config_accepts_custom_datetime_format():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"datetime_format": "%d.%m.%Y"},
+                "sources": [],
+            },
+        )
+
+        config = load_paper_config(config_path)
+
+        assert config.paper.datetime_format == "%d.%m.%Y"
+
+
+def test_load_paper_config_accepts_null_datetime_format():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"datetime_format": None},
+                "sources": [],
+            },
+        )
+
+        config = load_paper_config(config_path)
+
+        assert config.paper.datetime_format is None
+
+
 def test_load_paper_config_accepts_rm1_page_profile_alias():
     with _TempWorkspace() as tmp_path:
         config_path = tmp_path / "paper.json"
