@@ -122,6 +122,11 @@ class SourceConfig:
     # source isn't in any section, matching Goosepaper's existing default (an unset
     # Story.section_title).
     section: Optional[str] = None
+    # Also not part of `options`, same reasoning as `section` above, and only meaningful
+    # alongside it: False keeps this source's stories in the table of contents while hiding
+    # the section heading itself from the rendered page (see SectionProvider/Story). Default
+    # True matches Goosepaper's existing default (a visible Story.section_heading_visible).
+    section_heading_visible: bool = True
 
     def __post_init__(self):
         if not isinstance(self.type, str) or not self.type:
@@ -132,11 +137,22 @@ class SourceConfig:
             not isinstance(self.section, str) or not self.section.strip()
         ):
             raise ValueError('Each source "section", if given, must be a non-empty string.')
+        if not isinstance(self.section_heading_visible, bool):
+            raise ValueError(
+                'Each source "section_heading_visible", if given, must be a boolean.'
+            )
+        if not self.section_heading_visible and not self.section:
+            raise ValueError(
+                'Each source "section_heading_visible" requires "section" to be set - '
+                "there's no section heading to hide without one."
+            )
 
     def to_dict(self) -> Dict[str, Any]:
         result = {"type": self.type, **self.options}
         if self.section is not None:
             result["section"] = self.section
+        if not self.section_heading_visible:
+            result["section_heading_visible"] = False
         return result
 
 
@@ -568,10 +584,27 @@ def _parse_source(raw: Any, index: int) -> SourceConfig:
     if section is not None and (not isinstance(section, str) or not section.strip()):
         raise ConfigError(f'Source #{index} "section", if given, must be a non-empty string.')
 
+    section_heading_visible = source.get("section_heading_visible", True)
+    if not isinstance(section_heading_visible, bool):
+        raise ConfigError(
+            f'Source #{index} "section_heading_visible", if given, must be a boolean.'
+        )
+    if not section_heading_visible and not section:
+        raise ConfigError(
+            f'Source #{index} "section_heading_visible" requires "section" to be set - '
+            "there's no section heading to hide without one."
+        )
+
     source_schema = _source_schema(source_type)
     _reject_unknown_keys(
         source,
-        {"type", "section", *source_schema["required"], *source_schema["optional"]},
+        {
+            "type",
+            "section",
+            "section_heading_visible",
+            *source_schema["required"],
+            *source_schema["optional"],
+        },
         f"source #{index}",
     )
 
@@ -585,9 +618,18 @@ def _parse_source(raw: Any, index: int) -> SourceConfig:
             + "."
         )
 
-    options = {key: value for key, value in source.items() if key not in {"type", "section"}}
+    options = {
+        key: value
+        for key, value in source.items()
+        if key not in {"type", "section", "section_heading_visible"}
+    }
     _validate_source_options(source_type, options, index)
-    return SourceConfig(type=source_type, options=options, section=section)
+    return SourceConfig(
+        type=source_type,
+        options=options,
+        section=section,
+        section_heading_visible=section_heading_visible,
+    )
 
 
 def _source_schema(source_type: str) -> Dict[str, Any]:

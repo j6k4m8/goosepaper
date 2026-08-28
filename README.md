@@ -143,6 +143,8 @@ The paper config uses a strict v2 schema with one file per paper. A minimal exam
 
 Any source can also set `"section": "Tech"` to render its stories grouped under that heading, alongside every other source sharing the same section name - useful once a paper mixes several feeds and you want them organized into named groups rather than one flat run of stories. A source with no `"section"` renders ungrouped, same as today.
 
+Add `"section_heading_visible": false` alongside a `"section"` to keep that group's entry in the table of contents while hiding the heading itself from the printed page - useful for a section whose content already carries its own visual identity, like a run of comic strips that already show their own titles inside the image, where repeating the section name as running text would be redundant.
+
 Delivery still happens only when you pass `--deliver`. If you want user-level delivery defaults, create `~/.config/goosepaper/config.json`:
 
 ```json

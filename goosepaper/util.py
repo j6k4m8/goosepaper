@@ -184,7 +184,9 @@ def construct_story_providers_from_source_configs(source_configs):
     stories = []
 
     for source_config in source_configs:
-        source_type, options, section = _source_config_parts(source_config)
+        source_type, options, section, section_heading_visible = _source_config_parts(
+            source_config
+        )
         if source_type in provider_specs:
             module_name, class_name, normalize = provider_specs[source_type]
             module = importlib.import_module(module_name)
@@ -199,7 +201,9 @@ def construct_story_providers_from_source_configs(source_configs):
         if section:
             from goosepaper.storyprovider.section import SectionProvider
 
-            provider = SectionProvider(provider, section)
+            provider = SectionProvider(
+                provider, section, heading_visible=section_heading_visible
+            )
         stories.append(provider)
     return stories
 
@@ -210,6 +214,7 @@ def _source_config_parts(source_config):
             source_config.type,
             dict(source_config.options),
             getattr(source_config, "section", None),
+            getattr(source_config, "section_heading_visible", True),
         )
     if not isinstance(source_config, dict):
         raise ValueError("Each source must be a dict-like object.")
@@ -217,6 +222,11 @@ def _source_config_parts(source_config):
         raise ValueError("Each source must include a type.")
     return (
         source_config["type"],
-        {key: value for key, value in source_config.items() if key not in {"type", "section"}},
+        {
+            key: value
+            for key, value in source_config.items()
+            if key not in {"type", "section", "section_heading_visible"}
+        },
         source_config.get("section"),
+        source_config.get("section_heading_visible", True),
     )

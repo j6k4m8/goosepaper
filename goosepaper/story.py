@@ -19,6 +19,7 @@ class Story:
         placement_preference: PlacementPreference = PlacementPreference.NONE,
         include_in_toc: bool = True,
         section_title: Optional[str] = None,
+        section_heading_visible: bool = True,
         short_form: bool = False,
     ) -> None:
         """
@@ -30,6 +31,12 @@ class Story:
         self.date = date
         self.include_in_toc = include_in_toc
         self.section_title = section_title
+        # Only meaningful when section_title is set - False keeps this story's section run
+        # out of the visible body text (see Goosepaper._render_story_region) while still
+        # letting it contribute a table-of-contents entry, for content that already carries
+        # its own visual identity (e.g. a comic strip with its title drawn into the image
+        # itself) and doesn't need the section heading repeated in the page flow.
+        self.section_heading_visible = section_heading_visible
         self.short_form = short_form
         if body_html is not None:
             self.body_html = body_html

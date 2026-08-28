@@ -393,6 +393,92 @@ def test_load_paper_config_rejects_non_string_section():
         )
 
 
+def test_load_paper_config_defaults_section_heading_visible_to_true():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [{"type": "wikipedia", "section": "General"}],
+            },
+        )
+
+        config = load_paper_config(config_path)
+
+        assert config.sources[0].section_heading_visible is True
+
+
+def test_load_paper_config_accepts_section_heading_visible_false():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {
+                        "type": "wikipedia",
+                        "section": "Comics",
+                        "section_heading_visible": False,
+                    }
+                ],
+            },
+        )
+
+        config = load_paper_config(config_path)
+
+        assert config.sources[0].section_heading_visible is False
+        # Not a per-type field either - must not leak into options any more than "section" does.
+        assert "section_heading_visible" not in config.sources[0].options
+
+
+def test_load_paper_config_rejects_non_bool_section_heading_visible():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {
+                        "type": "wikipedia",
+                        "section": "General",
+                        "section_heading_visible": "no",
+                    }
+                ],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            '"section_heading_visible", if given, must be a boolean',
+        )
+
+
+def test_load_paper_config_rejects_section_heading_visible_without_section():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {"type": "wikipedia", "section_heading_visible": False}
+                ],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            '"section_heading_visible" requires "section" to be set',
+        )
+
+
 def test_load_paper_config_accepts_bluesky_source():
     with _TempWorkspace() as tmp_path:
         config_path = tmp_path / "paper.json"
