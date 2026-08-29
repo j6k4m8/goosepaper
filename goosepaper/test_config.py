@@ -577,3 +577,156 @@ def test_load_paper_config_rejects_invalid_weather_clock_format():
             lambda: load_paper_config(config_path),
             'clock_format must be either "12h" or "24h"',
         )
+
+
+def test_load_paper_config_accepts_comic_source():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [{"type": "comic", "comic_type": "xkcd"}],
+            },
+        )
+
+        config = load_paper_config(config_path)
+
+        assert config.sources[0].type == "comic"
+        assert config.sources[0].options["comic_type"] == "xkcd"
+
+
+def test_load_paper_config_rejects_comic_source_without_comic_type():
+    """DailyComicStoryProvider itself requires `comic_type` (no default - see comic.py), so the
+    config layer must reject its absence with a clean ConfigError before construction ever gets
+    a chance to blow up with a raw TypeError."""
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [{"type": "comic"}],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            "missing required field(s): comic_type",
+        )
+
+
+def test_load_paper_config_rejects_invalid_comic_type():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [{"type": "comic", "comic_type": "dilbert"}],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            "comic_type must be one of",
+        )
+
+
+def test_load_paper_config_accepts_gocomics_source_with_comic_name():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {"type": "comic", "comic_type": "gocomics", "comic_name": "garfield"}
+                ],
+            },
+        )
+
+        config = load_paper_config(config_path)
+
+        assert config.sources[0].options["comic_type"] == "gocomics"
+        assert config.sources[0].options["comic_name"] == "garfield"
+
+
+def test_load_paper_config_accepts_arcamax_source_with_comic_name():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {"type": "comic", "comic_type": "arcamax", "comic_name": "garfield"}
+                ],
+            },
+        )
+
+        config = load_paper_config(config_path)
+
+        assert config.sources[0].options["comic_type"] == "arcamax"
+        assert config.sources[0].options["comic_name"] == "garfield"
+
+
+def test_load_paper_config_rejects_gocomics_source_without_comic_name():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [{"type": "comic", "comic_type": "gocomics"}],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            'requires a "comic_name"',
+        )
+
+
+def test_load_paper_config_rejects_arcamax_source_without_comic_name():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [{"type": "comic", "comic_type": "arcamax"}],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            'requires a "comic_name"',
+        )
+
+
+def test_load_paper_config_rejects_xkcd_source_with_comic_name():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {"type": "comic", "comic_type": "xkcd", "comic_name": "xkcd"}
+                ],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            'does not accept "comic_name"',
+        )
