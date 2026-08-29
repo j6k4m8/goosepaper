@@ -116,15 +116,44 @@ class DeliverySettings:
 class SourceConfig:
     type: str
     options: Dict[str, Any] = field(default_factory=dict)
+    # Not part of `options`: unlike every other field, "section" applies uniformly to every
+    # source type rather than being validated per-type (see _source_schema) - it just tags which
+    # named group (see SectionProvider) this source's stories render under. None means the
+    # source isn't in any section, matching Goosepaper's existing default (an unset
+    # Story.section_title).
+    section: Optional[str] = None
+    # Also not part of `options`, same reasoning as `section` above, and only meaningful
+    # alongside it: False keeps this source's stories in the table of contents while hiding
+    # the section heading itself from the rendered page (see SectionProvider/Story). Default
+    # True matches Goosepaper's existing default (a visible Story.section_heading_visible).
+    section_heading_visible: bool = True
 
     def __post_init__(self):
         if not isinstance(self.type, str) or not self.type:
             raise ValueError("Each source must have a non-empty string type.")
         if not isinstance(self.options, dict):
             raise ValueError("Each source options payload must be an object.")
+        if self.section is not None and (
+            not isinstance(self.section, str) or not self.section.strip()
+        ):
+            raise ValueError('Each source "section", if given, must be a non-empty string.')
+        if not isinstance(self.section_heading_visible, bool):
+            raise ValueError(
+                'Each source "section_heading_visible", if given, must be a boolean.'
+            )
+        if not self.section_heading_visible and not self.section:
+            raise ValueError(
+                'Each source "section_heading_visible" requires "section" to be set - '
+                "there's no section heading to hide without one."
+            )
 
     def to_dict(self) -> Dict[str, Any]:
-        return {"type": self.type, **self.options}
+        result = {"type": self.type, **self.options}
+        if self.section is not None:
+            result["section"] = self.section
+        if not self.section_heading_visible:
+            result["section_heading_visible"] = False
+        return result
 
 
 @dataclass(frozen=True)
@@ -551,10 +580,31 @@ def _parse_source(raw: Any, index: int) -> SourceConfig:
     if not isinstance(source_type, str) or not source_type:
         raise ConfigError(f'Source #{index} must include a non-empty string "type".')
 
+    section = source.get("section")
+    if section is not None and (not isinstance(section, str) or not section.strip()):
+        raise ConfigError(f'Source #{index} "section", if given, must be a non-empty string.')
+
+    section_heading_visible = source.get("section_heading_visible", True)
+    if not isinstance(section_heading_visible, bool):
+        raise ConfigError(
+            f'Source #{index} "section_heading_visible", if given, must be a boolean.'
+        )
+    if not section_heading_visible and not section:
+        raise ConfigError(
+            f'Source #{index} "section_heading_visible" requires "section" to be set - '
+            "there's no section heading to hide without one."
+        )
+
     source_schema = _source_schema(source_type)
     _reject_unknown_keys(
         source,
-        {"type", *source_schema["required"], *source_schema["optional"]},
+        {
+            "type",
+            "section",
+            "section_heading_visible",
+            *source_schema["required"],
+            *source_schema["optional"],
+        },
         f"source #{index}",
     )
 
@@ -568,9 +618,18 @@ def _parse_source(raw: Any, index: int) -> SourceConfig:
             + "."
         )
 
-    options = {key: value for key, value in source.items() if key != "type"}
+    options = {
+        key: value
+        for key, value in source.items()
+        if key not in {"type", "section", "section_heading_visible"}
+    }
     _validate_source_options(source_type, options, index)
-    return SourceConfig(type=source_type, options=options)
+    return SourceConfig(
+        type=source_type,
+        options=options,
+        section=section,
+        section_heading_visible=section_heading_visible,
+    )
 
 
 def _source_schema(source_type: str) -> Dict[str, Any]:

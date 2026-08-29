@@ -393,9 +393,18 @@ class Goosepaper:
                     f"section-{self._slugify(section_title)}",
                     used_anchors,
                 )
+                # A section heading is hidden only if every story in the run agrees it should
+                # be - unlike include_in_toc's any() below, hiding is the "sticky" outcome here:
+                # the whole point is suppressing a heading that would otherwise repeat visual
+                # information a section's own content already carries (e.g. a comic strip with
+                # its title drawn into the image), so one story left at the True default
+                # shouldn't silently force it back on.
+                heading_class = "story-section-heading"
+                if not all(story.section_heading_visible for story in run_stories):
+                    heading_class += " story-section-heading--hidden"
                 rendered.append(
                     f"""
-                    <div id="{escape(section_anchor)}" class="story-section-heading">
+                    <div id="{escape(section_anchor)}" class="{heading_class}">
                         <h2 class="story-section-title">{escape(section_title)}</h2>
                     </div>
                     """

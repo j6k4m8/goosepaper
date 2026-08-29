@@ -107,6 +107,69 @@ def test_toc_can_collapse_sections_and_skip_opted_out_stories():
     assert 'Hidden from contents' in html
 
 
+def test_toc_lists_a_section_whose_heading_is_hidden_from_the_body():
+    class ComicsProvider:
+        def get_stories(self):
+            return [
+                Story(
+                    headline="Garfield",
+                    body_text="strip image",
+                    section_title="Comics",
+                    section_heading_visible=False,
+                ),
+                Story(
+                    headline="Peanuts",
+                    body_text="strip image",
+                    section_title="Comics",
+                    section_heading_visible=False,
+                ),
+            ]
+
+    g = Goosepaper([ComicsProvider()])
+
+    html = g.to_html(table_of_contents=True)
+
+    # Still findable and jumpable from the table of contents...
+    assert html.count('class="table-of-contents__entry"') == 1
+    assert 'href="#section-comics"' in html
+    # ...but the heading itself is a visually-hidden anchor in the body, not a printed heading -
+    # the section-heading div carries the hidden modifier, and the section title text is only
+    # ever the invisible <h2> the anchor link jumps to.
+    assert 'id="section-comics" class="story-section-heading story-section-heading--hidden"' in html
+    assert 'class="story-section-title">Comics<' in html
+
+
+def test_toc_hides_section_heading_if_any_story_in_the_run_wants_it_hidden():
+    class MixedComicsProvider:
+        def get_stories(self):
+            return [
+                Story(
+                    headline="Garfield",
+                    body_text="strip image",
+                    section_title="Comics",
+                    section_heading_visible=False,
+                ),
+                Story(
+                    headline="A written comic recap",
+                    body_text="text body",
+                    section_title="Comics",
+                    # Left at the default (True) - but hiding wins over a mixed run: the intent
+                    # (suppress a heading duplicating visual info some of this section's content
+                    # already carries) shouldn't be silently defeated by one story that simply
+                    # never opted in to hiding it.
+                ),
+            ]
+
+    g = Goosepaper([MixedComicsProvider()])
+
+    html = g.to_html(table_of_contents=True)
+
+    assert (
+        'id="section-comics" class="story-section-heading story-section-heading--hidden"'
+        in html
+    )
+
+
 def test_utility_strip_renders_between_header_and_contents():
     class UtilityProvider:
         def get_stories(self):
