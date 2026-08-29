@@ -626,9 +626,9 @@ def _base_print_css(
         text-transform: uppercase;
     }}
 
-    /* Story.section_heading_visible=False (SectionProvider's heading_visible, the "section"
-    source config's section_heading_visible field) - the heading still exists as a real element
-    so its id keeps working as a table-of-contents jump target, it's just not painted or given
+    /* Story.section_heading_visible=False (SectionProvider's own section_heading_visible param,
+    the "section" source config's section_heading_visible field) - the heading still exists as a
+    real element so its id keeps working as a table-of-contents jump target, it's just not painted or given
     layout space. Not display:none: that would drop the box (and the anchor with it) entirely,
     which the standard "visually hidden" pattern below avoids while still reading as absent to
     sighted users. */

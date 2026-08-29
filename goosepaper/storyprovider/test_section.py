@@ -37,11 +37,11 @@ def test_section_provider_defaults_heading_to_visible():
     assert stories[0].section_heading_visible is True
 
 
-def test_section_provider_tags_every_story_with_heading_visible_false():
+def test_section_provider_tags_every_story_with_section_heading_visible_false():
     inner = _FakeProvider(
         [Story("One", body_text="a"), Story("Two", body_text="b")]
     )
-    provider = SectionProvider(inner, "Comics", heading_visible=False)
+    provider = SectionProvider(inner, "Comics", section_heading_visible=False)
     stories = provider.get_stories()
 
     assert [s.section_heading_visible for s in stories] == [False, False]

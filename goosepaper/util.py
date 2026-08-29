@@ -202,7 +202,7 @@ def construct_story_providers_from_source_configs(source_configs):
             from goosepaper.storyprovider.section import SectionProvider
 
             provider = SectionProvider(
-                provider, section, heading_visible=section_heading_visible
+                provider, section, section_heading_visible=section_heading_visible
             )
         stories.append(provider)
     return stories
