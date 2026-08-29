@@ -159,18 +159,24 @@ class DailyComicStoryProvider(StoryProvider):
         ignored for them.
 
     Every story's headline is a fixed, source-derived name - never the strip's own (per-day)
-    title, and no byline is set. Two comic sources commonly sit in the same section (e.g. a
-    "Comics" section with both a gocomics and an arcamax entry); a byline or a per-day dynamic
-    headline (XKCD's own alt text, or a "<name> - <date>" fallback used in earlier versions of
-    this provider) just repeated the same source name the headline already showed, or produced a
-    needlessly long heading - neither adds anything a reader can use for a comic, unlike a byline
-    on an RSS article (which distinguishes otherwise-anonymous entries from different feeds in
-    the same section). For `"xkcd"` the label is fixed to `"XKCD"`; its real per-day title is
-    still available via the embedded image's `alt` attribute, and its mouseover joke still
-    renders as a caption underneath. For `"gocomics"`/`"arcamax"`, the label is instead read off
-    the fetched page itself (see `_extract_gocomics_label`/`_extract_arcamax_label`) - one
+    title, and no byline is set. For `"xkcd"` the label is fixed to `"XKCD"`; its real per-day
+    title is still available via the embedded image's `alt` attribute, and its mouseover joke
+    still renders as a caption underneath. For `"gocomics"`/`"arcamax"`, the label is instead read
+    off the fetched page itself (see `_extract_gocomics_label`/`_extract_arcamax_label`) - one
     `_ComicSource` entry covers every comic on that site, so there's no per-comic label to
     hardcode.
+
+    That headline is never actually rendered above the strip either (`Story(headline_visible=
+    False, ...)`) - a comic strip already shows its own title drawn into the image, so repeating
+    it as running text just above would be a plain duplicate, unlike a byline or headline on an
+    RSS article (which name something the fetched content doesn't already show on its own). The
+    headline text itself is still kept around, not blanked out: it still names the strip in the
+    table of contents whenever the source is grouped into a section (see the fork's
+    `feature/section-provider`/`section_heading_visible`), or as its own standalone table-of-
+    contents entry when it isn't in any section at all, and it still seeds the anchor id
+    `to_html()` generates for linking to it. This is a fixed property of every comic story, not a
+    config-exposed option - a comic asking to show its own headline again isn't a real use case
+    this provider needs to support.
 
     The strip image itself is downloaded and inlined as a base64 `data:` URI rather than linked
     by remote URL, for two reasons: (1) gocomics.com requires the same browser-like headers for
@@ -295,6 +301,7 @@ class DailyComicStoryProvider(StoryProvider):
         return [
             Story(
                 headline=label,
+                headline_visible=False,
                 body_html=(
                     _COMIC_CSS + f'<div class="comic-strip-body">{body_html}</div>'
                 ),

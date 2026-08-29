@@ -115,6 +115,9 @@ def test_xkcd_uses_fixed_headline_and_no_byline_but_keeps_hover_text(monkeypatch
     assert len(stories) == 1
     story = stories[0]
     assert story.headline == "XKCD"
+    # The headline is kept (still names the strip in the table of contents/anchor id) but never
+    # rendered above the strip - the strip already shows its own title inside the image.
+    assert story.headline_visible is False
     assert story.byline is None
     assert "hover joke text" in story.body_html
     embedded = _decode_data_uri_image(story.body_html)
@@ -154,6 +157,7 @@ def test_gocomics_uses_date_scoped_url_browser_headers_and_derives_label(monkeyp
     story = stories[0]
     # Label is derived from the page's JSON-LD, not hardcoded per comic.
     assert story.headline == "Calvin and Hobbes"
+    assert story.headline_visible is False
     assert story.byline is None
     assert story.date == datetime.datetime(2026, 1, 5)
     embedded = _decode_data_uri_image(story.body_html)
