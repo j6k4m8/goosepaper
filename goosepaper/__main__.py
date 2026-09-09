@@ -22,6 +22,7 @@ def main(args=None):
             story_providers=story_providers,
             title=config.paper.title,
             subtitle=config.paper.subtitle,
+            datetime_format=config.paper.datetime_format,
         )
 
         if config.output.endswith(".html"):

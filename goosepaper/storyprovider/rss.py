@@ -88,6 +88,24 @@ def _story_from_entry(
     body_source: str = "auto",
     prefer_feed_title: bool = False,
 ) -> Optional[Story]:
+    try:
+        return _story_from_entry_unsafe(
+            entry, source, date, body_source=body_source, prefer_feed_title=prefer_feed_title
+        )
+    except Exception as err:
+        print(
+            f"Sad honk :/ Skipping {entry.get('link', entry.get('title'))}: {err}"
+        )
+        return None
+
+
+def _story_from_entry_unsafe(
+    entry,
+    source: str,
+    date: datetime.datetime,
+    body_source: str = "auto",
+    prefer_feed_title: bool = False,
+) -> Story:
     if body_source == "summary":
         return Story(
             entry["title"],
