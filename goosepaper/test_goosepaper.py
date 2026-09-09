@@ -1,3 +1,5 @@
+import datetime
+
 from .goosepaper import Goosepaper
 from .story import Story
 from .styles import Style
@@ -31,6 +33,31 @@ def test_skips_failing_providers_and_keeps_rendering():
     stories = g.get_stories()
 
     assert len(stories) == 2
+
+
+def test_subtitle_uses_default_datetime_format():
+    g = Goosepaper([])
+    stamp = datetime.datetime.today().strftime("%B %d, %Y %H:%M")[:10]
+    assert g.subtitle.startswith(stamp)
+
+
+def test_subtitle_uses_custom_datetime_format():
+    g = Goosepaper([], subtitle="Custom sub", datetime_format="%d.%m.%Y")
+    expected_date = datetime.datetime.today().strftime("%d.%m.%Y")
+    assert g.subtitle == f"Custom sub\n{expected_date}"
+
+
+def test_subtitle_omits_datetime_stamp_when_format_is_falsy():
+    g = Goosepaper([], subtitle="Custom sub", datetime_format=None)
+    assert g.subtitle == "Custom sub"
+
+    g_empty = Goosepaper([], subtitle="Custom sub", datetime_format="")
+    assert g_empty.subtitle == "Custom sub"
+
+
+def test_subtitle_omits_datetime_stamp_with_no_subtitle_and_no_format():
+    g = Goosepaper([], datetime_format=None)
+    assert g.subtitle == ""
 
 
 def test_can_create_html():
