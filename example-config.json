@@ -24,12 +24,14 @@
             "url": "https://feeds.npr.org/1001/rss.xml",
             "limit": 5,
             "byline": "first",
-            "body_source": "auto"
+            "body_source": "auto",
+            "section": "News"
         },
         {
             "type": "reddit",
             "subreddit": "news",
-            "limit": 6
+            "limit": 6,
+            "section": "News"
         },
         {
             "type": "reddit",

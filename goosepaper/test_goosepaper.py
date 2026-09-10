@@ -3,7 +3,7 @@ import datetime
 from .goosepaper import Goosepaper
 from .story import Story
 from .styles import Style
-from .util import PlacementPreference
+from .util import PlacementPreference, construct_story_providers_from_source_configs
 
 from .storyprovider.storyprovider import LoremStoryProvider
 
@@ -132,6 +132,112 @@ def test_toc_can_collapse_sections_and_skip_opted_out_stories():
     assert 'class="story-section-title">Bluesky<' in html
     assert 'class="story story-card story-short"' in html
     assert 'Hidden from contents' in html
+
+
+def test_toc_lists_a_section_whose_heading_is_hidden_from_the_body():
+    class ComicsProvider:
+        def get_stories(self):
+            return [
+                Story(
+                    headline="Garfield",
+                    body_text="strip image",
+                    section_title="Comics",
+                    section_heading_visible=False,
+                ),
+                Story(
+                    headline="Peanuts",
+                    body_text="strip image",
+                    section_title="Comics",
+                    section_heading_visible=False,
+                ),
+            ]
+
+    g = Goosepaper([ComicsProvider()])
+
+    html = g.to_html(table_of_contents=True)
+
+    # Still findable and jumpable from the table of contents...
+    assert html.count('class="table-of-contents__entry"') == 1
+    assert 'href="#section-comics"' in html
+    # ...but the heading itself is a visually-hidden anchor in the body, not a printed heading -
+    # the section-heading div carries the hidden modifier, and the section title text is only
+    # ever the invisible <h2> the anchor link jumps to.
+    assert 'id="section-comics" class="story-section-heading story-section-heading--hidden"' in html
+    assert 'class="story-section-title">Comics<' in html
+
+
+def test_toc_hides_section_heading_if_any_story_in_the_run_wants_it_hidden():
+    class MixedComicsProvider:
+        def get_stories(self):
+            return [
+                Story(
+                    headline="Garfield",
+                    body_text="strip image",
+                    section_title="Comics",
+                    section_heading_visible=False,
+                ),
+                Story(
+                    headline="A written comic recap",
+                    body_text="text body",
+                    section_title="Comics",
+                    # Left at the default (True) - but hiding wins over a mixed run: the intent
+                    # (suppress a heading duplicating visual info some of this section's content
+                    # already carries) shouldn't be silently defeated by one story that simply
+                    # never opted in to hiding it.
+                ),
+            ]
+
+    g = Goosepaper([MixedComicsProvider()])
+
+    html = g.to_html(table_of_contents=True)
+
+    assert (
+        'id="section-comics" class="story-section-heading story-section-heading--hidden"'
+        in html
+    )
+
+
+def test_two_config_sources_share_a_section_when_listed_consecutively():
+    providers = construct_story_providers_from_source_configs(
+        [
+            {"type": "text", "headline": "A", "text": "a",
+             "section": "News", "section_heading_visible": False},
+            {"type": "text", "headline": "B", "text": "b",
+             "section": "News", "section_heading_visible": True},
+        ]
+    )
+    html = Goosepaper(providers).to_html(table_of_contents=True)
+
+    # One "News" run out of the two sources, and - the two sources disagreeing -
+    # the heading is hidden: `section_heading_visible: false` on any source in the
+    # run wins over another left at the default True.
+    assert html.count('class="story-section-title">News<') == 1
+    assert (
+        'id="section-news" class="story-section-heading story-section-heading--hidden"'
+        in html
+    )
+    assert 'href="#section-news"' in html
+
+
+def test_same_section_across_non_consecutive_sources_prints_the_heading_twice():
+    # Documented limitation (see README / SourceConfig.section): grouping is by
+    # consecutive run, not global. A different section between two "News" sources
+    # splits them into two runs, so the "News" heading renders once per run
+    # rather than merging - the first hidden, the second visible.
+    providers = construct_story_providers_from_source_configs(
+        [
+            {"type": "text", "headline": "A", "text": "a",
+             "section": "News", "section_heading_visible": False},
+            {"type": "text", "headline": "M", "text": "m", "section": "Other"},
+            {"type": "text", "headline": "B", "text": "b",
+             "section": "News", "section_heading_visible": True},
+        ]
+    )
+    html = Goosepaper(providers).to_html(table_of_contents=True)
+
+    assert html.count('class="story-section-title">News<') == 2
+    assert 'id="section-news" class="story-section-heading story-section-heading--hidden"' in html
+    assert 'id="section-news-2" class="story-section-heading">' in html
 
 
 def test_utility_strip_renders_between_header_and_contents():
