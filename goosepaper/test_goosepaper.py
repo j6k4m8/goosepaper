@@ -3,7 +3,7 @@ import datetime
 from .goosepaper import Goosepaper
 from .story import Story
 from .styles import Style
-from .util import PlacementPreference
+from .util import PlacementPreference, construct_story_providers_from_source_configs
 
 from .storyprovider.storyprovider import LoremStoryProvider
 
@@ -195,6 +195,49 @@ def test_toc_hides_section_heading_if_any_story_in_the_run_wants_it_hidden():
         'id="section-comics" class="story-section-heading story-section-heading--hidden"'
         in html
     )
+
+
+def test_two_config_sources_share_a_section_when_listed_consecutively():
+    providers = construct_story_providers_from_source_configs(
+        [
+            {"type": "text", "headline": "A", "text": "a",
+             "section": "News", "section_heading_visible": False},
+            {"type": "text", "headline": "B", "text": "b",
+             "section": "News", "section_heading_visible": True},
+        ]
+    )
+    html = Goosepaper(providers).to_html(table_of_contents=True)
+
+    # One "News" run out of the two sources, and - the two sources disagreeing -
+    # the heading is hidden: `section_heading_visible: false` on any source in the
+    # run wins over another left at the default True.
+    assert html.count('class="story-section-title">News<') == 1
+    assert (
+        'id="section-news" class="story-section-heading story-section-heading--hidden"'
+        in html
+    )
+    assert 'href="#section-news"' in html
+
+
+def test_same_section_across_non_consecutive_sources_prints_the_heading_twice():
+    # Documented limitation (see README / SourceConfig.section): grouping is by
+    # consecutive run, not global. A different section between two "News" sources
+    # splits them into two runs, so the "News" heading renders once per run
+    # rather than merging - the first hidden, the second visible.
+    providers = construct_story_providers_from_source_configs(
+        [
+            {"type": "text", "headline": "A", "text": "a",
+             "section": "News", "section_heading_visible": False},
+            {"type": "text", "headline": "M", "text": "m", "section": "Other"},
+            {"type": "text", "headline": "B", "text": "b",
+             "section": "News", "section_heading_visible": True},
+        ]
+    )
+    html = Goosepaper(providers).to_html(table_of_contents=True)
+
+    assert html.count('class="story-section-title">News<') == 2
+    assert 'id="section-news" class="story-section-heading story-section-heading--hidden"' in html
+    assert 'id="section-news-2" class="story-section-heading">' in html
 
 
 def test_utility_strip_renders_between_header_and_contents():

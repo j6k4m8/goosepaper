@@ -129,7 +129,9 @@ class SourceConfig:
     # source type rather than being validated per-type (see _source_schema) - it just tags which
     # named group (see SectionProvider) this source's stories render under. None means the
     # source isn't in any section, matching Goosepaper's existing default (an unset
-    # Story.section_title).
+    # Story.section_title). Grouping is by *consecutive* run, not global (see
+    # Goosepaper._story_runs): sources meant for the same section should be listed together, or
+    # the heading renders once per run.
     section: Optional[str] = None
     # Also not part of `options`, same reasoning as `section` above, and only meaningful
     # alongside it: False keeps this source's stories in the table of contents while hiding
