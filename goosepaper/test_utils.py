@@ -202,3 +202,12 @@ def test_construct_story_providers_wraps_source_with_section_from_source_config(
     assert providers[0].get_stories()[0].section_title == "Tech"
     assert not isinstance(providers[1], SectionProvider)
     assert providers[1].get_stories()[0].section_title is None
+
+
+def test_construct_story_providers_passes_comic_type_option():
+    stories = construct_story_providers_from_source_configs(
+        [{"type": "comic", "comic_type": "gocomics", "comic_name": "garfield"}]
+    )
+
+    assert stories[0].comic_type == "gocomics"
+    assert stories[0].comic_name == "garfield"

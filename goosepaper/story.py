@@ -20,6 +20,7 @@ class Story:
         include_in_toc: bool = True,
         section_title: Optional[str] = None,
         section_heading_visible: bool = True,
+        headline_visible: bool = True,
         short_form: bool = False,
     ) -> None:
         """
@@ -37,6 +38,13 @@ class Story:
         # its own visual identity (e.g. a comic strip with its title drawn into the image
         # itself) and doesn't need the section heading repeated in the page flow.
         self.section_heading_visible = section_heading_visible
+        # False keeps `headline` around for everything that still needs the text itself
+        # (anchor-id slugging, its own table-of-contents entry when there's no section_title,
+        # deduplicate=True's headline-based matching) while suppressing only the rendered
+        # <h1>/<h2>/... tag in to_html() - for content that already carries its own visible
+        # identity (e.g. DailyComicStoryProvider's strip image, whose alt text already names it)
+        # and doesn't need that name repeated as running text above it too.
+        self.headline_visible = headline_visible
         self.short_form = short_form
         if body_html is not None:
             self.body_html = body_html
@@ -95,7 +103,7 @@ class Story:
             classes.extend(extra_classes)
         headline = (
             f"<{headline_tag} class='story-headline {priority_class}'>{escape(self.headline)}</{headline_tag}>"
-            if self.headline
+            if self.headline and self.headline_visible
             else ""
         )
         byline_p = (
