@@ -132,6 +132,71 @@ def test_resolve_delivery_settings_paper_folder_overrides_user_default():
     assert delivery.folder == "Morning Brief"
 
 
+def test_delivery_settings_rejects_retention_keep_last_n_without_prefix():
+    try:
+        DeliverySettings(retention_keep_last_n=3)
+    except ValueError as err:
+        assert "retention_keep_last_n requires retention_prefix" in str(err)
+    else:
+        assert False, "Expected ValueError"
+
+
+def test_delivery_settings_rejects_retention_prefix_without_keep_last_n():
+    try:
+        DeliverySettings(retention_prefix="Daily Goose ")
+    except ValueError as err:
+        assert "retention_prefix requires retention_keep_last_n" in str(err)
+    else:
+        assert False, "Expected ValueError"
+
+
+def test_delivery_settings_rejects_non_positive_retention_keep_last_n():
+    try:
+        DeliverySettings(retention_keep_last_n=0, retention_prefix="Daily Goose ")
+    except ValueError as err:
+        assert "retention_keep_last_n must be a positive integer" in str(err)
+    else:
+        assert False, "Expected ValueError"
+
+
+def test_delivery_settings_accepts_matching_retention_pair():
+    delivery = DeliverySettings(retention_keep_last_n=5, retention_prefix="Daily Goose ")
+    assert delivery.retention_keep_last_n == 5
+    assert delivery.retention_prefix == "Daily Goose "
+
+
+def test_resolve_delivery_settings_retention_cli_overrides_user_default():
+    delivery = resolve_delivery_settings(
+        user_defaults=DeliverySettings(
+            retention_keep_last_n=7, retention_prefix="Old Prefix "
+        ),
+        retention_keep_last_n_override=3,
+        retention_prefix_override="New Prefix ",
+    )
+    assert delivery.retention_keep_last_n == 3
+    assert delivery.retention_prefix == "New Prefix "
+
+
+def test_load_user_config_parses_retention_from_delivery_defaults():
+    with _TempWorkspace() as tmp_path:
+        os.environ["XDG_CONFIG_HOME"] = str(tmp_path)
+        _write_json(
+            tmp_path / "goosepaper" / "config.json",
+            {
+                "version": 2,
+                "delivery_defaults": {
+                    "retention_keep_last_n": 7,
+                    "retention_prefix": "Daily Goose ",
+                },
+            },
+        )
+
+        config = load_user_config()
+
+        assert config.delivery_defaults.retention_keep_last_n == 7
+        assert config.delivery_defaults.retention_prefix == "Daily Goose "
+
+
 def test_resolve_runtime_config_merges_user_defaults_and_cli():
     with _TempWorkspace() as tmp_path:
         os.environ["XDG_CONFIG_HOME"] = str(tmp_path / "xdg")
@@ -166,6 +231,52 @@ def test_resolve_runtime_config_merges_user_defaults_and_cli():
         assert config.delivery.replace_mode == "exact"
         assert config.delivery.cleanup is False
         assert config.deliver is True
+
+
+def test_resolve_runtime_config_accepts_retention_cli_flags():
+    with _TempWorkspace() as tmp_path:
+        os.environ["XDG_CONFIG_HOME"] = str(tmp_path / "xdg")
+        _write_json(
+            tmp_path / "goosepaper.json",
+            {
+                "version": 2,
+                "paper": {"style": "Academy"},
+                "sources": [{"type": "text", "headline": "hello"}],
+            },
+        )
+
+        config = resolve_runtime_config(
+            [
+                "--deliver",
+                "--retention-keep-last-n",
+                "7",
+                "--retention-prefix",
+                "Daily Goose ",
+            ]
+        )
+
+        assert config.delivery.retention_keep_last_n == 7
+        assert config.delivery.retention_prefix == "Daily Goose "
+
+
+def test_resolve_runtime_config_requires_deliver_for_retention_flags():
+    with _TempWorkspace() as tmp_path:
+        os.environ["XDG_CONFIG_HOME"] = str(tmp_path / "xdg")
+        _write_json(
+            tmp_path / "goosepaper.json",
+            {
+                "version": 2,
+                "paper": {"style": "Academy"},
+                "sources": [{"type": "text", "headline": "hello"}],
+            },
+        )
+
+        _assert_config_error(
+            lambda: resolve_runtime_config(
+                ["--retention-keep-last-n", "7", "--retention-prefix", "Daily Goose "]
+            ),
+            "Delivery override flags require '--deliver'",
+        )
 
 
 def test_load_paper_config_accepts_auto_layout_and_null_body_font():
