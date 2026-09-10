@@ -176,6 +176,27 @@ Check out [this example PDF](https://github.com/j6k4m8/goosepaper/blob/master/do
 -   [Weather](https://github.com/j6k4m8/goosepaper/blob/master/docs/reference/storyprovider/weather.py.md)
 -   [RSS Feeds](https://github.com/j6k4m8/goosepaper/blob/master/docs/reference/storyprovider/rss.py.md)
 -   [Reddit Subreddits](https://github.com/j6k4m8/goosepaper/blob/master/docs/reference/storyprovider/reddit.py.md)
+-   [Logic Puzzles](goosepaper/storyprovider/puzzle.py) - see below
+
+## puzzle source options
+
+The `"puzzle"` source type generates one or more logic puzzles - Sudoku, Binoxxo, Futoshiki,
+Kakuro, or Shikaku - and renders each as plain HTML/CSS (no images). Every puzzle's solution is
+collected separately and placed in the paper's appendix.
+
+```json
+{ "type": "puzzle", "puzzle_type": "sudoku", "difficulty": "hard", "count": 2, "explanation": "footer", "name": "Sudoku" }
+```
+
+| Option | Required? | Default | What it does |
+|---|---|---|---|
+| `puzzle_type` | **required** | - | One of `sudoku`, `binoxxo`, `futoshiki`, `kakuro`, `shikaku`. No default on purpose - a config that forgets it fails loudly instead of silently always generating Sudoku. |
+| `box_size` | optional | `3` | **Sudoku only**, ignored for every other type. Supported values are `2` (4x4, a quick/easy variant) and `3` (the classic 9x9, 3x3 boxes). Unlike every other type's grid size, this does not vary by `difficulty` - all three difficulties use the same box size. |
+| `difficulty` | optional | `"medium"` | One of `easy`, `medium`, `hard`. Controls how many cells/constraints are given, and (for every type but sudoku) the grid size itself - see e.g. `goosepaper/puzzlegen/binoxxo/config.py`'s `DIFFICULTIES` table. Grid size and difficulty aren't independent knobs: Shikaku's "hard" preset, for example, is specifically tuned for a 20x20 grid (a smaller grid can't even fit as many regions as "hard" asks for), so there's no separate `size` option to set independently - it would let a config ask for an untested combination. |
+| `count` | optional | `1` | How many puzzle instances of this `puzzle_type`+`difficulty` to generate. |
+| `seed` | optional | random | RNG seed, for reproducible generation. |
+| `explanation` | optional | `"none"` | `"none"`, `"inline"` (a short rules blurb repeated under every puzzle instance), `"footer"` (a real CSS footnote at the bottom of whichever page it lands on - one footnote per `puzzle_type` in the whole paper, with every instance of that type carrying its own small reference mark pointing at it), or `"appendix"` (one rules blurb per `puzzle_type`, grouped with the solutions at the end of the document). |
+| `name` | optional | none | Visible heading for this puzzle instance (and its solution, suffixed " - Solution"). If omitted, no heading renders for the puzzle itself - only the enclosing section's own title identifies it. Useful when several different puzzle types share one section; redundant (and best left unset) when a section already covers exactly one type+difficulty. |
 
 # More Questions, Infrequently Asked
 

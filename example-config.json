@@ -49,6 +49,13 @@
             "username": "jordan.matelsky.com",
             "limit": 4,
             "include_replies": false
+        },
+        {
+            "type": "puzzle",
+            "puzzle_type": "sudoku",
+            "difficulty": "medium",
+            "count": 1,
+            "explanation": "footer"
         }
     ],
     "delivery": {
