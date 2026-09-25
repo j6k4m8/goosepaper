@@ -128,6 +128,7 @@ def construct_story_providers_from_source_configs(source_configs):
                         "since_days_ago",
                         "byline",
                         "body_source",
+                        "prefer_feed_title",
                     }
                 },
             },

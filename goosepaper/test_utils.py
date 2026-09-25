@@ -86,6 +86,20 @@ def test_construct_story_providers_passes_rss_byline_option():
     assert stories[0].body_source == "summary"
 
 
+def test_construct_story_providers_passes_rss_prefer_feed_title_option():
+    stories = construct_story_providers_from_source_configs(
+        [
+            {
+                "type": "rss",
+                "url": "https://example.com/feed.xml",
+                "prefer_feed_title": True,
+            }
+        ]
+    )
+
+    assert stories[0].prefer_feed_title is True
+
+
 def test_construct_story_providers_supports_bluesky():
     stories = construct_story_providers_from_source_configs(
         [
