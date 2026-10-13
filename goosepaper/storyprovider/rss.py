@@ -103,11 +103,12 @@ class RSSFeedStoryProvider(StoryProvider):
             if self.skip_content_filters:
                 story.body_html = apply_skip_content_filters(story.body_html, self.skip_content_filters)
 
-            body_length = visible_text_length(story.body_html)
-            if self.min_body_text_length is not None and body_length < self.min_body_text_length:
-                continue
-            if self.max_body_text_length is not None and body_length > self.max_body_text_length:
-                continue
+            if self.min_body_text_length is not None or self.max_body_text_length is not None:
+                body_length = visible_text_length(story.body_html)
+                if self.min_body_text_length is not None and body_length < self.min_body_text_length:
+                    continue
+                if self.max_body_text_length is not None and body_length > self.max_body_text_length:
+                    continue
 
             if self.byline_mode == "none":
                 story.byline = None

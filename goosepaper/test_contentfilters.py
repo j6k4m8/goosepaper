@@ -12,6 +12,11 @@ def test_visible_text_length_strips_tags_and_whitespace():
     assert visible_text_length("<p>Hello world</p>") == len("Hello world")
 
 
+def test_visible_text_length_counts_entities_once_and_ignores_style_and_script():
+    html = "<style>p { color: red; }</style><script>var x = 1;</script><p>a&nbsp;b &amp; c</p>"
+    assert visible_text_length(html) == len("a b & c")
+
+
 def test_visible_text_length_handles_empty_html():
     assert visible_text_length("") == 0
     assert visible_text_length(None) == 0

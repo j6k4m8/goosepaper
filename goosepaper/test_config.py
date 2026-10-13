@@ -3,6 +3,8 @@ import os
 import tempfile
 from pathlib import Path
 
+import pytest
+
 from .config import (
     ConfigError,
     DeliveryIntent,
@@ -1080,3 +1082,32 @@ def test_load_paper_config_rejects_xkcd_source_with_comic_name():
             lambda: load_paper_config(config_path),
             'does not accept "comic_name"',
         )
+
+
+@pytest.mark.parametrize(
+    "option, value, expected",
+    [
+        ("skip_title_patterns", ["["], "invalid regex"),
+        ("accept_title_patterns", ["("], "invalid regex"),
+        ("skip_content_filters", [{"type": "regex", "pattern": "("}], "is invalid"),
+        (
+            "accept_content_filters",
+            [{"type": "regex", "pattern": "a", "flags": "z"}],
+            "unknown regex flag",
+        ),
+        ("skip_content_filters", [{"type": "css", "selector": "div["}], "is invalid"),
+    ],
+)
+def test_load_paper_config_rejects_unusable_rss_filter_patterns(option, value, expected):
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [{"type": "rss", "url": "https://example.com/feed.xml", option: value}],
+            },
+        )
+
+        _assert_config_error(lambda: load_paper_config(config_path), expected)

@@ -25,10 +25,12 @@ _FLAG_CHARS = {
 }
 
 
-def _parse_flags(flags: str) -> int:
+def parse_flags(flags: str) -> int:
     combined = 0
     for ch in flags or "":
-        combined |= _FLAG_CHARS.get(ch.lower(), 0)
+        if ch.lower() not in _FLAG_CHARS:
+            raise ValueError(f"unknown regex flag {ch!r} (supported: i, s, m, x)")
+        combined |= _FLAG_CHARS[ch.lower()]
     return combined
 
 
@@ -41,7 +43,7 @@ def apply_skip_content_filters(html: str, filters: Iterable[Dict[str, Any]]) -> 
 
     for filt in filters:
         if filt.get("type") == "regex":
-            html = re.sub(filt["pattern"], "", html, flags=_parse_flags(filt.get("flags", "")))
+            html = re.sub(filt["pattern"], "", html, flags=parse_flags(filt.get("flags", "")))
 
     css_selectors = [filt["selector"] for filt in filters if filt.get("type") == "css"]
     if css_selectors:
@@ -75,7 +77,7 @@ def should_accept_content(html: str, filters: Iterable[Dict[str, Any]]) -> bool:
         return True
     text = bs4.BeautifulSoup(html, "lxml").get_text()
     return any(
-        re.search(filt["pattern"], text, _parse_flags(filt.get("flags", "")))
+        re.search(filt["pattern"], text, parse_flags(filt.get("flags", "")))
         for filt in regex_filters
     )
 
@@ -88,13 +90,13 @@ def apply_accept_content_filters(html: str, filters: Iterable[Dict[str, Any]]) -
 
     Falls through to the original `html` unchanged if no `css` filter matches - an accept filter
     that misses its target should never zero out an article, only skip filters remove content."""
-    for filt in filters or []:
-        if filt.get("type") != "css":
-            continue
+    selectors = [filt["selector"] for filt in filters or [] if filt.get("type") == "css"]
+    if selectors:
         soup = bs4.BeautifulSoup(html, "lxml")
-        match = soup.select_one(filt["selector"])
-        if match is not None:
-            return str(match)
+        for selector in selectors:
+            match = soup.select_one(selector)
+            if match is not None:
+                return str(match)
     return html
 
 
@@ -104,12 +106,14 @@ def visible_text_length(html: str) -> int:
     50-photo gallery each carrying paragraphs of alt text, which would otherwise balloon a single
     RSS entry into the bulk of the whole paper).
 
-    Collapses whitespace runs (including the newlines/indentation of pretty-printed source HTML)
-    down to a single space before measuring - a rendered page (or a screen reader) collapses that
-    the same way, so none of it is actually "visible text". Without this, a short teaser-only
+    Parsed with bs4 (like `should_accept_content`) so entities count once (`&nbsp;` is one
+    character) and `<style>`/`<script>` contents don't count at all. Collapses whitespace runs
+    (including the newlines/indentation of pretty-printed source HTML) down to a single space
+    before measuring - a rendered page (or a screen reader) collapses that the same way, so none
+    of it is actually "visible text". Without this, a short teaser-only
     extraction from a heavily-indented page can rack up hundreds of characters of pure source
     formatting and clear a min-length threshold on whitespace alone, not real content."""
-    text = re.sub(r"<[^>]+>", " ", html or "")
+    text = bs4.BeautifulSoup(html or "", "lxml").get_text()
     return len(re.sub(r"\s+", " ", text).strip())
 
 

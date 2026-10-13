@@ -2,10 +2,14 @@ import argparse
 import datetime
 import json
 import os
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
 
+import bs4
+
+from goosepaper.contentfilters import parse_flags
 from goosepaper.goosepaper import DEFAULT_DATETIME_FORMAT
 from goosepaper.layout import LAYOUT_CHOICES
 from goosepaper.styles import PAGE_PROFILE_CHOICES
@@ -706,12 +710,16 @@ def _validate_source_options(source_type: str, options: Dict[str, Any], index: i
         ),
         "days": lambda value: _validate_positive_int(value, f"source #{index} days"),
         "clock_format": lambda value: _validate_weather_clock_format(value, index),
-        "skip_content_filters": lambda value: _validate_skip_content_filters(value, index),
-        "skip_title_patterns": lambda value: _validate_string_list(
+        "skip_content_filters": lambda value: _validate_type_keyed_content_filters(
+            value, index, "skip_content_filters"
+        ),
+        "skip_title_patterns": lambda value: _validate_title_patterns(
             value, f"source #{index} skip_title_patterns"
         ),
-        "accept_content_filters": lambda value: _validate_accept_content_filters(value, index),
-        "accept_title_patterns": lambda value: _validate_string_list(
+        "accept_content_filters": lambda value: _validate_type_keyed_content_filters(
+            value, index, "accept_content_filters"
+        ),
+        "accept_title_patterns": lambda value: _validate_title_patterns(
             value, f"source #{index} accept_title_patterns"
         ),
         "min_body_text_length": lambda value: _validate_positive_int(
@@ -825,6 +833,15 @@ def _validate_rss_byline(value: Any, index: int):
         )
 
 
+def _validate_title_patterns(value: Any, context: str):
+    _validate_string_list(value, context)
+    for pattern in value:
+        try:
+            re.compile(pattern)
+        except re.error as err:
+            raise ConfigError(f"{context} has an invalid regex {pattern!r}: {err}") from err
+
+
 def _validate_type_keyed_content_filters(value: Any, index: int, field_name: str):
     """Shared by `skip_content_filters` and `accept_content_filters`: both are lists of `{"type":
     "css", "selector": "..."}` or `{"type": "regex", "pattern": "...", "flags": "..."}` entries.
@@ -860,14 +877,15 @@ def _validate_type_keyed_content_filters(value: Any, index: int, field_name: str
             raise ConfigError(
                 f"source #{index} {field_name}[{i}] of type regex requires a non-empty pattern."
             )
-
-
-def _validate_skip_content_filters(value: Any, index: int):
-    _validate_type_keyed_content_filters(value, index, "skip_content_filters")
-
-
-def _validate_accept_content_filters(value: Any, index: int):
-    _validate_type_keyed_content_filters(value, index, "accept_content_filters")
+        # A bad selector/pattern/flag would otherwise only fail inside the provider's
+        # get_stories(), which drops the whole feed instead of rejecting the config.
+        try:
+            if filter_type == "css":
+                bs4.BeautifulSoup("", "lxml").select(item["selector"])
+            else:
+                re.compile(item["pattern"], parse_flags(item.get("flags", "")))
+        except Exception as err:
+            raise ConfigError(f"source #{index} {field_name}[{i}] is invalid: {err}") from err
 
 
 def _validate_body_source(source_type: str, value: Any, index: int):
