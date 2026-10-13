@@ -836,7 +836,9 @@ def _validate_puzzle_type(value: Any, index: int):
 
 
 def _validate_puzzle_box_size(value: Any, index: int):
-    if value not in (2, 3):
+    # type() is int, not just `in (2, 3)`: 3.0 == 3, so a JSON float would pass and then fail
+    # later in generation, dropping the whole puzzle source.
+    if type(value) is not int or value not in (2, 3):
         raise ConfigError(f"source #{index} box_size must be 2 or 3.")
 
 
