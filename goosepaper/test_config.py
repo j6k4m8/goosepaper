@@ -3,6 +3,8 @@ import os
 import tempfile
 from pathlib import Path
 
+import pytest
+
 from .config import (
     ConfigError,
     DeliveryIntent,
@@ -353,6 +355,88 @@ def test_load_paper_config_accepts_registered_source():
 
         assert config.sources[0].type == "dummy_cfg_provider"
         assert config.sources[0].options == {"handle": "goose", "limit": 2}
+
+
+def test_load_paper_config_accepts_puzzle_source():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [
+                    {
+                        "type": "puzzle",
+                        "puzzle_type": "sudoku",
+                        "difficulty": "hard",
+                        "name": "Sudoku",
+                    }
+                ],
+            },
+        )
+
+        config = load_paper_config(config_path)
+
+        assert config.sources[0].type == "puzzle"
+        assert config.sources[0].options["puzzle_type"] == "sudoku"
+        assert config.sources[0].options["difficulty"] == "hard"
+        assert config.sources[0].options["name"] == "Sudoku"
+
+
+def test_load_paper_config_rejects_puzzle_source_without_puzzle_type():
+    """PuzzleStoryProvider itself requires `puzzle_type` (no default - see puzzle.py), so the
+    config layer must reject its absence with a clean ConfigError before construction ever gets
+    a chance to blow up with a raw TypeError."""
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [{"type": "puzzle", "difficulty": "easy"}],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            "missing required field(s): puzzle_type",
+        )
+
+
+@pytest.mark.parametrize("box_size", [3.0, True, "3", 4])
+def test_load_paper_config_rejects_invalid_puzzle_box_size(box_size):
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [{"type": "puzzle", "puzzle_type": "sudoku", "box_size": box_size}],
+            },
+        )
+
+        _assert_config_error(lambda: load_paper_config(config_path), "box_size must be 2 or 3")
+
+
+def test_load_paper_config_rejects_invalid_puzzle_type():
+    with _TempWorkspace() as tmp_path:
+        config_path = tmp_path / "paper.json"
+        _write_json(
+            config_path,
+            {
+                "version": 2,
+                "paper": {"style": "FifthAvenue"},
+                "sources": [{"type": "puzzle", "puzzle_type": "crossword"}],
+            },
+        )
+
+        _assert_config_error(
+            lambda: load_paper_config(config_path),
+            "puzzle_type must be one of",
+        )
 
 
 def test_load_paper_config_accepts_bluesky_source():
