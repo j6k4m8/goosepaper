@@ -2,10 +2,14 @@ import argparse
 import datetime
 import json
 import os
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
 
+import bs4
+
+from goosepaper.contentfilters import parse_flags
 from goosepaper.goosepaper import DEFAULT_DATETIME_FORMAT
 from goosepaper.layout import LAYOUT_CHOICES
 from goosepaper.styles import PAGE_PROFILE_CHOICES
@@ -597,7 +601,18 @@ def _source_schema(source_type: str) -> Dict[str, Any]:
         },
         "rss": {
             "required": {"url"},
-            "optional": {"limit", "since_days_ago", "byline", "body_source"},
+            "optional": {
+                "limit",
+                "since_days_ago",
+                "byline",
+                "body_source",
+                "skip_content_filters",
+                "skip_title_patterns",
+                "accept_content_filters",
+                "accept_title_patterns",
+                "min_body_text_length",
+                "max_body_text_length",
+            },
         },
         "mastodon": {
             "required": {"server", "username"},
@@ -695,6 +710,24 @@ def _validate_source_options(source_type: str, options: Dict[str, Any], index: i
         ),
         "days": lambda value: _validate_positive_int(value, f"source #{index} days"),
         "clock_format": lambda value: _validate_weather_clock_format(value, index),
+        "skip_content_filters": lambda value: _validate_type_keyed_content_filters(
+            value, index, "skip_content_filters"
+        ),
+        "skip_title_patterns": lambda value: _validate_title_patterns(
+            value, f"source #{index} skip_title_patterns"
+        ),
+        "accept_content_filters": lambda value: _validate_type_keyed_content_filters(
+            value, index, "accept_content_filters"
+        ),
+        "accept_title_patterns": lambda value: _validate_title_patterns(
+            value, f"source #{index} accept_title_patterns"
+        ),
+        "min_body_text_length": lambda value: _validate_positive_int(
+            value, f"source #{index} min_body_text_length"
+        ),
+        "max_body_text_length": lambda value: _validate_positive_int(
+            value, f"source #{index} max_body_text_length"
+        ),
         "comic_type": lambda value: _validate_comic_type(value, index),
         "comic_name": lambda value: _validate_string(value, f"source #{index} comic_name"),
     }
@@ -798,6 +831,61 @@ def _validate_rss_byline(value: Any, index: int):
         raise ConfigError(
             f'source #{index} byline must be one of "all", "none", or "first".'
         )
+
+
+def _validate_title_patterns(value: Any, context: str):
+    _validate_string_list(value, context)
+    for pattern in value:
+        try:
+            re.compile(pattern)
+        except re.error as err:
+            raise ConfigError(f"{context} has an invalid regex {pattern!r}: {err}") from err
+
+
+def _validate_type_keyed_content_filters(value: Any, index: int, field_name: str):
+    """Shared by `skip_content_filters` and `accept_content_filters`: both are lists of `{"type":
+    "css", "selector": "..."}` or `{"type": "regex", "pattern": "...", "flags": "..."}` entries.
+    Keyed by "type", since selector/pattern/flags aren't a shared pool - a "css" entry using
+    "pattern"/"flags" (or a "regex" entry using "selector") is meaningless input that would
+    otherwise pass validation silently and just get ignored by the filter itself. Reject it here
+    instead, same as any other unknown field."""
+    if not isinstance(value, list):
+        raise ConfigError(f"source #{index} {field_name} must be an array.")
+    allowed_keys_by_type = {
+        "css": {"type", "selector"},
+        "regex": {"type", "pattern", "flags"},
+    }
+    for i, item in enumerate(value):
+        if not isinstance(item, dict):
+            raise ConfigError(f"source #{index} {field_name}[{i}] must be an object.")
+        filter_type = item.get("type")
+        if filter_type not in allowed_keys_by_type:
+            raise ConfigError(
+                f'source #{index} {field_name}[{i}] type must be "css" or "regex".'
+            )
+        extra_keys = set(item) - allowed_keys_by_type[filter_type]
+        if extra_keys:
+            raise ConfigError(
+                f'source #{index} {field_name}[{i}] of type {filter_type} has unknown '
+                "field(s): " + ", ".join(sorted(extra_keys)) + "."
+            )
+        if filter_type == "css" and not item.get("selector"):
+            raise ConfigError(
+                f"source #{index} {field_name}[{i}] of type css requires a non-empty selector."
+            )
+        if filter_type == "regex" and not item.get("pattern"):
+            raise ConfigError(
+                f"source #{index} {field_name}[{i}] of type regex requires a non-empty pattern."
+            )
+        # A bad selector/pattern/flag would otherwise only fail inside the provider's
+        # get_stories(), which drops the whole feed instead of rejecting the config.
+        try:
+            if filter_type == "css":
+                bs4.BeautifulSoup("", "lxml").select(item["selector"])
+            else:
+                re.compile(item["pattern"], parse_flags(item.get("flags", "")))
+        except Exception as err:
+            raise ConfigError(f"source #{index} {field_name}[{i}] is invalid: {err}") from err
 
 
 def _validate_body_source(source_type: str, value: Any, index: int):
