@@ -149,15 +149,19 @@ Delivery still happens only when you pass `--deliver`. If you want user-level de
     "delivery_defaults": {
         "folder": "News",
         "replace_mode": "nocase",
-        "cleanup": true
+        "cleanup": true,
+        "retention_keep_last_n": 7,
+        "retention_prefix": "Daily Goose "
     }
 }
 ```
 
+`retention_keep_last_n`/`retention_prefix` prune older deliveries after a successful upload - once you're on a schedule (a cron job invoking `goosepaper --deliver` daily), your reMarkable's `folder` otherwise accumulates one document per run forever. Every document in `folder` whose name starts with `retention_prefix` is a candidate; only the most recent `retention_keep_last_n` (by name, so a `YYYY-MM-DD`-suffixed name like `"Daily Goose 2026-08-05"` sorts correctly) survive, and anything not matching the prefix - a different paper sharing the same folder - is left alone. Both settings must be given together; neither has a default, so retention is off unless you opt in.
+
 CLI flags override the config for a single run:
 
 ```shell
-uv run goosepaper --deliver --folder Inbox --replace-mode exact
+uv run goosepaper --deliver --folder Inbox --replace-mode exact --retention-keep-last-n 7 --retention-prefix "Daily Goose "
 ```
 
 An example config file is included here: [example-config.json](example-config.json).
