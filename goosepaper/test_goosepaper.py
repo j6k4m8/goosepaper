@@ -2,10 +2,16 @@ import base64
 import datetime
 import io
 
+import pytest
 from PIL import Image
 
 from . import goosepaper as goosepaper_module
-from .goosepaper import Goosepaper, _image_max_dimension, _inline_story_images
+from .goosepaper import (
+    Goosepaper,
+    _image_max_dimension,
+    _inline_all_story_images,
+    _inline_story_images,
+)
 from .story import Story
 from .styles import PageProfile, Style
 from .util import PlacementPreference
@@ -384,23 +390,47 @@ def test_inline_story_images_fetches_and_normalizes_a_remote_http_image(monkeypa
     assert max(embedded.size) == 20  # capped to max_dimension, aspect preserved
 
 
-def test_inline_story_images_re_encodes_an_already_inlined_data_uri(monkeypatch):
-    """A provider (or an earlier render pass) may hand back a story whose image is already a
-    data: URI rather than a remote link - CMYK/oversized/format normalization must still apply
-    there too, not just to freshly-fetched remote http(s) images."""
-
+def test_inline_story_images_leaves_data_uris_untouched(monkeypatch):
     def fail_get(*args, **kwargs):
         raise AssertionError("requests.get should not run for an already-inlined image")
 
     monkeypatch.setattr(goosepaper_module.requests, "get", fail_get)
 
-    fake_cmyk_jpeg = _image_bytes("JPEG", mode="CMYK", size=(8, 8))
-    src = f"data:image/jpeg;base64,{base64.b64encode(fake_cmyk_jpeg).decode('ascii')}"
-    result = _inline_story_images(f'<img src="{src}">', max_dimension=1200)
+    html = '<img src="data:image/svg+xml;base64,PHN2Zy8+">'
+    assert _inline_story_images(html, max_dimension=1200) == html
 
-    embedded = _decode_data_uri_image(result)
-    assert embedded.format == "JPEG"
-    assert embedded.mode in ("RGB", "L")
+
+@pytest.mark.parametrize(
+    "url, resp_headers",
+    [
+        ("https://example.com/logo.svg?v=2", {}),
+        ("https://example.com/logo", {"content-type": "image/svg+xml"}),
+    ],
+)
+def test_inline_story_images_leaves_svg_for_weasyprint(monkeypatch, url, resp_headers):
+    monkeypatch.setattr(
+        goosepaper_module.requests,
+        "get",
+        lambda u, *, headers, timeout: _FakeResponse(b"<svg/>", resp_headers),
+    )
+
+    html = f'<p>hi</p><img src="{url}">'
+    assert url in _inline_story_images(html, max_dimension=1200)
+
+
+def test_inline_all_story_images_drops_a_story_whose_only_image_fails(monkeypatch):
+    def fake_get(url, *, headers, timeout):
+        raise RuntimeError("network's down")
+
+    monkeypatch.setattr(goosepaper_module.requests, "get", fake_get)
+
+    comic = Story(headline="Strip", body_html='<img src="https://example.com/strip.png">')
+    article = Story(headline="Article", body_html='<p>text</p><img src="https://example.com/a.png">')
+    stories = [comic, article]
+    _inline_all_story_images(stories, 1200)
+
+    assert stories == [article]
+    assert "<img" not in article.body_html
 
 
 def test_inline_story_images_removes_a_failing_image(monkeypatch):

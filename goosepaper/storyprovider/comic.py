@@ -182,9 +182,9 @@ class DailyComicStoryProvider(StoryProvider):
     This provider does not itself validate that the resolved URL actually points at a decodable
     image - unlike an earlier version, which fetched and decoded the strip here and raised (so
     Goosepaper.get_stories() would cleanly drop just this comic) if it wasn't a real image. That
-    check now happens only inside `_inline_story_images()`, which fails soft on a bad image
-    (leaves the original link in place) rather than dropping the Story - the same tradeoff RSS
-    images already have.
+    check now happens only inside `_inline_story_images()`, which removes an unreadable image;
+    `_inline_all_story_images()` then drops the Story if nothing else (no text) is left of it,
+    so a comic whose strip can't be loaded still doesn't leave an empty gap.
     """
 
     def __init__(
