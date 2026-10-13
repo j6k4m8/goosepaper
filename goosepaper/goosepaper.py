@@ -47,7 +47,7 @@ def _bookmark_css(
             "section_bookmark_level and headline_bookmark_level are both "
             f"{section_bookmark_level}; sections and story headlines will sit at the same "
             "depth in the PDF outline instead of headlines nesting under sections.",
-            stacklevel=2,
+            stacklevel=3,
         )
     rules = []
     if section_bookmark_level is not None:
@@ -377,22 +377,15 @@ class Goosepaper:
                 function will return None.
             style: The style to use for the paper. Default: FifthAvenueStyle
             font_size: The font size to use for the paper. Default: 14
-            section_bookmark_level: PDF outline (bookmark) level for section headings and the
-                paper's own masthead title, or None to leave WeasyPrint's default (one bookmark
-                per heading tag) untouched. Default: 1
-            headline_bookmark_level: PDF outline level for story headlines, or None to leave
-                WeasyPrint's default untouched. Note that "untouched" is WeasyPrint's raw
-                per-tag default (h1 -> level 1), which can numerically coincide with
-                section_bookmark_level and collapse the two-level hierarchy just as if you'd
-                set both levels to the same number - it does not guarantee headlines stay
-                independent of the configured section level. Default: 2
-            body_heading_bookmarks: Whether headings inside a story's own body content (e.g. an
-                article's preserved subheadings) should appear in the PDF outline at all.
-                Default: False - WeasyPrint's default UA stylesheet turns every <h1>-<h6> into a
-                bookmark matching its tag, which - combined with section headings rendering as
-                <h2> and story headlines as <h1> - produces a flat, cluttered outline where
-                incidental subheadings from a story's own source markup sit at the same level as
-                section and story titles.
+            section_bookmark_level: PDF outline level for section headings and the masthead
+                title. None leaves WeasyPrint's per-tag default (h1 -> level 1) untouched.
+                Default: 1
+            headline_bookmark_level: PDF outline level for story headlines. None leaves
+                WeasyPrint's per-tag default untouched, which can land on the same level as the
+                sections and flatten the outline. Default: 2
+            body_heading_bookmarks: Whether headings inside a story's own body (preserved
+                article subheadings) appear in the outline. Default: False, so they don't
+                clutter it.
 
         Returns:
             str: The filename of the PDF file. If `filename` is an IO object,
