@@ -190,3 +190,45 @@ def test_upload_without_retention_keep_last_n_never_deletes(monkeypatch, tmp_pat
 
     assert result is not False
     assert not any(call[0] == "delete" for call in client.calls)
+
+
+def test_upload_retention_failure_does_not_fail_the_upload(monkeypatch, tmp_path):
+    client = _Client()
+    client._items = [
+        _IndexedItem("doc-old", "Daily Goose 2026-08-01", "", "DocumentType"),
+        _IndexedItem("doc-older", "Daily Goose 2026-07-31", "", "DocumentType"),
+    ]
+
+    def boom(*args, **kwargs):
+        raise RuntimeError("trash unavailable")
+
+    client.delete = boom
+    monkeypatch.setattr("goosepaper.upload.auth_client", lambda **kwargs: client)
+    filepath = tmp_path / "Daily Goose 2026-08-02.pdf"
+    filepath.write_bytes(b"%PDF-test")
+
+    result = upload(
+        filepath,
+        DeliverySettings(cleanup=True, retention_keep_last_n=1, retention_prefix="Daily Goose "),
+    )
+
+    assert result is not False
+    assert not filepath.exists()  # cleanup still ran
+
+
+def test_upload_retention_never_deletes_the_just_uploaded_document(monkeypatch, tmp_path):
+    client = _Client()
+    # "1. Oktober" sorts below "9. August" by name, so a name-only sort would rank the new
+    # upload as the oldest edition and delete it. The fake lists the upload (doc-1) like the
+    # real API does.
+    client._items = [
+        _IndexedItem("doc-1", "Goose 1. Oktober", "", "DocumentType"),
+        _IndexedItem("doc-old", "Goose 9. August", "", "DocumentType"),
+    ]
+    monkeypatch.setattr("goosepaper.upload.auth_client", lambda **kwargs: client)
+    filepath = tmp_path / "Goose 1. Oktober.pdf"
+    filepath.write_bytes(b"%PDF-test")
+
+    upload(filepath, DeliverySettings(retention_keep_last_n=1, retention_prefix="Goose "))
+
+    assert {c[1] for c in client.calls if c[0] == "delete"} == {"doc-old"}

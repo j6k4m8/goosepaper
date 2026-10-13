@@ -22,7 +22,9 @@ def _list_active_items(client, refresh: bool = False):
     return [item for item in client.list_items(refresh=refresh) if item.parent != "trash"]
 
 
-def _apply_retention(client, parent_id: str, prefix: str, keep_last_n: int) -> None:
+def _apply_retention(
+    client, parent_id: str, prefix: str, keep_last_n: int, uploaded_id: Optional[str] = None
+) -> None:
     """Deletes older documents in the same folder as the just-uploaded one, keeping only the
     `keep_last_n` most recent whose name starts with `prefix` - for a paper delivered on a
     schedule under a name like "Daily Goose 2026-08-05", `prefix` would be "Daily Goose " so this
@@ -36,6 +38,9 @@ def _apply_retention(client, parent_id: str, prefix: str, keep_last_n: int) -> N
     unqualified list_items() call here could silently read stale, pre-upload state depending on
     which upload path just ran. Forcing refresh=True removes that as something to reason about,
     at the cost of one guaranteed extra API round-trip.
+
+    The just-uploaded document (`uploaded_id`) always counts as the newest edition, whatever its
+    name sorts like - a non-ISO name ("Daily Goose 1. Oktober") must not delete itself.
     """
     editions = sorted(
         (
@@ -45,7 +50,7 @@ def _apply_retention(client, parent_id: str, prefix: str, keep_last_n: int) -> N
             and item.parent == parent_id
             and item.visibleName.startswith(prefix)
         ),
-        key=lambda item: item.visibleName,
+        key=lambda item: (item.id == uploaded_id, item.visibleName),
         reverse=True,
     )
     for stale in editions[keep_last_n:]:
@@ -149,9 +154,18 @@ def upload(
     if result is not None:
         print("Honk! Upload successful!")
         if delivery.retention_keep_last_n is not None:
-            _apply_retention(
-                client, parent_id, delivery.retention_prefix, delivery.retention_keep_last_n
-            )
+            # The upload already succeeded - a pruning failure must not turn it into an error
+            # or skip the cleanup below.
+            try:
+                _apply_retention(
+                    client,
+                    parent_id,
+                    delivery.retention_prefix,
+                    delivery.retention_keep_last_n,
+                    getattr(result, "id", None),
+                )
+            except Exception as err:
+                print(f"Honk! Uploaded, but retention cleanup failed: {err}")
         if cleanup:
             try:
                 os.remove(fpr)
