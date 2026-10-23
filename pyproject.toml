@@ -50,4 +50,4 @@ version = { attr = "goosepaper.version.__version__" }
 include = ["goosepaper*"]
 
 [tool.setuptools.package-data]
-goosepaper = ["assets/styles/*/*.css", "assets/styles/*/*.txt"]
+goosepaper = ["assets/styles/*/*.css", "assets/styles/*/*.txt", "storyprovider/*.css"]
