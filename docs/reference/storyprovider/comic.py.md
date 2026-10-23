@@ -42,10 +42,8 @@ title - and no byline is set: a byline or dynamic per-day headline would just re
 same source name the headline already shows, unlike a byline on an RSS article (which
 distinguishes otherwise-anonymous entries pulled from different feeds).
 
-The strip image is downloaded, decoded, and re-encoded as JPEG (not linked by remote URL
-and not passed through unmodified): this bounds pixel dimensions (some sources serve
-print-resolution images far larger than a newspaper page needs), normalizes color mode
-(handles CMYK source JPEGs), and composites any transparency onto white before dropping
-the alpha channel. Inlining as a base64 `data:` URI also sidesteps gocomics.com requiring
-the same browser-like headers for the image request as for the page request, and makes
-the rendered PDF self-contained.
+The strip image itself is left as a plain remote link - this source only resolves which
+URL is the actual strip. Fetching it, bounding its pixel dimensions, normalizing color
+mode (handling CMYK source JPEGs), compositing any transparency onto white, and inlining
+it as a self-contained base64 `data:` URI all happen centrally when the paper is
+rendered, the same way for every source's images, not just comics.
