@@ -635,6 +635,17 @@ def _source_schema(source_type: str) -> Dict[str, Any]:
             "required": set(),
             "optional": set(),
         },
+        "puzzle": {
+            "required": {"puzzle_type"},
+            "optional": {
+                "box_size",
+                "difficulty",
+                "count",
+                "seed",
+                "explanation",
+                "name",
+            },
+        },
         "comic": {
             "required": {"comic_type"},
             "optional": {"comic_name"},
@@ -695,6 +706,13 @@ def _validate_source_options(source_type: str, options: Dict[str, Any], index: i
         ),
         "days": lambda value: _validate_positive_int(value, f"source #{index} days"),
         "clock_format": lambda value: _validate_weather_clock_format(value, index),
+        "puzzle_type": lambda value: _validate_puzzle_type(value, index),
+        "box_size": lambda value: _validate_puzzle_box_size(value, index),
+        "difficulty": lambda value: _validate_puzzle_difficulty(value, index),
+        "count": lambda value: _validate_positive_int(value, f"source #{index} count"),
+        "seed": lambda value: _validate_int(value, f"source #{index} seed"),
+        "explanation": lambda value: _validate_puzzle_explanation(value, index),
+        "name": lambda value: _validate_string(value, f"source #{index} name"),
         "comic_type": lambda value: _validate_comic_type(value, index),
         "comic_name": lambda value: _validate_string(value, f"source #{index} comic_name"),
     }
@@ -797,6 +815,49 @@ def _validate_rss_byline(value: Any, index: int):
     if value not in {"all", "none", "first"}:
         raise ConfigError(
             f'source #{index} byline must be one of "all", "none", or "first".'
+        )
+
+
+def _validate_int(value: Any, context: str):
+    if not isinstance(value, int) or isinstance(value, bool):
+        raise ConfigError(f"{context} must be an integer.")
+
+
+_PUZZLE_TYPES = {"sudoku", "binoxxo", "futoshiki", "kakuro", "shikaku"}
+
+
+def _validate_puzzle_type(value: Any, index: int):
+    if value not in _PUZZLE_TYPES:
+        raise ConfigError(
+            f"source #{index} puzzle_type must be one of "
+            + ", ".join(f'"{t}"' for t in sorted(_PUZZLE_TYPES))
+            + "."
+        )
+
+
+def _validate_puzzle_box_size(value: Any, index: int):
+    # type() is int, not just `in (2, 3)`: 3.0 == 3, so a JSON float would pass and then fail
+    # later in generation, dropping the whole puzzle source.
+    if type(value) is not int or value not in (2, 3):
+        raise ConfigError(f"source #{index} box_size must be 2 or 3.")
+
+
+def _validate_puzzle_difficulty(value: Any, index: int):
+    if value not in {"easy", "medium", "hard"}:
+        raise ConfigError(
+            f'source #{index} difficulty must be one of "easy", "medium", or "hard".'
+        )
+
+
+_PUZZLE_EXPLANATION_MODES = {"none", "inline", "footer", "appendix"}
+
+
+def _validate_puzzle_explanation(value: Any, index: int):
+    if value not in _PUZZLE_EXPLANATION_MODES:
+        raise ConfigError(
+            f"source #{index} explanation must be one of "
+            + ", ".join(f'"{mode}"' for mode in sorted(_PUZZLE_EXPLANATION_MODES))
+            + "."
         )
 
 
